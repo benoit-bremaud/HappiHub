@@ -2,9 +2,10 @@
   "name": "happihub",
   "version": "1.0.0",
   "description": "HappiHub - La culture, le partage, la communauté",
-  "main": "server/server.js",
   "scripts": {
-    "start": "node server/server.js",
+    "start": "cd server && npm start",
+    "client": "cd client && npm start",
+    "dev": "concurrently \"npm run server:start\" \"npm run client\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
