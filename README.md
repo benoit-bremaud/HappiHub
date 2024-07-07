@@ -35,21 +35,46 @@ Le projet est organisé en plusieurs répertoires :
 
 ## Configuration de l'Environnement
 
-1. Créez un fichier `.env` dans le répertoire `server` avec le contenu suivant :
+Avant de démarrer le projet, assurez-vous de configurer correctement les variables d'environnement pour le backend et le frontend.
 
+### Backend
+
+1. Allez dans le répertoire `server/`.
+
+2. Copiez le fichier `.env.example` et renommez-le en `.env` :
+   ```bash
+   cp server/.env.example server/.env
+   ```
+3. Ouvrez le fichier `.env` et configurez les variables d'environnement selon vos besoins.
+
+   Voici un exemple :
    ```env
+   MONGO_URI=mongodb://localhost:27017/happihub
+   JWT_SECRET=your_jwt_secret
    PORT=5000
-   MONGO_URI=mongodb://mongo:27017/happihub
    ```
 
-2. Créez un fichier `.env` dans le répertoire `client` avec le contenu suivant :
+### Frontend
 
+1. Allez dans le répertoire `client/`.
+
+2. Copiez le fichier `.env.example` et renommez-le en `.env` :
+   ```bash
+   cp client/.env.example client/.env
+   ```
+3. Ouvrez le fichier `.env` et configurez les variables d'environnement selon vos besoins.
+   
+   Voici un exemple :
    ```env
-   PORT=3000
-   REACT_APP_API_URL=http://localhost:5000
+   REACT_APP_API_URL=http://localhost:5000/api
    ```
 
-3. Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construire et démarrer les conteneurs Docker :
+Assurez-vous que les valeurs des variables d'environnement correspondent à la configuration de votre environnement de développement.
+```
+
+## Démarrage des Conteneurs Docker
+
+Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construire et démarrer les conteneurs Docker :
 
    ```bash
    docker-compose up --build
