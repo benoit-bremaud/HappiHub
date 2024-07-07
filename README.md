@@ -49,6 +49,32 @@ Le projet est organisé en plusieurs répertoires :
 
 ## Vérification du Bon Fonctionnement
 
+Pour vérifier que le serveur fonctionne correctement, nous avons ajouté une route de test qui renvoie un message simple.
+
+### Vérifier la Réponse
+
+1. **Utiliser un Navigateur Web** :
+   - Ouvrez votre navigateur web.
+   - Accédez à `http://localhost:5000`.
+   - Vous devriez voir la réponse "Hello HappiHub Server!".
+
+2. **Utiliser `curl` (ligne de commande)** :
+   - Ouvrez votre terminal.
+   - Exécutez la commande suivante :
+     ```bash
+     curl http://localhost:5000
+     ```
+   - Vous devriez voir la réponse "Hello HappiHub Server!".
+
+3. **Utiliser Postman** :
+   - Ouvrez Postman.
+   - Créez une nouvelle requête GET à l'URL `http://localhost:5000`.
+   - Envoyez la requête.
+   - Vous devriez voir la réponse "Hello HappiHub Server!".
+
+
+## Vérification du Bon Fonctionnement
+
 1. **Backend** : Vérifiez que le backend fonctionne en accédant à `http://localhost:5000`.
 2. **Frontend** : Vérifiez que le frontend fonctionne en accédant à `http://localhost:3000`.
 3. **MongoDB** : Vérifiez que MongoDB fonctionne en utilisant un client comme MongoDB Compass avec l'URI `mongodb://localhost:27018`.
