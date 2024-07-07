@@ -10,6 +10,7 @@ HappiHub est une application web de réseau social pour les événements culture
 - [Vérification du Bon Fonctionnement](#vérification-du-bon-fonctionnement)
 - [Contribution](#contribution)
 - [Licence](#licence)
+- [Correction des Erreurs Courantes](#correction-des-erreurs-courantes)
 
 ## Structure du Projet
 
@@ -38,10 +39,17 @@ Le projet est organisé en plusieurs répertoires :
 
    ```env
    PORT=5000
-   MONGO_URI=mongodb://mongo:27018/happihub
+   MONGO_URI=mongodb://mongo:27017/happihub
    ```
 
-2. Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construire et démarrer les conteneurs Docker :
+2. Créez un fichier `.env` dans le répertoire `client` avec le contenu suivant :
+
+   ```env
+   PORT=3000
+   REACT_APP_API_URL=http://localhost:5000
+   ```
+
+3. Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construire et démarrer les conteneurs Docker :
 
    ```bash
    docker-compose up --build
@@ -49,9 +57,9 @@ Le projet est organisé en plusieurs répertoires :
 
 ## Vérification du Bon Fonctionnement
 
-Pour vérifier que le serveur fonctionne correctement, nous avons ajouté une route de test qui renvoie un message simple.
+### Backend
 
-### Vérifier la Réponse
+Vérifiez que le backend fonctionne en accédant à `http://localhost:5000`.
 
 1. **Utiliser un Navigateur Web** :
    - Ouvrez votre navigateur web.
@@ -66,18 +74,29 @@ Pour vérifier que le serveur fonctionne correctement, nous avons ajouté une ro
      ```
    - Vous devriez voir la réponse "Hello HappiHub Server!".
 
+### Frontend
+
+Vérifiez que le frontend fonctionne en accédant à `http://localhost:3000`.
+
+1. **Utiliser un Navigateur Web** :
+   - Ouvrez votre navigateur web.
+   - Accédez à `http://localhost:3000`.
+   - Vous devriez voir la page d'accueil par défaut de l'application React.
+
+2. **Utiliser `curl` (ligne de commande)** :
+   - Ouvrez votre terminal.
+   - Exécutez la commande suivante :
+     ```bash
+     curl http://localhost:3000
+     ```
+   - Vous devriez voir le code HTML de la page d'accueil par défaut de l'application React.
+
 3. **Utiliser Postman** :
    - Ouvrez Postman.
-   - Créez une nouvelle requête GET à l'URL `http://localhost:5000`.
+   - Créez une nouvelle requête GET à l'URL `http://localhost:3000`.
    - Envoyez la requête.
-   - Vous devriez voir la réponse "Hello HappiHub Server!".
+   - Vous devriez voir le code HTML de la page d'accueil par défaut de l'application React.
 
-
-## Vérification du Bon Fonctionnement
-
-1. **Backend** : Vérifiez que le backend fonctionne en accédant à `http://localhost:5000`.
-2. **Frontend** : Vérifiez que le frontend fonctionne en accédant à `http://localhost:3000`.
-3. **MongoDB** : Vérifiez que MongoDB fonctionne en utilisant un client comme MongoDB Compass avec l'URI `mongodb://localhost:27018`.
 
 ## Correction des Erreurs Courantes
 
@@ -125,6 +144,8 @@ Les contributions sont les bienvenues. Pour commencer :
 3. Commit vos modifications (`git commit -am 'Add some fooBar'`).
 4. Push la branche (`git push origin feature/fooBar`).
 5. Créez une nouvelle Pull Request.
+
+Pour plus d'informations, veuillez lire le fichier CONTRIBUTING.md.
 
 ## Licence
 
