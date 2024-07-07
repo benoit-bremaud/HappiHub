@@ -53,6 +53,43 @@ Le projet est organisé en plusieurs répertoires :
 2. **Frontend** : Vérifiez que le frontend fonctionne en accédant à `http://localhost:3000`.
 3. **MongoDB** : Vérifiez que MongoDB fonctionne en utilisant un client comme MongoDB Compass avec l'URI `mongodb://localhost:27018`.
 
+## Correction des Erreurs Courantes
+
+### Erreur : Ports are not available
+
+Si vous rencontrez l'erreur suivante lors du démarrage des conteneurs Docker :
+
+```plaintext
+Starting happihub_mongo_1 ... error
+
+ERROR: for happihub_mongo_1  Cannot start service mongo: Ports are not available: exposing port TCP 0.0.0.0:27017 -> 0.0.0.0:0: listen tcp 0.0.0.0:27017: bind: address already in use
+
+ERROR: for happihub_app_1  'ContainerConfig'
+
+ERROR: for mongo  Cannot start service mongo: Ports are not available: exposing port TCP 0.0.0.0:27017 -> 0.0.0.0:0: listen tcp 0.0.0.0:27017: bind: address already in use
+```
+
+Cela signifie que le port 27017 est déjà utilisé par un autre processus. Pour résoudre ce problème, vous pouvez suivre les étapes suivantes :
+
+1. **Trouver le processus utilisant le port 27017** :
+   ```bash
+   sudo lsof -i :27017
+   ```
+
+   Exemple de sortie :
+   ```plaintext
+   ➜  HappiHub git:(main) sudo lsof -i :27017                                 
+   COMMAND  PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+   mongod  2100 mongodb   11u  IPv4  24553      0t0  TCP localhost:27017 (LISTEN)
+   ```
+
+2. **Tuer le processus utilisant le port 27017** :
+   ```bash
+   sudo kill -9 2100
+   ```
+
+   Remplacez `2100` par le PID trouvé dans la sortie de la commande précédente.
+
 ## Contribution
 
 Les contributions sont les bienvenues. Pour commencer :

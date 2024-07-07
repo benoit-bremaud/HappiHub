@@ -1,5 +1,5 @@
 # Use the official image as a parent image
-FROM node:14
+FROM node:18
 
 # Create app directory
 WORKDIR /app
