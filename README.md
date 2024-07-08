@@ -215,7 +215,7 @@ Les contributions sont les bienvenues. Pour commencer :
 4. Push la branche (`git push origin feature/fooBar`).
 5. Créez une nouvelle Pull Request.
 
-Pour plus d'informations, veuillez lire le fichier [CONTRIBUTING.md](CONTRIBUTING.md).
+Pour plus d'informations, veuillez lire le fichier [CONTRIBUTING](doc/CONTRIBUTING.md).
 
 ## Licence
 

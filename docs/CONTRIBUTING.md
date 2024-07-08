@@ -7,8 +7,13 @@ Merci de votre intérêt pour contribuer à HappiHub ! Ce document vous guidera 
 - [Signaler un Problème](#signaler-un-problème)
 - [Proposer des Modifications](#proposer-des-modifications)
 - [Configurer l'Environnement de Développement](#configurer-lenvironnement-de-développement)
+- [Installation des Dépendances](#installation-des-dépendances)
+- [Exécution des Tests](#exécution-des-tests)
 - [Règles de Commit](#règles-de-commit)
 - [Règles de Nommage des Branches](#règles-de-nommage-des-branches)
+- [Linting et Formatage](#linting-et-formatage)
+- [Processus de Review des Pull Requests](#processus-de-review-des-pull-requests)
+- [Communauté et Support](#communauté-et-support)
 
 ## Code de Conduite
 
@@ -22,16 +27,16 @@ Si vous rencontrez un problème ou avez une suggestion d'amélioration, veuillez
 
 1. **Fork le dépôt**
 2. **Clonez votre fork** :
-   ```bash
+   ```
    git clone https://github.com/votre-nom-utilisateur/happihub.git
    ```
 3. **Créez une branche pour votre fonctionnalité ou correction de bug** :
-   ```bash
+   ```
    git checkout -b feature/nom-de-la-fonctionnalité
    ```
 4. **Faites vos modifications et committez-les en suivant les [Règles de Commit](#règles-de-commit)**.
 5. **Push votre branche vers votre fork** :
-   ```bash
+   ```
    git push origin feature/nom-de-la-fonctionnalité
    ```
 6. **Ouvrez une Pull Request** sur le dépôt principal.
@@ -43,20 +48,47 @@ Si vous rencontrez un problème ou avez une suggestion d'amélioration, veuillez
    - [Docker Compose](https://docs.docker.com/compose/install/)
 
 2. **Clonez le dépôt** :
-   ```bash
+   ```
    git clone https://github.com/yourusername/happihub.git
    cd happihub
    ```
 
 3. **Créez un fichier `.env` dans le répertoire `server` avec le contenu suivant** :
-   ```env
+   ```
    PORT=5000
    MONGO_URI=mongodb://mongo:27018/happihub
    ```
+4. **Créez un fichier `.env` dans le répertoire `client` avec le contenu suivant** :
+   ```
+   REACT_APP_API_URL=http://localhost:5000/api
 
-4. **Utilisez les fichiers `Dockerfile` et `docker-compose.yml` pour construire et démarrer les conteneurs Docker** :
-   ```bash
+   ```
+5. **Utilisez les fichiers `Dockerfile` et `docker-compose.yml` pour construire et démarrer les conteneurs Docker** :
+   ```
    docker-compose up --build
+   ```
+
+## Installation des Dépendances
+
+1. **Assurez-vous que Node.js et NPM sont installés**.
+   - [Node.js](https://nodejs.org/)
+   - [NPM](https://www.npmjs.com/)
+
+2. **Installez les dépendances du projet** :
+   ```
+   npm install
+   ```
+
+## Exécution des Tests
+
+1. **Exécutez les tests unitaires** :
+   ```
+   npm test
+   ```
+
+2. **Exécutez les tests d'intégration** :
+   ```
+   npm run test:integration
    ```
 
 ## Règles de Commit
@@ -65,7 +97,7 @@ Nous suivons les conventions de commit d'Angular pour garantir des messages de c
 
 ### Structure du Message de Commit
 
-```plaintext
+```
 type(scope): subject
 
 body
@@ -88,7 +120,7 @@ body
 
 ### Exemple de Message de Commit
 
-```plaintext
+```
 feat(user-auth): add JWT authentication
 
 Added JWT authentication for user login and registration. This ensures
@@ -116,5 +148,28 @@ Pour maintenir une organisation claire et cohérente, suivez ces conventions pou
 - **feature/add-search-functionality**
 - **fix/navbar-styling-bug**
 - **chore/cleanup-unused-imports**
+
+## Linting et Formatage
+
+1. **Exécutez ESLint pour vérifier le linting** :
+   ```
+   npm run lint
+   ```
+
+2. **Formatage du code avec Prettier** :
+   ```
+   npm run format
+   ```
+
+## Processus de Review des Pull Requests
+
+1. **Créez une Pull Request (PR)** en suivant les instructions.
+2. **Les PRs doivent être révisées par au moins un mainteneur avant d'être fusionnées**.
+3. **Assurez-vous que toutes les vérifications CI passent avant de demander une review**.
+
+## Communauté et Support
+
+1. **Rejoignez notre communauté sur [Slack/Discord/etc.] pour obtenir de l'aide et discuter**.
+2. **Consultez notre documentation [lien vers la documentation] pour plus de détails**.
 
 Merci de votre contribution !
