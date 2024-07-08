@@ -224,6 +224,16 @@ Nous avons adopté un code de conduite pour notre communauté. Pour en savoir pl
 ## Sécurité
 Pour signaler une vulnérabilité de sécurité, veuillez lire notre [Politique de Sécurité](docs/SECURITY.md).
 
+Documentation de l'API
+Pour une documentation détaillée de l'API de HappiHub, veuillez consulter le fichier [API_DOCUMENTATION](docs/API_DOCUMENTATION.md). Ce document inclut des descriptions des endpoints, des paramètres, et des exemples de requêtes et de réponses.
+
+Contenu de la documentation API :
+Description de chaque endpoint
+Paramètres requis et optionnels
+Exemples de requêtes et de réponses
+Informations sur l'authentification et les autorisations
+La documentation de l'API est essentielle pour comprendre comment interagir avec l'API de HappiHub et pour faciliter le développement des fonctionnalités dépendantes de l'API.
+
 ## Licence
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
