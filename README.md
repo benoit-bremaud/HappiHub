@@ -215,11 +215,11 @@ Les contributions sont les bienvenues. Pour commencer :
 4. Push la branche (`git push origin feature/fooBar`).
 5. Créez une nouvelle Pull Request.
 
-Pour plus d'informations, veuillez lire le fichier [CONTRIBUTING](doc/CONTRIBUTING.md).
+Pour plus d'informations, veuillez lire le fichier [CONTRIBUTING](docs/CONTRIBUTING.md).
 
 ## Code de Conduite
 
-Nous avons adopté un code de conduite pour notre communauté. Pour en savoir plus, consultez le Code de Conduite.
+Nous avons adopté un code de conduite pour notre communauté. Pour en savoir plus, consultez le [Code de Conduite](docs/CODE_OF_CONDUCT.md).
 
 ## Licence
 
