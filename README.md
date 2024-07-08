@@ -140,6 +140,8 @@ ERROR: for mongo  Cannot start service mongo: Ports are not available: exposing 
 
 Cela signifie que le port 27017 est déjà utilisé par un autre processus. Pour résoudre ce problème, vous pouvez suivre les étapes suivantes :
 
+### Linux
+
 1. **Trouver le processus utilisant le port 27017** :
    ```
    sudo lsof -i :27017
@@ -154,6 +156,51 @@ Cela signifie que le port 27017 est déjà utilisé par un autre processus. Pour
 2. **Tuer le processus utilisant le port 27017** :
    ```
    sudo kill -9 2100
+   ```
+
+   Remplacez `2100` par le PID trouvé dans la sortie de la commande précédente.
+
+### Windows
+
+1. **Trouver le processus utilisant le port 27017** :
+   ```powershell
+   Get-NetTCPConnection -LocalPort 27017 | Select-Object -Property State, LocalAddress, LocalPort, RemoteAddress, RemotePort, OwningProcess
+   Get-Process -Id (Get-NetTCPConnection -LocalPort 27017).OwningProcess
+   ```
+
+   Exemple de sortie :
+   ```plaintext
+   State        : Listen
+   LocalAddress : 0.0.0.0
+   LocalPort    : 27017
+   RemoteAddress: 0.0.0.0
+   RemotePort   : 0
+   OwningProcess: 2100
+   ```
+
+2. **Tuer le processus utilisant le port 27017** :
+   ```powershell
+   Stop-Process -Id 2100 -Force
+   ```
+
+   Remplacez `2100` par le PID trouvé dans la sortie de la commande précédente.
+
+### Mac
+
+1. **Trouver le processus utilisant le port 27017** :
+   ```sh
+   lsof -i :27017
+   ```
+
+   Exemple de sortie :
+   ```plaintext
+   COMMAND  PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+   mongod  2100 mongodb   11u  IPv4  24553      0t0  TCP localhost:27017 (LISTEN)
+   ```
+
+2. **Tuer le processus utilisant le port 27017** :
+   ```sh
+   kill -9 2100
    ```
 
    Remplacez `2100` par le PID trouvé dans la sortie de la commande précédente.
