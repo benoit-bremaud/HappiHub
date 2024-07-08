@@ -28,8 +28,8 @@ Le projet est organisé en plusieurs répertoires :
 
 1. Clonez le dépôt :
 
-   ```bash
-   git clone https://github.com/yourusername/happihub.git
+   ```
+   git clone https://github.com/benoit-bremaud/happihub.git
    cd happihub
    ```
 
@@ -42,13 +42,13 @@ Avant de démarrer le projet, assurez-vous de configurer correctement les variab
 1. Allez dans le répertoire `server/`.
 
 2. Copiez le fichier `.env.example` et renommez-le en `.env` :
-   ```bash
+   ```
    cp server/.env.example server/.env
    ```
 3. Ouvrez le fichier `.env` et configurez les variables d'environnement selon vos besoins.
 
    Voici un exemple :
-   ```env
+   ```
    MONGO_URI=mongodb://localhost:27017/happihub
    JWT_SECRET=your_jwt_secret
    PORT=5000
@@ -59,24 +59,23 @@ Avant de démarrer le projet, assurez-vous de configurer correctement les variab
 1. Allez dans le répertoire `client/`.
 
 2. Copiez le fichier `.env.example` et renommez-le en `.env` :
-   ```bash
+   ```
    cp client/.env.example client/.env
    ```
 3. Ouvrez le fichier `.env` et configurez les variables d'environnement selon vos besoins.
    
    Voici un exemple :
-   ```env
+   ```
    REACT_APP_API_URL=http://localhost:5000/api
    ```
 
 Assurez-vous que les valeurs des variables d'environnement correspondent à la configuration de votre environnement de développement.
-```
 
 ## Démarrage des Conteneurs Docker
 
 Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construire et démarrer les conteneurs Docker :
 
-   ```bash
+   ```
    docker-compose up --build
    ```
 
@@ -94,7 +93,7 @@ Vérifiez que le backend fonctionne en accédant à `http://localhost:5000`.
 2. **Utiliser `curl` (ligne de commande)** :
    - Ouvrez votre terminal.
    - Exécutez la commande suivante :
-     ```bash
+     ```
      curl http://localhost:5000
      ```
    - Vous devriez voir la réponse "Hello HappiHub Server!".
@@ -111,7 +110,7 @@ Vérifiez que le frontend fonctionne en accédant à `http://localhost:3000`.
 2. **Utiliser `curl` (ligne de commande)** :
    - Ouvrez votre terminal.
    - Exécutez la commande suivante :
-     ```bash
+     ```
      curl http://localhost:3000
      ```
    - Vous devriez voir le code HTML de la page d'accueil par défaut de l'application React.
@@ -129,7 +128,7 @@ Vérifiez que le frontend fonctionne en accédant à `http://localhost:3000`.
 
 Si vous rencontrez l'erreur suivante lors du démarrage des conteneurs Docker :
 
-```plaintext
+```
 Starting happihub_mongo_1 ... error
 
 ERROR: for happihub_mongo_1  Cannot start service mongo: Ports are not available: exposing port TCP 0.0.0.0:27017 -> 0.0.0.0:0: listen tcp 0.0.0.0:27017: bind: address already in use
@@ -142,19 +141,18 @@ ERROR: for mongo  Cannot start service mongo: Ports are not available: exposing 
 Cela signifie que le port 27017 est déjà utilisé par un autre processus. Pour résoudre ce problème, vous pouvez suivre les étapes suivantes :
 
 1. **Trouver le processus utilisant le port 27017** :
-   ```bash
+   ```
    sudo lsof -i :27017
    ```
 
    Exemple de sortie :
-   ```plaintext
-   ➜  HappiHub git:(main) sudo lsof -i :27017                                 
+   ```
    COMMAND  PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
    mongod  2100 mongodb   11u  IPv4  24553      0t0  TCP localhost:27017 (LISTEN)
    ```
 
 2. **Tuer le processus utilisant le port 27017** :
-   ```bash
+   ```
    sudo kill -9 2100
    ```
 
