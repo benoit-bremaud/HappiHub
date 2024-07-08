@@ -217,6 +217,10 @@ Les contributions sont les bienvenues. Pour commencer :
 
 Pour plus d'informations, veuillez lire le fichier [CONTRIBUTING](doc/CONTRIBUTING.md).
 
+## Code de Conduite
+
+Nous avons adopté un code de conduite pour notre communauté. Pour en savoir plus, consultez le Code de Conduite.
+
 ## Licence
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
