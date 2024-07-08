@@ -221,6 +221,9 @@ Pour plus d'informations, veuillez lire le fichier [CONTRIBUTING](docs/CONTRIBUT
 
 Nous avons adopté un code de conduite pour notre communauté. Pour en savoir plus, consultez le [Code de Conduite](docs/CODE_OF_CONDUCT.md).
 
+## Sécurité
+Pour signaler une vulnérabilité de sécurité, veuillez lire notre [Politique de Sécurité](docs/SECURITY.md).
+
 ## Licence
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
