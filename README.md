@@ -224,6 +224,10 @@ Nous avons adopté un code de conduite pour notre communauté. Pour en savoir pl
 ## Sécurité
 Pour signaler une vulnérabilité de sécurité, veuillez lire notre [Politique de Sécurité](docs/SECURITY.md).
 
+## Guide Général
+
+Pour des directives supplémentaires et des informations spécifiques sur le projet HappiHub, veuillez consulter le fichier [GUIDE.md](./docs/GUIDE.md). Ce guide fournit des conseils sur les bonnes pratiques de développement, l'utilisation des fonctionnalités avancées, ainsi que des astuces et des ressources utiles.
+
 ## Licence
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
