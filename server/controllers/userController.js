@@ -1,34 +1,32 @@
 import User from '../models/userModel.js';
+import { signupValidation } from '../validation/userValidation.js';
+// import jwt from 'jsonwebtoken';
 
-// @desc   Register a new user
-// @route  POST /api/users
-// @access Public
-const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+export const signup = async (req, res) => {
+  // Validate the user input
+  const { error } = signupValidation(req.body);
+  if (error) return res.status(400).json({ message: error.details[0].message });
 
-  const userExists = await User.findOne({ email });
+  // Check if the user already exists
+  const emailExist = await User.findOne({ email: req.body.email });
+  if (emailExist) return res.status(400).json({ message: 'Email already exists' });
 
-  if (userExists) {
-    res.status(400);
-    throw new Error('User already exists');
-  }
-
-  const user = await User.create({
-    name,
-    email,
-    password,
+  // Create a new user
+  const user = new User({
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password,
   });
 
-  if (user) {
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-    });
-  } else {
-    res.status(400);
-    throw new Error('Invalid user data');
+  try {
+    // Save the user to the database
+    const savedUser = await user.save();
+
+    // Create and assign a token
+
+    // Send the user data in the response
+    res.status(201).json({ message: 'User registered successfully', user: savedUser });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
-
-export { registerUser };
