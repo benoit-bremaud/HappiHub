@@ -5,19 +5,20 @@ import userRoutes from './routes/userRoutes.js';
 
 dotenv.config();
 
-connectDB();
-
 const app = express();
 
 app.use(express.json());
 
+// MongoDB database connection
+connectDB();
+
 app.use('/api/users', userRoutes);
 
 // Test route
-app.get('/', (req, res) => {
+app.get('/test', (req, res) => {
   res.send('Hello HappiHub Server !');
 });
+app.use('/api/users', userRoutes);
 
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
