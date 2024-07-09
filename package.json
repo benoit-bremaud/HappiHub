@@ -11,5 +11,7 @@
   "keywords": [],
   "author": "Benoit Bremaud",
   "license": "ISC",
-  "dependencies": {}
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  }
 }
