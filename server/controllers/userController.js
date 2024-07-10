@@ -35,21 +35,34 @@ export const signup = async (req, res) => {
 };
 
 export const login = async (req, res) => {
+
+  try {
   // Validate the user input
-  const { error } = loginValidation(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
+    const { error } = loginValidation(req.body);
+    if (error) return res.status(400).json({ message: error.details[0].message });
 
-  // Check if the user exists
-  const user = await User.findOne({ email: req.body.email });
-  if (!user) return res.status(400).json({ message: 'Email is not found' });
+    // Check if the user exists
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) return res.status(400).json({ message: 'Email is not found' });
 
-  // Check if the password is correct
-  const validPassword = await user.matchPassword(req.body.password);
-  if (!validPassword) return res.status(400).json({ message: 'Invalid password' });
+    // Check if the password is correct
+    const validPassword = await user.matchPassword(req.body.password);
+    if (!validPassword) return res.status(400).json({ message: 'Invalid password' });
 
-  // Create and assign a token
-  const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRATION });
+    // Create and assign a token
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRATION });
 
-  // Send the user data in the response
-  res.status(200).json({ message: 'Logged in successfully', token: token, user: user});
-};
+    // Send the user data in the response
+    res.status(200).json({ 
+      message: 'Logged in successfully', 
+      token: token, 
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}; 

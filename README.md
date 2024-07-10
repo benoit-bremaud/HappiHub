@@ -49,7 +49,7 @@ Avant de démarrer le projet, assurez-vous de configurer correctement les variab
 
    Voici un exemple :
    ```
-   MONGO_URI=mongodb://localhost:27017/happihub
+   MONGO_URI=mongodb://mongo:27017/happihub
    JWT_SECRET=your_jwt_secret
    PORT=5000
    ```
