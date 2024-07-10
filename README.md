@@ -79,6 +79,101 @@ Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construi
    docker-compose up --build
    ```
 
+### Nettoyage Complet de Docker
+
+Pour nettoyer tous les éléments liés à Docker sur Linux, Windows et macOS, suivez les étapes ci-dessous. Cela inclut la suppression des conteneurs, des images, des volumes et des réseaux Docker inutilisés.
+
+#### Linux (Ubuntu)
+
+1. **Arrêter tous les conteneurs en cours d'exécution :**
+   ```bash
+   docker stop $(docker ps -q)
+   ```
+2. **Supprimer tous les conteneurs :**
+   ```bash
+   docker rm $(docker ps -a -q)
+   ```
+3. **Supprimer toutes les images :**
+   ```bash
+   docker rmi $(docker images -q)
+   ```
+4. **Supprimer tous les volumes non utilisés :**
+   ```bash
+   docker volume prune -f
+   ```
+5. **Supprimer tous les réseaux non utilisés :**
+   ```bash
+   docker network prune -f
+   ```
+6. **Supprimer toutes les données restantes de Docker :**
+   ```bash
+   sudo rm -rf /var/lib/docker
+   sudo rm -rf /var/lib/containerd
+   ```
+
+#### Windows
+
+1. **Arrêter tous les conteneurs en cours d'exécution :**
+   ```powershell
+   docker stop $(docker ps -q)
+   ```
+2. **Supprimer tous les conteneurs :**
+   ```powershell
+   docker rm $(docker ps -a -q)
+   ```
+3. **Supprimer toutes les images :**
+   ```powershell
+   docker rmi $(docker images -q)
+   ```
+4. **Supprimer tous les volumes non utilisés :**
+   ```powershell
+   docker volume prune -f
+   ```
+5. **Supprimer tous les réseaux non utilisés :**
+   ```powershell
+   docker network prune -f
+   ```
+6. **Supprimer toutes les données restantes de Docker :**
+   ```powershell
+   Remove-Item -Recurse -Force C:\ProgramData\Docker
+   Remove-Item -Recurse -Force C:\ProgramData\DockerDesktop
+   ```
+
+#### macOS
+
+1. **Arrêter tous les conteneurs en cours d'exécution :**
+   ```bash
+   docker stop $(docker ps -q)
+   ```
+2. **Supprimer tous les conteneurs :**
+   ```bash
+   docker rm $(docker ps -a -q)
+   ```
+3. **Supprimer toutes les images :**
+   ```bash
+   docker rmi $(docker images -q)
+   ```
+4. **Supprimer tous les volumes non utilisés :**
+   ```bash
+   docker volume prune -f
+   ```
+5. **Supprimer tous les réseaux non utilisés :**
+   ```bash
+   docker network prune -f
+   ```
+6. **Supprimer toutes les données restantes de Docker :**
+   ```bash
+   sudo rm -rf /var/lib/docker
+   sudo rm -rf /var/lib/containerd
+   ```
+
+**Raisons du nettoyage :**
+
+- **Récupération d'espace disque :** Les conteneurs, images et volumes Docker peuvent consommer beaucoup d'espace disque. Les supprimer libère cet espace.
+- **Maintien de la performance :** Un grand nombre de conteneurs, images et volumes inutilisés peut ralentir les opérations Docker.
+- **Gestion de la sécurité :** La suppression des conteneurs et images obsolètes réduit les risques de sécurité liés à des versions vulnérables.
+- **Prévention des conflits :** Des conteneurs et images obsolètes peuvent causer des conflits lors de la création de nouveaux conteneurs.
+
 ## Vérification du Bon Fonctionnement
 
 ### Backend
