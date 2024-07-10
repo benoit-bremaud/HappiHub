@@ -4,9 +4,9 @@ services:
   mongo:
     image: mongo
     ports:
-      - '27017:27017'
+      - '27018:27017'
 
-  app:
+  server:
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -26,4 +26,4 @@ services:
     env_file:
       - ./client/.env
     depends_on:
-      - app
+      - server
