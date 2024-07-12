@@ -1,8 +1,7 @@
-import { login, logout, signup } from '../controllers/userController.js';
+import { getUserProfile, login, logout, signup, updateUserProfile } from '../controllers/userController.js';
 
 import authenticateToken from '../middleware/auth.js';
 import express from 'express';
-import { updateUserProfile } from '../controllers/userController.js';
 
 // Create an express router
 const router = express.Router();
@@ -14,5 +13,6 @@ router.post('/logout', logout);
 
 // Profile route
 router.put('/profile', authenticateToken, updateUserProfile);
+router.get('/profile', authenticateToken, getUserProfile);
 
 export default router;
