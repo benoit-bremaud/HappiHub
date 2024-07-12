@@ -12,6 +12,8 @@ const signupValidation = (data) => {
   return schema.validate(data);
 };
 
+export { signupValidation };
+
 // Login validation
 const loginValidation = (data) => {
   const schema = Joi.object({
@@ -22,6 +24,8 @@ const loginValidation = (data) => {
   return schema.validate(data);
 };
 
+export { loginValidation };
+
 // Logout with token validation
 const logoutValidation = (data) => {
   const schema = Joi.object({
@@ -29,6 +33,19 @@ const logoutValidation = (data) => {
   });
 
   return schema.validate(data);
-}
+};
 
-export { signupValidation, loginValidation , logoutValidation};
+export { logoutValidation };
+
+// Profile update validation
+const updateProfileValidation = (data) => {
+  const schema = Joi.object({
+    name: Joi.string().min(3).required(),
+    email: Joi.string().min(6).required().email(),
+    password: Joi.string().min(6).required(),
+  });
+
+  return schema.validate(data);
+};
+
+export { updateProfileValidation };

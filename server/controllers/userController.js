@@ -1,6 +1,7 @@
-import { loginValidation, logoutValidation, signupValidation } from '../validation/userValidation.js';
+import { loginValidation, logoutValidation, signupValidation, updateProfileValidation } from '../validation/userValidation.js';
 
 import User from '../models/userModel.js';
+import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import generateToken from '../utils/jwt.js';
 
@@ -77,4 +78,33 @@ export const logout = async (req, res) => {
   
   // Send the user data in the response
   res.status(200).json({ message: 'Logged out successfully' });
-}
+};
+
+// Update user profile
+export const updateUserProfile = async (req, res) => {
+  // Validate the new profile data
+  const { error } = updateProfileValidation(req.body);
+  if (error) return res.status(400).json({ message: error.details[0].message });
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Update user fields
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.email) user.email = req.body.email;
+    if (req.body.password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(req.body.password, salt);
+    }
+
+    const updatedUser = await user.save();
+    res.status(200).json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
