@@ -16,11 +16,9 @@ services:
       - '5000:5000'
     env_file:
       - ./server/.env
-    depends_on:
-      - mongo
     volumes:
-      - .:/server
-      - /server/node_modules
+      - ./server:/app
+      - /app/node_modules
 
   client:
     build:
@@ -30,11 +28,9 @@ services:
       - '3000:3000'
     env_file:
       - ./client/.env
-    depends_on:
-      - server
     volumes:
-      - ./client:/server
-      - /server/node_modules
+      - ./client:/app
+      - /app/node_modules
       
 volumes:
   mongo-data:
