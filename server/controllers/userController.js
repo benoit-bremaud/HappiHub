@@ -80,6 +80,22 @@ export const logout = async (req, res) => {
   res.status(200).json({ message: 'Logged out successfully' });
 };
 
+// Get user profile
+export const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Update user profile
 export const updateUserProfile = async (req, res) => {
   // Validate the new profile data
