@@ -4,6 +4,7 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('user');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -12,6 +13,7 @@ const Register = () => {
       name,
       email,
       password,
+      role
     };
 
     const response = await fetch('http://localhost:5000/api/users/signup', {

@@ -21,7 +21,7 @@ const Connexion = () => {
       body: JSON.stringify(data),
     };
 
-    const response = await fetch("http://localhost:5000/api", options);
+    const response = await fetch("http://localhost:5000/api/users/login", options);
     const json = await response.json();
 
     console.log(json);
