@@ -1,8 +1,8 @@
-import { loginValidation, signupValidation } from '../validation/userValidation.js';
+import { loginValidation, logoutValidation, signupValidation } from '../validation/userValidation.js';
 
 import User from '../models/userModel.js';
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
+import generateToken from '../utils/jwt.js';
 
 // Load environment variables
 dotenv.config();
@@ -21,6 +21,7 @@ export const signup = async (req, res) => {
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
+    role: req.body.role,
   });
 
   try {
@@ -50,7 +51,7 @@ export const login = async (req, res) => {
     if (!validPassword) return res.status(400).json({ message: 'Invalid password' });
 
     // Create and assign a token
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRATION });
+    const token = generateToken(user);
 
     // Send the user data in the response
     res.status(200).json({ 
@@ -60,9 +61,20 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 }; 
+
+export const logout = async (req, res) => {
+  // Validate the user token
+  const { error } = logoutValidation(req.body);
+  if (error) return res.status(400).json({ message: error.details[0].message });
+
+  
+  // Send the user data in the response
+  res.status(200).json({ message: 'Logged out successfully' });
+}
