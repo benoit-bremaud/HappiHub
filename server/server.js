@@ -3,12 +3,22 @@ import dotenv from 'dotenv';
 import eventRoutes from './routes/eventRoutes.js';
 import express from 'express';
 import userRoutes from './routes/userRoutes.js';
+import cors from 'cors';
 
 // Load environment variables
 dotenv.config();
 
 // Create an express application
 const app = express();
+
+
+// allow all origins
+// app.use(cors());
+
+app.use(cors({
+  origin: 'http://localhost:3000'
+}));
+
 
 // Middleware to parse the request body as JSON
 app.use(express.json());

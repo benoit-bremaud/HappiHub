@@ -1,0 +1,12 @@
+.home{
+    margin: 0px 30px;
+}
+.home h1{
+    text-align: center;
+    margin: 40px 0px;
+}
+.card_display{
+    display: flex;
+    flex-wrap: wrap;
+
+}
