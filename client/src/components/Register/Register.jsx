@@ -37,6 +37,7 @@ const Register = () => {
       <input
         type="text"
         id="name"
+        placeholder='name'
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
@@ -45,6 +46,7 @@ const Register = () => {
       <input
         type="email"
         id="email"
+        placeholder='email'
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
@@ -53,6 +55,7 @@ const Register = () => {
       <input
         type="password"
         id="password"
+        placeholder='password'
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
