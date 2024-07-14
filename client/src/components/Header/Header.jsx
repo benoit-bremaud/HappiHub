@@ -1,6 +1,7 @@
 import React from "react";
 import "./header.css";
-import Logout from "../Logout/Logout";    
+import Logout from "../Logout/Logout";
+import { Link } from "react-router-dom";
 
 
 
@@ -12,9 +13,9 @@ const Header = () => {
             </div>
             <div className="nav">
                 <ul>
-                    <li><a href="">event</a></li>
-                    <li><a href="">event</a></li>
-                    <li><a href="">event</a></li>
+                    <li><Link to="/">Home</Link></li>
+                    <li><Link to="/register">Signin</Link></li>
+                    <li><Link to="/login">Login</Link></li>
                 </ul>
                 <form>
                     <label for="truc">yoyoy</label>
