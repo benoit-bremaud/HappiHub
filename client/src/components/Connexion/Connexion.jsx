@@ -23,7 +23,7 @@ const Connexion = () => {
 
     const response = await fetch("http://localhost:5000/api/users/login", options);
     const json = await response.json();
-
+    localStorage.setItem("token", json.token);
     console.log(json);
   };
 

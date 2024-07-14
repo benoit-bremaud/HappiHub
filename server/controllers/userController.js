@@ -45,15 +45,16 @@ export const login = async (req, res) => {
 
     // Check if the user exists
     const user = await User.findOne({ email: req.body.email });
-    if (!user) return res.status(400).json({ message: 'Email is not found' });
+    if (!user) return res.status(400).json({ message: 'Email is not found ' });
 
-    // Check if the password is correct
-    const validPassword = await user.matchPassword(req.body.password);
-    if (!validPassword) return res.status(400).json({ message: 'Invalid password' });
-
+// Check if the password is correct
+if (req.body.password !== user.password) {
+  return res.status(400).json({ message: 'Invalid password' });
+}
+    
     // Create and assign a token
     const token = generateToken(user);
-
+ 
     // Send the user data in the response
     res.status(200).json({ 
       message: 'Logged in successfully', 

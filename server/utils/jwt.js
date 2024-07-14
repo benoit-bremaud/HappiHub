@@ -8,7 +8,7 @@ const generateToken = (user) => {
         },
         process.env.JWT_SECRET,
         {
-            expiresIn: process.env.JWT_EXPIRATION,
+            expiresIn: '1d',
         }
     ); 
 }

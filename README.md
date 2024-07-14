@@ -341,3 +341,11 @@ Pour répondre aux questions fréquemment posées, nous avons créé un fichier 
 ## Licence
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+## start manualy server
+
+npm start 
+
+## start manualy client
+
+npm run start
