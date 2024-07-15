@@ -1,5 +1,6 @@
 import { loginValidation, logoutValidation, signupValidation, updateProfileValidation } from '../validation/userValidation.js';
 
+import Event from '../models/eventModel.js';
 import User from '../models/userModel.js';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
@@ -120,6 +121,16 @@ export const updateUserProfile = async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
     });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// View public events
+export const getPublicEvents = async (req, res) => {
+  try {
+    const events = await Event.find({ isPrivate: false });
+    res.status(200).json(events);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

@@ -10,8 +10,9 @@ Bienvenue dans le guide général du projet HappiHub. Ce document fournit des di
 2. [Installation et Configuration](#installation-et-configuration)
 3. [Bonnes Pratiques de Développement](#bonnes-pratiques-de-développement)
 4. [Fonctionnalités Avancées](#fonctionnalités-avancées)
-5. [Conseils et Astuces](#conseils-et-astuces)
-6. [Ressources Utiles](#ressources-utiles)
+5. [Gestion des Rôles et Rangs](#gestion-des-rôles-et-rangs)
+6. [Conseils et Astuces](#conseils-et-astuces)
+7. [Ressources Utiles](#ressources-utiles)
 
 ## Prérequis
 
@@ -42,6 +43,14 @@ Pour installer et configurer HappiHub, suivez les étapes détaillées dans le [
 - Écrivez des tests unitaires et d'intégration pour chaque nouvelle fonctionnalité.
 - Utilisez Jest pour les tests unitaires et Cypress pour les tests end-to-end.
 
+### Tests Unitaires
+
+Les tests unitaires sont essentiels pour garantir la qualité et la fiabilité de votre code. Voici quelques bonnes pratiques :
+
+- **Coverage** : Assurez-vous que votre code a une couverture de tests élevée. Utilisez des outils comme Jest pour mesurer la couverture.
+- **Mocking** : Utilisez le mocking pour isoler les tests des dépendances externes.
+- **Structure** : Organisez vos tests de manière cohérente en suivant la même structure que votre code source.
+
 ## Fonctionnalités Avancées
 
 ### Utilisation des Webhooks
@@ -51,6 +60,42 @@ Les webhooks peuvent être configurés pour intégrer HappiHub avec d'autres ser
 ### Authentification avec JWT
 
 HappiHub utilise JSON Web Tokens (JWT) pour l'authentification. Assurez-vous de stocker les tokens de manière sécurisée et de les inclure dans les en-têtes des requêtes pour les routes protégées.
+
+## Gestion des Rôles et Rangs
+
+### Rôles des Utilisateurs
+
+Les rôles définissent les niveaux d'autorité et les permissions des utilisateurs sur la plateforme HappiHub. Voici les rôles disponibles :
+
+- **Visiteur** : Utilisateurs non inscrits qui peuvent consulter les événements publics.
+- **Ami** : Utilisateurs inscrits qui commencent à s'impliquer et à participer.
+- **Compagnon** : Participants réguliers et actifs dans la communauté.
+- **Organisateur** : Utilisateurs qui créent et dirigent des événements.
+- **Unificateur** : Leaders influents avec des contributions majeures.
+- **Ambassadeur** : Figures emblématiques inspirant la communauté.
+- **Gardien** : Membres de l'équipe supervisant et veillant au bon fonctionnement de la plateforme.
+
+### Rangs des Utilisateurs
+
+Les rangs permettent de différencier les niveaux d'implication des utilisateurs. Voici les rangs disponibles pour les utilisateurs :
+
+- **Niveau 1** : Nouveau membre.
+- **Niveau 2** : Membre actif.
+- **Niveau 3** : Membre régulier.
+- **Niveau 4** : Membre engagé.
+- **Niveau 5** : Membre influent.
+
+### Mise en Œuvre des Rôles et Rangs
+
+Les rôles et rangs sont définis et stockés dans la base de données. Chaque utilisateur a un champ `role` et un champ `rank` associé.
+
+### Middleware de Vérification des Rôles
+
+Des middlewares sont implémentés pour vérifier les rôles et permissions des utilisateurs avant l'accès à certaines routes. Voici quelques exemples de middlewares :
+
+- **authMiddleware** : Vérifie si l'utilisateur est authentifié.
+- **roleMiddleware** : Vérifie le rôle de l'utilisateur.
+- **rankMiddleware** : Vérifie le rang de l'utilisateur.
 
 ## Conseils et Astuces
 
