@@ -21,6 +21,20 @@ const userSchema = new mongoose.Schema({
     default: 'user',
     required: true,
   },
+  rank: {
+    type: String,
+    enum: ['visitor', 'friend', 'companion', 'organizer', 'unifier', 'ambassador', 'guardian'],
+    default: 'visitor',
+    required: function() {
+      return this.role === 'user';
+    },
+  },
+  permissions: {
+    type: [String],
+    required: function() {
+      return this.role === 'admin';
+    },
+  },
 });
 
 // Encrypt password before saving the user
