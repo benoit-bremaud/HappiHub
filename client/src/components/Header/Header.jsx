@@ -17,12 +17,14 @@ const Header = () => {
                     <li><Link to="/register">Signin</Link></li>
                     <li><Link to="/login">Login</Link></li>
                     <li><Link to="/profil">Profil</Link></li>
+                    <li><Link to="/events">Event</Link></li>
+                    <Logout/>
                 </ul>
-                <form>
+                {/* <form>
                     <label for="truc">yoyoy</label>
                     <input id="truc" type="text" placeholder="connexion"/>
                     <Logout/>
-                </form>
+                </form> */}
             </div>            
         </header>
     )
