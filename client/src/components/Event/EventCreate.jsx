@@ -1,9 +1,10 @@
 import "./event.css";
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 
 const CreateEvent = () => {
-
+    const navigate = useNavigate();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [date, setDate] = useState('');
@@ -39,6 +40,7 @@ const CreateEvent = () => {
     //   console.log(json);
     // const resdata = await response.json();
     // console.log(resdata);
+    navigate("/events");
     };
 
     return(

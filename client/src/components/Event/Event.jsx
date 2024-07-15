@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Card from "../Card/Card";
 
 
+
 const Event = () => {
 
 
@@ -32,17 +33,17 @@ const Event = () => {
     }, []);
   
     return (
-      <div className="event">
-        <h1>Event</h1>
-        <ul>
-          {events.map((event) => (
-
-            <li><Card event={event}/></li>
-
-          ))}
-        </ul>
-      </div>
-    );
+        <div className="container">
+          <h1>Event</h1>
+          <div className="event-list">
+            {events.map((event) => (
+              <div className="event-item" key={event._id}>
+                <Card event={event} />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
   };
   
 
