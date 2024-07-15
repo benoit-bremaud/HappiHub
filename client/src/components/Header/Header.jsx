@@ -16,6 +16,7 @@ const Header = () => {
                     <li><Link to="/">Home</Link></li>
                     <li><Link to="/register">Signin</Link></li>
                     <li><Link to="/login">Login</Link></li>
+                    <li><Link to="/profil">Profil</Link></li>
                 </ul>
                 <form>
                     <label for="truc">yoyoy</label>

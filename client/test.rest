@@ -19,3 +19,17 @@ Content-Type: application/json
   "email": "toto@gmail.com",
   "password": "123123"
 }
+
+
+#####
+
+Put http://localhost:5000/api/users/profile
+
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "yoyo@gmail.com",
+  "authentificateToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjkzYWJjYzc2ZWFmYWI4YTg1NTRiOWEiLCJuYW1lIjoieW95byIsImVtYWlsIjoieW95b0BnbWFpbC5jb20iLCJpYXQiOjE3MjEwMjQxNzgsImV4cCI6MTcyMTExMDU3OH0.Q87mQc99X9eN4cjyl4yL8i1t0hSmFFyMWrpCuQSuLwo"
+  
+}
