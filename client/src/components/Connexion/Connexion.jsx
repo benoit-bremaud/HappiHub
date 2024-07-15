@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import "./connexion.css";
+import { useNavigate } from "react-router-dom";
 
 const Connexion = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -23,8 +25,10 @@ const Connexion = () => {
 
     const response = await fetch("http://localhost:5000/api/users/login", options);
     const json = await response.json();
-    localStorage.setItem("token", json.token);
-    console.log(json);
+    if (response.ok) {
+      localStorage.setItem("token", json.token);
+      navigate("/");
+    }
   };
 
   return (

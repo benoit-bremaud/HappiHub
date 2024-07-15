@@ -8,12 +8,7 @@ const Home = ({ user }) => {
     <div className="home">
       <h1>Bienvenue, {user ? user.name : ""} !</h1>
       <div className="card_display">
-        <Card/>
-        <Card/>
-        <Card/>
-        <Card/>
-        <Card/>
-        <Card/>
+
       </div>
     </div>
   )

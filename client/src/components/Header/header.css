@@ -2,7 +2,7 @@
     background-color: rgb(182, 199, 236);
     display: flex;
     flex_direction: row;
-    justify-content: space-between;
+    /* justify-content: space-between; */
 }
 
 .logo{
