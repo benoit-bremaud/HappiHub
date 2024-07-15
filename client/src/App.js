@@ -7,6 +7,7 @@ import Register from './components/Register/Register';
 import Connexion from './components/Connexion/Connexion';
 import Profil from './components/Profil/Profil';
 import Event from './components/Event/Event';
+import EventCreate from './components/Event/EventCreate';
 import { useState, useEffect } from "react";
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
           <Route path="/login" element={<Connexion />} />
           <Route path="/profil" element={<Profil user={user}/>}/>
           <Route path="/events" element={<Event/> }/>
+          <Route path="/events/create" element={<EventCreate/> }/>
         </Routes>
       </Router>
     </div>
