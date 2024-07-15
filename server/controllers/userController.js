@@ -129,11 +129,13 @@ export const updateUserProfile = async (req, res) => {
   }
 };
 
-// View public events
-export const getPublicEvents = async (req, res) => {
+// Get User Role
+export const getUserRole = async (req, res) => {
   try {
-    const events = await Event.find({ isPrivate: false });
-    res.status(200).json(events);
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({ role: user.role });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

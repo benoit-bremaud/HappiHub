@@ -23,12 +23,23 @@ export const createEvent = async (req, res) => {
     }
 };
 
+
 // Get all events
-export const getEvents = async (req, res) => {
+export const getEvents = async (_req, res) => {
     try {
         const events = await Event.find();
         res.status(200).json(events);
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+// Get all public events
+export const getPublicEvents = async (_req, res) => {
+    try {
+        const events = await Event.find({ isPrivate: false });
+        res.status(200).json(events);
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
     }
 };
