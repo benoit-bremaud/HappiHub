@@ -43,3 +43,27 @@ export const getPublicEvents = async (_req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+// Get event by event id
+export const getEventById = async (req, res) => {
+    try {
+        const event = await Event.findById(req.params.event_id);
+        if (!event) {
+            return res.status(404).json({ message: 'Event not found' });
+        }
+        res.json(event);
+    } catch (err) {
+        if (err.kind === 'ObjectId') {
+            return res.status(400).json({ message: 'Invalid Event ID' });
+        }
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Get event by user id
+
+// Get event by event id and user id
+
+// Update event by id
+
+// Delete event by id

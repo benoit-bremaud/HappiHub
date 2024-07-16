@@ -1,4 +1,4 @@
-import { createEvent, getEvents, getPublicEvents } from '../controllers/eventController.js';
+import { createEvent, getEventById, getEvents, getPublicEvents } from '../controllers/eventController.js';
 
 import authenticateToken from '../middleware/auth.js';
 import express from 'express';
@@ -10,5 +10,6 @@ const router = express.Router();
 router.post('/events', authenticateToken, createEvent);
 router.get('/events', authenticateToken, getEvents);
 router.get('/events/public', authenticateToken, getPublicEvents);
+router.get('/events/:event_id', authenticateToken, getEventById);
 
 export default router;
