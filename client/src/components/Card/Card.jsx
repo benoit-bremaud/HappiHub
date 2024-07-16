@@ -11,7 +11,7 @@ const Card = ({ event }) => {
             <p>{event.description}</p>
             <p>{event.date}</p>
             <p>{event.location}</p>
-            <button>button</button>
+            {/* <button>button</button> */}
         </div>
     )
 };

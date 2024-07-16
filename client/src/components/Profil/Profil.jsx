@@ -47,13 +47,13 @@ const Profile = ({ user }) => {
   
     return (
       <div className="container">
-        <div className="profil">
           <h1>Profil</h1>
           <div className="user">
             <h2>name :{user.name}</h2>
             <p>{user.email}</p>
           </div>
-          <div>
+        <div className="profil">
+      
             <form onSubmit={handleSubmit}>
               <label htmlFor="email">Email</label>
               <input
@@ -81,7 +81,7 @@ const Profile = ({ user }) => {
               />
               <button type="submit">Submit</button>
             </form>
-          </div>
+          
         </div>
       </div>
     )
