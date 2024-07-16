@@ -1,4 +1,4 @@
-import { getPublicEvents, getUserProfile, login, logout, signup, updateUserProfile } from '../controllers/userController.js';
+import { getUserProfile, getUserRole, login, logout, signup, updateUserProfile } from '../controllers/userController.js';
 
 import authenticateToken from '../middleware/auth.js';
 import express from 'express';
@@ -15,7 +15,7 @@ router.post('/logout', logout);
 router.put('/profile', authenticateToken, updateUserProfile);
 router.get('/profile', authenticateToken, getUserProfile);
 
-// Route to view public events
-router.get('/events', getPublicEvents);
+// Role based routes
+router.get('/role', authenticateToken, getUserRole);
 
 export default router;
