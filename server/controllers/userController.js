@@ -1,8 +1,6 @@
 import { loginValidation, logoutValidation, signupValidation, updateProfileValidation } from '../validation/userValidation.js';
 
-import Event from '../models/eventModel.js';
 import User from '../models/userModel.js';
-import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import generateToken from '../utils/jwt.js';
 

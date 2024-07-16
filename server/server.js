@@ -1,9 +1,10 @@
+import commentRoutes from './routes/commentRoutes.js';
 import connectDB from './config/mongo.js';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import eventRoutes from './routes/eventRoutes.js';
 import express from 'express';
 import userRoutes from './routes/userRoutes.js';
-import cors from 'cors';
 
 // Load environment variables
 dotenv.config();
@@ -33,6 +34,7 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 // Define the routes
 app.use('/api/users', userRoutes);
 app.use('/api', eventRoutes);
+app.use('/api/comments', commentRoutes);
 
 // Define a test route
 app.get('/test', (req, res) => {
