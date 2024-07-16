@@ -6,6 +6,7 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('user');
+  const [rank, setRank] = useState('friend');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,7 +15,8 @@ const Register = () => {
       name,
       email,
       password,
-      role
+      role,
+      // rank
     };
 
     const response = await fetch('http://localhost:5000/api/users/signup', {
