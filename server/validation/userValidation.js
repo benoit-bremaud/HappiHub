@@ -1,6 +1,11 @@
 import Joi from 'joi';
+import { mongo } from 'mongoose';
 
-// Signup validation
+/**
+ * Validates the signup data.
+ * @param {object} data - The signup data to be validated.
+ * @returns {object} - The result of the validation.
+ */
 const signupValidation = (data) => {
   const schema = Joi.object({
     name: Joi.string().min(3).required(),
@@ -15,7 +20,11 @@ const signupValidation = (data) => {
 
 export { signupValidation };
 
-// Login validation
+/**
+ * Validates the login data.
+ * @param {object} data - The login data to be validated.
+ * @returns {object} - The result of the validation.
+ */
 const loginValidation = (data) => {
   const schema = Joi.object({
     email: Joi.string().min(6).required().email(),
@@ -27,7 +36,11 @@ const loginValidation = (data) => {
 
 export { loginValidation };
 
-// Logout with token validation
+/**
+ * Validates the logout data with token.
+ * @param {object} data - The logout data to be validated.
+ * @returns {object} - The result of the validation.
+ */
 const logoutValidation = (data) => {
   const schema = Joi.object({
     token: Joi.string().required(),
@@ -38,7 +51,11 @@ const logoutValidation = (data) => {
 
 export { logoutValidation };
 
-// Profile update validation
+/**
+ * Validates the profile update data.
+ * @param {object} data - The profile update data to be validated.
+ * @returns {object} - The result of the validation.
+ */
 const updateProfileValidation = (data) => {
   const schema = Joi.object({
     name: Joi.string().min(3).required(),
@@ -52,3 +69,14 @@ const updateProfileValidation = (data) => {
 };
 
 export { updateProfileValidation };
+
+/**
+ * Checks if a user_id is valid.
+ * @param {string} user_id - The user_id to be checked.
+ * @returns {boolean} - True if the user_id is valid, false otherwise.
+ */
+const isValidUserId = (user_id) => {
+  return mongo.ObjectId.isValid(user_id);
+}
+
+export { isValidUserId };

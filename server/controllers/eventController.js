@@ -16,9 +16,10 @@ export const createEvent = async (req, res) => {
 
     try {
         const savedEvent = await newEvent.save();
+        // Send the event data in the response
         res.status(201).json(savedEvent);
+        // res.status(201).json({ message: 'Event created successfully', event_id: savedEvent._id });
     } catch (error) {
-        console.log(error);
         res.status(500).json({ message: error.message });
     }
 };
