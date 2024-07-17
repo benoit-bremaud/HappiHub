@@ -45,46 +45,49 @@ const CreateEvent = () => {
 
     return(
 
-        <div className="event">
+        <div className="container">
             <h1>Event</h1>
-            <form onSubmit={handleSubmit}>
-            <label htmlFor="title">title</label>
-            <input
-                type="text"
-                id="title"
-                placeholder='title'
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-            />
+            <div className="event">
 
-            <label htmlFor="description">description</label>
-            <input
-                type="text"
-                id="description"
-                placeholder='description'
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-            />
+                <form onSubmit={handleSubmit}>
+                <label htmlFor="title">title</label>
+                <input
+                    type="text"
+                    id="title"
+                    placeholder='title'
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                />
 
-            <label htmlFor="date">date</label>
-            <input
-                type="date"
-                id="date"
-                placeholder='date'
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-            />
-            <label htmlFor="location">location</label>
-            <input
-                type="text"
-                id="location"
-                placeholder='location'
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-            />
+                <label htmlFor="description">description</label>
+                <input
+                    type="text"
+                    id="description"
+                    placeholder='description'
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                />
 
-            <button type="submit">Register</button>
-        </form>
+                <label htmlFor="date">date</label>
+                <input
+                    type="date"
+                    id="date"
+                    placeholder='date'
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                />
+                <label htmlFor="location">location</label>
+                <input
+                    type="text"
+                    id="location"
+                    placeholder='location'
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                />
+
+                <button type="submit">Validate</button>
+                </form>
+            </div>
         </div>
     )
 };
