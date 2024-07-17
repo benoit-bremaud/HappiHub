@@ -1,4 +1,4 @@
-import { getUserProfile, getUserRole, login, logout, signup, updateUserProfile } from '../controllers/userController.js';
+import { getUserById, getUserProfile, getUserRole, login, logout, signup, updateUserProfile } from '../controllers/userController.js';
 
 import authenticateToken from '../middleware/auth.js';
 import express from 'express';
@@ -6,10 +6,13 @@ import express from 'express';
 // Create an express router
 const router = express.Router();
 
-// Define the routes
+// Auth routes
 router.post('/signup', signup);
 router.post('/login', login);
 router.post('/logout', logout);
+
+// User routes
+router.get('/:id', authenticateToken, getUserById);
 
 // Profile route
 router.put('/profile', authenticateToken, updateUserProfile);
