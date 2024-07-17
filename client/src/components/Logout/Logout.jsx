@@ -1,21 +1,19 @@
-import React from 'react';
-import "./logout.css";
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Logout = () => {
+const Logout = ({ handleLogout }) => {
+  const navigate = useNavigate();
 
-
-  const handleLogout = () => {
-    // Remove the token from local storage
-    localStorage.removeItem('token');
-
-    // Redirect to the login page
-
-  };
+  useEffect(() => {
+    handleLogout();
+    navigate("/");
+    window.location.reload();
+  }, []);
 
   return (
-    <button onClick={handleLogout}>
-      Logout
-    </button>
+    <div>
+      <p>Logging out...</p>
+    </div>
   );
 };
 

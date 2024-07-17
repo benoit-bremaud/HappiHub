@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 
 
-const Header = () => {
+const Header = ({isLoggedIn}) => {
     return (
         <header className="header">
             <div className="logo">
@@ -14,11 +14,24 @@ const Header = () => {
             <div className="nav">
                 <ul>
                     <li><Link to="/">Home</Link></li>
+                    { isLoggedIn &&(
+                        <>
+                        <li><Link to="/events/create">Create Event</Link></li>
+                        <li><Link to="/profil">Profil</Link></li>
+                        <li><Link to="/events">Event</Link></li>
+                        <li><Link to="/logout">Logout</Link></li>
+                        </>
+                    )}
+                    {!isLoggedIn && (
+                        <>
                     <li><Link to="/register">Signin</Link></li>
                     <li><Link to="/login">Login</Link></li>
-                    <li><Link to="/profil">Profil</Link></li>
-                    <li><Link to="/events">Event</Link></li>
-                    <Logout/>
+                        </>
+                    )}
+
+
+
+
                 </ul>
                 {/* <form>
                     <label for="truc">yoyoy</label>

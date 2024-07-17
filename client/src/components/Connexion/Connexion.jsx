@@ -28,6 +28,7 @@ const Connexion = () => {
     if (response.ok) {
       localStorage.setItem("token", json.token);
       navigate("/");
+      window.location.reload();
     }
   };
 
