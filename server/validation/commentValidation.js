@@ -20,3 +20,11 @@ const commentValidation = (data) => {
     }
 
 export { commentValidation };
+
+// comment_id validation
+/**
+ * Checks if the provided comment ID is valid.
+ * @param {string} comment_id - The comment ID to be checked.
+ * @returns {boolean} - True if the comment ID is valid, false otherwise.
+ */
+// to be implemented

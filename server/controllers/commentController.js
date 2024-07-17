@@ -1,5 +1,7 @@
 import Comment from "../models/commentModel.js";
 import { commentValidation } from "../validation/commentValidation.js";
+import { isValidEventId } from "../validation/eventValidation.js";
+import { isValidUserId } from "../validation/userValidation.js";
 
 /**
  * Create a new comment.
