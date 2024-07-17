@@ -18,6 +18,7 @@ Cette documentation fournit des informations détaillées sur l'API de HappiHub,
 - [Événements](#événements)
   - [Créer un événement](#créer-un-événement)
   - [Récupérer les événements](#récupérer-les-événements)
+  - [Récupérer les événements publics](#récupérer-les-événements-publics)
 - [Commentaires](#commentaires)
   - [Ajouter un commentaire](#ajouter-un-commentaire)
   - [Modifier un commentaire](#modifier-un-commentaire)
@@ -256,20 +257,59 @@ GET /api/events
 ]
 ```
 
+### Récupérer les événements publics
+
+- **Endpoint:** `/api/events/public`
+- **Méthode HTTP:** `GET`
+- **Description:** Récupère la liste des événements publics.
+- **Paramètres:** Aucuns
+- **Exemple de Requête:**
+
+```http
+GET /api/events/public
+```
+
+- **Exemple de Réponse:**
+
+```json
+[
+  {
+    "id": "60b8d2956b2e2c001b8f4a8
+
+b",
+    "title": "Concert de Rock",
+    "description": "Un concert de rock en plein air.",
+    "date": "2024-08-15T18:00:00Z",
+    "location": "Parc Central"
+  },
+  {
+    "id": "60b8d2956b2e2c001b8f4a8c",
+    "title": "Atelier de Peinture",
+    "description": "Un atelier de peinture pour les débutants.",
+    "date": "2024-08-20T10:00:00Z",
+    "location": "Centre Culturel"
+  }
+]
+```
+
 ## Commentaires
 
 ### Ajouter un commentaire
 
-- **Endpoint:** `/api/events/:eventId/comments`
+- **Endpoint:** `/api/comments/add`
 - **Méthode HTTP:** `POST`
-- **Description:** Permet à un utilisateur d'ajouter un commentaire à un événement spécifique.
+- **Description:** Permet à un utilisateur authentifié d'ajouter un commentaire à un événement spécifique.
 - **Paramètres:**
-  - `content` (string) - Contenu du commentaire
+  - `text` (string) - Contenu du commentaire
+  - `event_id` (string) - ID de l'événement
+  - `user_id` (string) - ID de l'utilisateur
 - **Exemple de Requête:**
 
 ```json
 {
-  "content": "Super événement, j'ai adoré !"
+  "text": "Super événement, j'ai adoré !",
+  "event_id": "60b8d2956b2e2c001b8f4a8b",
+  "user_id": "60b8d2956b2e2c001b8f4a8a"
 }
 ```
 
@@ -279,28 +319,27 @@ GET /api/events
 {
   "message": "Commentaire ajouté avec succès",
   "comment": {
-
-
     "id": "60b8d2956b2e2c001b8f4a8d",
-    "eventId": "60b8d2956b2e2c001b8f4a8b",
-    "userId": "60b8d2956b2e2c001b8f4a8a",
-    "content": "Super événement, j'ai adoré !"
+    "event_id": "60b8d2956b2e2c001b8f4a8b",
+    "user_id": "60b8d2956b2e2c001b8f4a8a",
+    "text": "Super événement, j'ai adoré !",
+    "date": "2024-07-16T18:00:00Z"
   }
 }
 ```
 
 ### Modifier un commentaire
 
-- **Endpoint:** `/api/events/:eventId/comments/:commentId`
+- **Endpoint:** `/api/comments/:commentId`
 - **Méthode HTTP:** `PUT`
 - **Description:** Permet à un utilisateur de modifier un commentaire existant sur un événement spécifique.
 - **Paramètres:**
-  - `content` (string) - Nouveau contenu du commentaire
+  - `text` (string) - Nouveau contenu du commentaire
 - **Exemple de Requête:**
 
 ```json
 {
-  "content": "Événement fantastique, vraiment bien organisé !"
+  "text": "Événement fantastique, vraiment bien organisé !"
 }
 ```
 
@@ -311,23 +350,24 @@ GET /api/events
   "message": "Commentaire modifié avec succès",
   "comment": {
     "id": "60b8d2956b2e2c001b8f4a8d",
-    "eventId": "60b8d2956b2e2c001b8f4a8b",
-    "userId": "60b8d2956b2e2c001b8f4a8a",
-    "content": "Événement fantastique, vraiment bien organisé !"
+    "event_id": "60b8d2956b2e2c001b8f4a8b",
+    "user_id": "60b8d2956b2e2c001b8f4a8a",
+    "text": "Événement fantastique, vraiment bien organisé !",
+    "date": "2024-07-16T18:00:00Z"
   }
 }
 ```
 
 ### Supprimer un commentaire
 
-- **Endpoint:** `/api/events/:eventId/comments/:commentId`
+- **Endpoint:** `/api/comments/:commentId`
 - **Méthode HTTP:** `DELETE`
 - **Description:** Permet à un utilisateur de supprimer un commentaire existant sur un événement spécifique.
 - **Paramètres:** Aucuns
 - **Exemple de Requête:**
 
 ```http
-DELETE /api/events/60b8d2956b2e2c001b8f4a8b/comments/60b8d2956b2e2c001b8f4a8d
+DELETE /api/comments/60b8d2956b2e2c001b8f4a8d
 ```
 
 - **Exemple de Réponse:**
@@ -356,15 +396,17 @@ GET /api/events/60b8d2956b2e2c001b8f4a8b/comments
 [
   {
     "id": "60b8d2956b2e2c001b8f4a8d",
-    "eventId": "60b8d2956b2e2c001b8f4a8b",
-    "userId": "60b8d2956b2e2c001b8f4a8a",
-    "content": "Super événement, j'ai adoré !"
+    "event_id": "60b8d2956b2e2c001b8f4a8b",
+    "user_id": "60b8d2956b2e2c001b8f4a8a",
+    "text": "Super événement, j'ai adoré !",
+    "date": "2024-07-16T18:00:00Z"
   },
   {
     "id": "60b8d2956b2e2c001b8f4a8e",
-    "eventId": "60b8d2956b2e2c001b8f4a8b",
-    "userId": "60b8d2956b2e2c001b8f4a8a",
-    "content": "Vraiment une belle expérience, merci aux organisateurs !"
+    "event_id": "60b8d2956b2e2c001b8f4a8b",
+    "user_id": "60b8d2956b2e2c001b8f4a8a",
+    "text": "Vraiment une belle expérience, merci aux organisateurs !",
+    "date": "2024-07-16T18:00:00Z"
   }
 ]
 ```
