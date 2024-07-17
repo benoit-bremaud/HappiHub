@@ -3,6 +3,7 @@ import "./profil.css";
 import PropTypes from "prop-types";
 import Home from "../Home/Home";
 import { jwtDecode } from "jwt-decode";
+import { useNavigate } from 'react-router-dom';
 
 
 const Profile = ({ user }) => {
@@ -10,13 +11,38 @@ const Profile = ({ user }) => {
     const [name, setName] = useState(user?.name || "");
     const [password, setPassword] = useState("");
     const token = localStorage.getItem("token");
+
+    const navigate = useNavigate();
   
     useEffect(() => {
-      if (token) {
-        const decodedToken = jwtDecode(token);
-        setPassword(decodedToken.user?.password || "");
-      }
+      const getUser = async () => {
+        if (token) {
+          const decodedToken = jwtDecode(token);
+          console.log(decodedToken);
+          const response = await fetch("http://localhost:5000/api/users/profile", {
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            console.log(data._id);
+            if(data._id !== decodedToken._id){
+              navigate("/");
+            }else{
+              setEmail(data.email);
+              setName(data.name);
+            }
+          }
+        } else {
+          navigate("/");
+        }
+      };
+  
+      getUser();
     }, [token]);
+
   
     const handleSubmit = async (e) => {
       e.preventDefault();
@@ -49,8 +75,8 @@ const Profile = ({ user }) => {
       <div className="container">
           <h1>Profil</h1>
           <div className="user">
-            <h2>name :{user.name}</h2>
-            <p>{user.email}</p>
+            <h2>name :{name}</h2>
+            <p>{email}</p>
           </div>
         <div className="profil">
       
