@@ -51,7 +51,7 @@ export const login = async (req, res) => {
     if (!user) return res.status(400).json({ message: 'Email is not found ' });
     
     // Compare the passwords
-    const validPassword = await comparePassword(req.body.password, user.password);
+    const validPassword = await comparePassword(hashPassword(req.body.password), user.password);
     if (!validPassword) return res.status(400).json({ message: 'Invalid password' });    
 
     // Create and assign a token
