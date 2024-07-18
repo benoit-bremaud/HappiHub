@@ -41,34 +41,15 @@ export { loginValidation };
  * @param {object} data - The logout data to be validated.
  * @returns {object} - The result of the validation.
  */
-const logoutValidation = (data) => {
-  const schema = Joi.object({
-    token: Joi.string().required(),
-  });
+// const logoutValidation = (data) => {
+//   const schema = Joi.object({
+//     token: Joi.string().required(),
+//   });
 
-  return schema.validate(data);
-};
+//   return schema.validate(data);
+// };
 
-export { logoutValidation };
-
-/**
- * Validates the profile update data.
- * @param {object} data - The profile update data to be validated.
- * @returns {object} - The result of the validation.
- */
-const updateProfileValidation = (data) => {
-  const schema = Joi.object({
-    name: Joi.string().min(3).required(),
-    email: Joi.string().min(6).required().email(),
-    password: Joi.string().min(6).required(),
-    role: Joi.string().valid('user', 'admin').optional(),
-    rank: Joi.string().valid('Visitor', 'Friend', 'Companion', 'Organizer', 'Unifier', 'Ambassador', 'Guardian').optional(),
-  });
-
-  return schema.validate(data);
-};
-
-export { updateProfileValidation };
+// export { updateProfileValidation };
 
 /**
  * Checks if a user_id is valid.

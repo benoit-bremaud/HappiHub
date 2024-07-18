@@ -32,11 +32,7 @@ const Header = ({isLoggedIn}) => {
 
 
                 </ul>
-                {/* <form>
-                    <label for="truc">yoyoy</label>
-                    <input id="truc" type="text" placeholder="connexion"/>
-                    <Logout/>
-                </form> */}
+
             </div>            
         </header>
     )

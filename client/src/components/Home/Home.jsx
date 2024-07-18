@@ -1,21 +1,17 @@
 import React from "react";
 import "./home.css";
-import Card from "../Card/Card";
-import PropTypes from "prop-types";
 
-const Home = ({ user }) => {
+
+
+const Home = () => {
   return (
     <div className="home">
-      <h1>Bienvenue, {user ? user.name : ""} !</h1>
-      <div className="card_display">
+      <h1>Bienvenue!</h1>
 
-      </div>
     </div>
   )
 };
 
-Home.propTypes = {
-  user: PropTypes.object,
-};
+
 
 export default Home;

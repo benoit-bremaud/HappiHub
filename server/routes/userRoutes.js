@@ -1,4 +1,4 @@
-import { getUserById, getUserProfile, getUserRole, login, logout, signup, updateUserProfile } from '../controllers/userController.js';
+import { getUserById, getUserProfile, getUserRole, login, signup, updateUserProfile } from '../controllers/userController.js';
 
 import authenticateToken from '../middleware/auth.js';
 import express from 'express';
