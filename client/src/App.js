@@ -9,6 +9,7 @@ import Profil from './components/Profil/Profil';
 import Event from './components/Event/Event';
 import Logout from './components/Logout/Logout';
 import EventCreate from './components/Event/EventCreate';
+import EventInfo from './components/Event/EventInfo';
 import { useState, useEffect } from "react";
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
           <Route path="/profil" element={<Profil user={user}/>}/>
           <Route path="/events" element={<Event/> }/>
           <Route path="/events/create" element={<EventCreate/> }/>
+          <Route path="/events/:id" element={<EventInfo/>}/>
         </Routes>
       </Router>
     </div>
