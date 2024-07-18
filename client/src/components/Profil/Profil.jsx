@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import Home from "../Home/Home";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from 'react-router-dom';
+import EventCreate from "../Event/EventCreate";
 
 
 const Profile = ({ user }) => {
@@ -18,7 +19,7 @@ const Profile = ({ user }) => {
       const getUser = async () => {
         if (token) {
           const decodedToken = jwtDecode(token);
-          console.log(decodedToken);
+          // console.log(decodedToken);
           const response = await fetch("http://localhost:5000/api/users/profile", {
             headers: {
               "Content-Type": "application/json",
@@ -27,7 +28,7 @@ const Profile = ({ user }) => {
           });
           if (response.ok) {
             const data = await response.json();
-            console.log(data._id);
+            // console.log(data._id);
             if(data._id !== decodedToken._id){
               navigate("/");
             }else{
@@ -109,6 +110,7 @@ const Profile = ({ user }) => {
             </form>
           
         </div>
+        {/* <EventCreate/> */}
       </div>
     )
   }
