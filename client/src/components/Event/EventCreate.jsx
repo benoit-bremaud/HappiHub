@@ -11,6 +11,7 @@ const CreateEvent = ({isLoggedIn}) => {
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
   const [dataa, setDataa] = useState(null);
+  const [image, setImage] = useState(null);
 
   const token = localStorage.getItem("token");
 
@@ -43,6 +44,17 @@ const CreateEvent = ({isLoggedIn}) => {
     getUser();
   }, [token]);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    console.log(file);
+    reader.onloadend = () => {
+      setImage(reader.result);
+    };
+    console.log(image);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -51,7 +63,8 @@ const CreateEvent = ({isLoggedIn}) => {
       description,
       date,
       location,
-      creator: dataa
+      creator: dataa,
+      image
     };
 
     const options = {
@@ -114,6 +127,8 @@ const CreateEvent = ({isLoggedIn}) => {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
+
+          <input type="file" accept="image/*" onChange={handleImageChange} />
 
           <button type="submit">Validate</button>
         </form>
