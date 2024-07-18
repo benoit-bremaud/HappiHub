@@ -1,8 +1,9 @@
+import { comparePassword, hashPassword } from '../utils/hashPassword.js';
 import { isValidUserId, loginValidation, logoutValidation, signupValidation, updateProfileValidation } from '../validation/userValidation.js';
 
 import User from '../models/userModel.js';
 import dotenv from 'dotenv';
-import generateToken from '../utils/jwt.js';
+import { generateToken } from '../utils/jwt.js';
 
 // Load environment variables
 dotenv.config();
@@ -16,20 +17,23 @@ export const signup = async (req, res) => {
   const emailExist = await User.findOne({ email: req.body.email });
   if (emailExist) return res.status(400).json({ message: 'Email already exists' });
 
+  // Hash the password
+  const hashedPassword = await hashPassword(req.body.password);
+
   // Create a new user
   const user = new User({
     name: req.body.name,
     email: req.body.email,
-    password: req.body.password,
+    password: hashedPassword,
     role: req.body.role,
   });
 
   try {
     // Save the user to the database
-    const savedUser = await user.save();
+    await user.save();
 
     // Send the user data in the response
-    res.status(201).json({ message: 'User registered successfully', user: savedUser });
+    res.status(201).json({ message: 'User registered successfully'});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -45,27 +49,18 @@ export const login = async (req, res) => {
     // Check if the user exists
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(400).json({ message: 'Email is not found ' });
-
-// Check if the password is correct
-if (req.body.password !== user.password) {
-  return res.status(400).json({ message: 'Invalid password' });
-}
     
+    // Compare the passwords
+    const validPassword = await comparePassword(req.body.password, user.password);
+    if (!validPassword) return res.status(400).json({ message: 'Invalid password' });    
+
     // Create and assign a token
     const token = generateToken(user);
  
     // Send the user data in the response
     res.status(200).json({ 
       message: 'Logged in successfully', 
-      token: token, 
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        password: user.password,
-        role: user.role,
-        rank: user.rank,
-      },
+      token: token,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
