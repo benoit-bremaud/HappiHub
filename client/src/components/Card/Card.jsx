@@ -11,6 +11,8 @@ const Card = ({ event }) => {
             <p>{event.description}</p>
             <p>{event.date}</p>
             <p>{event.location}</p>
+            <p>{event._id}</p>
+            <p>{event.creator}</p>
             {/* <button>button</button> */}
         </div>
     )
