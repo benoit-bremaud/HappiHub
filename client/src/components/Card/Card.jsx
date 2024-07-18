@@ -1,6 +1,7 @@
 import React from "react";
 import "./card.css";
 import PropTypes from "prop-types";
+import { Link } from "react-router-dom";
 
 const Card = ({ event }) => {
   return (
@@ -12,7 +13,8 @@ const Card = ({ event }) => {
       <p>location : {event.location}</p>
       <p>eventId : {event._id}</p>
       <p>userId : {event.creator}</p>
-      {/* <button>button</button> */}
+      <p><Link to={`/events/${event._id}`}>info</Link></p>
+
     </div>
   );
 };
