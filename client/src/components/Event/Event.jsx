@@ -1,13 +1,22 @@
 import "./event.css";
 import React, { useState, useEffect } from "react";
 import Card from "../Card/Card";
+import { useNavigate } from 'react-router-dom';
 
 
+const Event = ({isLoggedIn}) => {
+  const navigate = useNavigate();
 
-const Event = () => {
-
+  // useEffect(() => {
+  //   if (!isLoggedIn) {
+  //     navigate("/");
+  //   }
+  // }, [isLoggedIn]);
 
     const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/");
+    }
   
     const options = {
       method: "GET",
@@ -25,7 +34,10 @@ const Event = () => {
         const json = await response.json();
         if (response.ok) {
           setEvents(json);
+        }else if(!token){
+          navigate("/");
         }
+
       };
   
       fetchEvents();

@@ -1,6 +1,5 @@
 import React from "react";
 import "./header.css";
-import Logout from "../Logout/Logout";
 import { Link } from "react-router-dom";
 
 

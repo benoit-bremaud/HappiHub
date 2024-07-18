@@ -12,6 +12,9 @@ export const createEvent = async (req, res) => {
         description: req.body.description,
         date: req.body.date,
         location: req.body.location,
+        isPrivate: req.body.isPrivate,
+        image: req.body.image,
+        creator: req.body.creator, // req.user._id
     });
 
     try {
