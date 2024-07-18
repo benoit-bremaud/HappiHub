@@ -67,16 +67,6 @@ export const login = async (req, res) => {
   }
 }; 
 
-export const logout = async (req, res) => {
-  // Validate the user token
-  const { error } = logoutValidation(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
-
-  
-  // Send the user data in the response
-  res.status(200).json({ message: 'Logged out successfully' });
-};
-
 // Get user by ID
 export const getUserById = async (req, res) => {
   // Validate the user ID

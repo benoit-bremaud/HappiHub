@@ -9,7 +9,6 @@ const router = express.Router();
 // Auth routes
 router.post('/signup', signup);
 router.post('/login', login);
-router.post('/logout', logout);
 
 // User routes
 router.get('/:id', authenticateToken, getUserById);
