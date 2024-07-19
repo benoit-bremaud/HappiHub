@@ -1,6 +1,7 @@
 import React from "react";
 import "./card.css";
 import PropTypes from "prop-types";
+import { Link } from "react-router-dom";
 
 const Card = ({ event,onClick }) => {
   return (
@@ -22,4 +23,3 @@ Card.propTypes = {
 };
 
 export default Card;
-

@@ -1,16 +1,29 @@
 import jwt from 'jsonwebtoken';
 
-const generateToken = (user) => {
+// Generate a token with userId and userRole
+export const generateToken = (user) => {
     return jwt.sign(
-        {   _id: user._id,
-            name: user.name,
-            email: user.email
+        {
+            _id: user._id,
+            role: user.role
         },
         process.env.JWT_SECRET,
-        {
-            expiresIn: '1d',
+        { 
+            expiresIn: '1h' 
         }
-    ); 
-}
+    );
+};
 
-export default generateToken;
+// Extract userId from the token
+export const getUserId = (req) => {
+    const token = req.header('Authorization').replace('Bearer ', '');
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    return verified._id;
+};
+
+// Extract userRole from the token
+export const getUserRole = (req) => {
+    const token = req.header('Authorization').replace('Bearer ', '');
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    return verified.role;
+};

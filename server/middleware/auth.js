@@ -7,7 +7,12 @@ const authenticateToken = (req, res, next) => {
   if (!token) return res.status(401).json({ message: 'Access denied' });
 
   try {
+    // Verify the token
     const verified = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Extract the user id from the token
+            
+
     req.user = verified;
     next();
   } catch (err) {
@@ -16,3 +21,6 @@ const authenticateToken = (req, res, next) => {
 };
 
 export default authenticateToken;
+
+// Extract userId from the token
+

@@ -12,6 +12,8 @@ const eventValidation = (data) => {
     description: joi.string().min(6).required(),
     date: joi.date().required(),
     location: joi.string().min(3).required(),
+    image: joi.string().allow(null, '').optional(),
+    creator: joi.string().required(),
   });
 
   return schema.validate(data);
