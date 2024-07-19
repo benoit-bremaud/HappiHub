@@ -12,6 +12,7 @@ const CreateEvent = ({isLoggedIn}) => {
   const [location, setLocation] = useState('');
   const [dataa, setDataa] = useState(null);
   const [image, setImage] = useState(null);
+  const decodedToken = jwtDecode(localStorage.getItem("token"));
 
   const token = localStorage.getItem("token");
 
@@ -19,8 +20,9 @@ const CreateEvent = ({isLoggedIn}) => {
     const getUser = async () => {
       if (token) {
         const decodedToken = jwtDecode(token);
+        console.log(decodedToken._id);
         // console.log(decodedToken);
-        const response = await fetch("http://localhost:5000/api/users/profile", {
+        const response = await fetch(`http://localhost:5000/api/users/${decodedToken._id}`, {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
@@ -28,12 +30,12 @@ const CreateEvent = ({isLoggedIn}) => {
         });
         if (response.ok) {
           const dataa = await response.json();
-          // console.log(dataa._id);
+          console.log(dataa._id);
             setDataa(dataa._id);
           if(dataa._id !== decodedToken._id){
 
           }else{
-            // console.log(dataa);
+            console.log(dataa);
           }
         }
       } else {
@@ -63,7 +65,7 @@ const CreateEvent = ({isLoggedIn}) => {
       description,
       date,
       location,
-      creator: dataa,
+      creator: decodedToken._id,
       image
     };
 

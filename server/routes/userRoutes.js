@@ -9,7 +9,7 @@ const router = express.Router();
 // Auth routes
 router.post('/signup', signup);
 router.post('/login', login);
-
+    
 
 // User routes
 router.get('/:id', authenticateToken, getUserById);
