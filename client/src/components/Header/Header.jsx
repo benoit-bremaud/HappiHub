@@ -1,9 +1,6 @@
 import React from "react";
 import "./header.css";
-import Logout from "../Logout/Logout";
 import { Link } from "react-router-dom";
-
-
 
 const Header = ({isLoggedIn}) => {
     return (
@@ -28,16 +25,7 @@ const Header = ({isLoggedIn}) => {
                     <li><Link to="/login">Login</Link></li>
                         </>
                     )}
-
-
-
-
                 </ul>
-                {/* <form>
-                    <label for="truc">yoyoy</label>
-                    <input id="truc" type="text" placeholder="connexion"/>
-                    <Logout/>
-                </form> */}
             </div>            
         </header>
     )
