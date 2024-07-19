@@ -41,15 +41,15 @@ export { loginValidation };
  * @param {object} data - The logout data to be validated.
  * @returns {object} - The result of the validation.
  */
-const logoutValidation = (data) => {
-  const schema = Joi.object({
-    token: Joi.string().required(),
-  });
+// const logoutValidation = (data) => {
+//   const schema = Joi.object({
+//     token: Joi.string().required(),
+//   });
 
-  return schema.validate(data);
-};
+//   return schema.validate(data);
+// };
 
-export { updateProfileValidation };
+// export { updateProfileValidation };
 
 /**
  * Checks if a user_id is valid.

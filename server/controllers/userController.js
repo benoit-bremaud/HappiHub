@@ -1,5 +1,7 @@
-import { comparePassword, hashPassword } from '../utils/hashPassword.js';
-import { isValidUserId, loginValidation, logoutValidation, signupValidation, updateProfileValidation } from '../validation/userValidation.js';
+
+import { isValidUserId, loginValidation, signupValidation } from '../validation/userValidation.js';
+
+
 
 import User from '../models/userModel.js';
 import dotenv from 'dotenv';
@@ -17,8 +19,7 @@ export const signup = async (req, res) => {
   const emailExist = await User.findOne({ email: req.body.email });
   if (emailExist) return res.status(400).json({ message: 'Email already exists' });
 
-  // Hash the password
-  const hashedPassword = await hashPassword(req.body.password);
+
 
   // Create a new user
   const user = new User({
@@ -44,15 +45,22 @@ export const login = async (req, res) => {
   try {
   // Validate the user input
     const { error } = loginValidation(req.body);
-    if (error) return res.status(400).json({ message: error.details[0].message });
+    if (error) return res.status(400).json({ message: error.details[0].message});
 
     // Check if the user exists
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(400).json({ message: 'Email is not found ' });
     
     // Compare the passwords
-    const validPassword = await comparePassword(hashPassword(req.body.password), user.password);
-    if (!validPassword) return res.status(400).json({ message: 'Invalid password' });    
+    const validPassword = await user.matchPassword(req.body.password);
+
+
+    if (!validPassword) {
+      // Return the error message with the two hashed passwords
+      return res.status(400).json({
+        message: 'Invalid password',
+      });
+    }
 
     // Create and assign a token
     const token = generateToken(user);
@@ -106,8 +114,7 @@ export const getUserProfile = async (req, res) => {
 // Update user profile
 export const updateUserProfile = async (req, res) => {
   // Validate the new profile data
-  const { error } = updateProfileValidation(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
+
 
   try {
     const user = await User.findById(req.user._id);
