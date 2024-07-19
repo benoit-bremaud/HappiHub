@@ -30,3 +30,17 @@ export const getCommentById = async (req, res) => {
         res.status(500).json({ message: err.message});
     }
 };
+
+// Get all comments by user id
+export const getCommentsByUserId = async (req, res) => {
+    try {
+        const comments = await Comment.find({ author: req.params.id });
+        if (comments === null) {
+            return res.status(404).json({ message: 'Comments not found'});
+        }
+        res.json(comments);
+    }
+    catch (err) {
+        res.status(500).json({ message: err.message});
+    }
+};
