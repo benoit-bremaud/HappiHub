@@ -1,4 +1,4 @@
-import { createComment, getCommentById } from "../controllers/commentController.js";
+import { createComment, getCommentById, getCommentsByUserId } from "../controllers/commentController.js";
 
 import authenticateToken from "../middleware/auth.js";
 import express from "express";
@@ -14,6 +14,9 @@ router.post("/", authenticateToken, createComment);
 
 // Get comment by id
 router.get("/:id", authenticateToken, getCommentById);
+
+// Get all comments by user id
+router.get("/user/:id", authenticateToken, getCommentsByUserId);
 
 export default router;
 
