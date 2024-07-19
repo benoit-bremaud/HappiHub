@@ -340,7 +340,7 @@ Nous avons ajouté une documentation complète pour la gestion des tokens JWT da
 - Procédures pour rafraîchir des tokens JWT avec des exemples de code
 - Bonnes pratiques de sécurité pour la gestion des tokens JWT
 
-Pour consulter la documentation complète, veuillez suivre ce [lien](docs/JWT_DOCUMENTATION.md).
+Pour consulter la documentation complète, veuillez suivre ce [JWT_DOCUMENTATION](docs/jwt/JWT_DOCUMENTATION.md).
 
 ## Guide Général
 
