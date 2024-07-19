@@ -1,8 +1,11 @@
-import { isValidUserId, loginValidation, logoutValidation, signupValidation, updateProfileValidation } from '../validation/userValidation.js';
+
+import { isValidUserId, loginValidation, signupValidation } from '../validation/userValidation.js';
+
+
 
 import User from '../models/userModel.js';
 import dotenv from 'dotenv';
-import generateToken from '../utils/jwt.js';
+import { generateToken } from '../utils/jwt.js';
 
 // Load environment variables
 dotenv.config();
@@ -16,6 +19,8 @@ export const signup = async (req, res) => {
   const emailExist = await User.findOne({ email: req.body.email });
   if (emailExist) return res.status(400).json({ message: 'Email already exists' });
 
+
+
   // Create a new user
   const user = new User({
     name: req.body.name,
@@ -26,10 +31,10 @@ export const signup = async (req, res) => {
 
   try {
     // Save the user to the database
-    const savedUser = await user.save();
+    await user.save();
 
     // Send the user data in the response
-    res.status(201).json({ message: 'User registered successfully', user: savedUser });
+    res.status(201).json({ message: 'User registered successfully'});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -40,47 +45,35 @@ export const login = async (req, res) => {
   try {
   // Validate the user input
     const { error } = loginValidation(req.body);
-    if (error) return res.status(400).json({ message: error.details[0].message });
+    if (error) return res.status(400).json({ message: error.details[0].message});
 
     // Check if the user exists
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(400).json({ message: 'Email is not found ' });
-
-// Check if the password is correct
-if (req.body.password !== user.password) {
-  return res.status(400).json({ message: 'Invalid password' });
-}
     
+    // Compare the passwords
+    const validPassword = await user.matchPassword(req.body.password);
+
+
+    if (!validPassword) {
+      // Return the error message with the two hashed passwords
+      return res.status(400).json({
+        message: 'Invalid password',
+      });
+    }
+
     // Create and assign a token
     const token = generateToken(user);
  
     // Send the user data in the response
     res.status(200).json({ 
       message: 'Logged in successfully', 
-      token: token, 
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        password: user.password,
-        role: user.role,
-        rank: user.rank,
-      },
+      token: token,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 }; 
-
-export const logout = async (req, res) => {
-  // Validate the user token
-  const { error } = logoutValidation(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
-
-  
-  // Send the user data in the response
-  res.status(200).json({ message: 'Logged out successfully' });
-};
 
 // Get user by ID
 export const getUserById = async (req, res) => {
@@ -121,8 +114,7 @@ export const getUserProfile = async (req, res) => {
 // Update user profile
 export const updateUserProfile = async (req, res) => {
   // Validate the new profile data
-  const { error } = updateProfileValidation(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
+
 
   try {
     const user = await User.findById(req.user._id);

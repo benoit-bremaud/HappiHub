@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import eventRoutes from './routes/eventRoutes.js';
 import express from 'express';
 import userRoutes from './routes/userRoutes.js';
+import bodyParser from 'body-parser';
 
 // Load environment variables
 dotenv.config();
@@ -13,6 +14,8 @@ dotenv.config();
 const app = express();
 
 
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 // allow all origins
 // app.use(cors());
 
