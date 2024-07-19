@@ -1,6 +1,7 @@
 import React from "react";
 import "./header.css";
 import { Link } from "react-router-dom";
+import logo from "../Asset/logo.png";
 
 
 
@@ -8,7 +9,7 @@ const Header = ({isLoggedIn}) => {
     return (
         <header className="header">
             <div className="logo">
-                <h1>LOGO</h1>
+                <img src={logo}/>
             </div>
             <div className="nav">
                 <ul>

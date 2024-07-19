@@ -1,3 +1,8 @@
+img {
+    width: 15%;
+    border-radius: 2px;
+}
+
 .header {
     background: linear-gradient(to right, #1f4037, #99f2c8);
     display: flex;
