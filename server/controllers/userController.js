@@ -1,7 +1,4 @@
-
 import { isValidUserId, loginValidation, signupValidation } from '../validation/userValidation.js';
-
-
 
 import User from '../models/userModel.js';
 import dotenv from 'dotenv';
@@ -69,6 +66,12 @@ export const login = async (req, res) => {
     res.status(200).json({ 
       message: 'Logged in successfully', 
       token: token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

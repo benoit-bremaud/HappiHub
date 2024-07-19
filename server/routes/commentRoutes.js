@@ -9,6 +9,7 @@ import express from "express";
 const router = express.Router();
 
 // Routes for comments
-router.post("/add", authenticateToken, createComment);
+router.post("/", authenticateToken, createComment);
 
 export default router;
+

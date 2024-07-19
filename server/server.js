@@ -1,3 +1,4 @@
+import bodyParser from 'body-parser';
 import commentRoutes from './routes/commentRoutes.js';
 import connectDB from './config/mongo.js';
 import cors from 'cors';
@@ -5,7 +6,6 @@ import dotenv from 'dotenv';
 import eventRoutes from './routes/eventRoutes.js';
 import express from 'express';
 import userRoutes from './routes/userRoutes.js';
-import bodyParser from 'body-parser';
 
 // Load environment variables
 dotenv.config();
