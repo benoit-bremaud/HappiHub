@@ -1,12 +1,66 @@
-.home{
-    margin: 0px 30px;
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #f3f4f6, #ffffff);
+  color: #333;
+  font-family: 'Roboto', sans-serif;
 }
-.home h1{
-    text-align: center;
-    margin: 40px 0px;
-}
-.card_display{
-    display: flex;
-    flex-wrap: wrap;
 
+.welcome-message {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.sub-text {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+  color: #666;
+  text-align: center;
+  max-width: 600px;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn {
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.discover-btn {
+  background: #007bff;
+  color: white;
+}
+
+.discover-btn:hover {
+  background: #0056b3;
+}
+
+.create-btn {
+  background: #28a745;
+  color: white;
+}
+
+.create-btn:hover {
+  background: #1e7e34;
+}
+
+.participate-btn {
+  background: #ffc107;
+  color: white;
+}
+
+.participate-btn:hover {
+  background: #e0a800;
 }

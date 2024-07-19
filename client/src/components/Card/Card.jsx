@@ -3,24 +3,23 @@ import "./card.css";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 
-const Card = ({ event }) => {
+const Card = ({ event,onClick }) => {
   return (
-    <div className="card">
-      <h1>{event.title}</h1>
-      <img src={`${event.image}`} alt="image de présentation" />
-      <p>description : {event.description}</p>
-      <p>date : {event.date}</p>
-      <p>location : {event.location}</p>
-      <p>eventId : {event._id}</p>
-      <p>userId : {event.creator}</p>
-      <p><Link to={`/events/${event._id}`}>info</Link></p>
-
+    <div className="card" onClick={() => onClick(event)}>
+      <h1 className="card_title">{event.title}</h1>
+      <img src={event.image || "https://picsum.photos/id/238/300/300"} alt="Event" className="card_image" />
+      <div className="card_content">
+        <p className="card_description">{event.description}</p>
+        <p className="card_date">{event.date}</p>
+        <p className="card_location">{event.location}</p>
+      </div>
     </div>
   );
 };
 
 Card.propTypes = {
-  event: PropTypes.object,
+  event: PropTypes.object.isRequired,
+  onClick: PropTypes.func.isRequired,
 };
 
 export default Card;

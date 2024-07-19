@@ -2,8 +2,6 @@ import React from "react";
 import "./header.css";
 import { Link } from "react-router-dom";
 
-
-
 const Header = ({isLoggedIn}) => {
     return (
         <header className="header">
@@ -27,12 +25,7 @@ const Header = ({isLoggedIn}) => {
                     <li><Link to="/login">Login</Link></li>
                         </>
                     )}
-
-
-
-
                 </ul>
-
             </div>            
         </header>
     )
