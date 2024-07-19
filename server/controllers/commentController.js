@@ -5,6 +5,7 @@ export const createComment = async (req, res) => {
         const newComment = new Comment({
             content: req.body.content,
             author: req.body.author,
+            event: req.body.event,
             status: 'pending',
         });
         const savedComment = await newComment.save();
