@@ -2,8 +2,9 @@ import "./event.css";
 import React, { useState, useEffect } from "react";
 import Card from "../Card/Card";
 import { useNavigate, useParams } from 'react-router-dom';
+import Comment from "../Comment/Comment";
 
-const EventInfo = ({ event }) => {
+const EventInfo = () => {
 
     const navigate = useNavigate();
     const { id } = useParams();
@@ -36,6 +37,7 @@ const EventInfo = ({ event }) => {
     return (
         <div className="event-info">
         {data && <Card event={data} />}
+        <Comment />
         </div>
     );
 };
