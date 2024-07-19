@@ -1,5 +1,4 @@
 import Comment from "../models/commentModel.js";
-import User from "../models/userModel.js";
 import { commentValidation } from "../validation/commentValidation.js";
 import { isValidEventId } from "../validation/eventValidation.js";
 import { isValidUserId } from "../validation/userValidation.js";
@@ -47,28 +46,4 @@ export const createComment = async (req, res) => {
         res.status(500).json({ message: error.message });
         console.log(error);
     }
-
 };
-
-/**
- * Get comments for a specific event.
- *
- * @param {Object} req - The request object.
- * @param {string} req.params.event_id - The ID of the event to retrieve comments for.
- * @param {Object} res - The response object.
- * @returns {Object} The comments for the specified event.
- * @throws {Object} If there is an error during the comment retrieval process.
- */
-export const getEventComments = async (req, res) => {
-    try {
-      const eventId = req.params.event_id;
-      const comments = await Comment.find({ event_id: eventId })
-        .populate({
-          path: 'user_id',
-          select: 'name'
-        });
-      res.status(200).json(comments);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  };

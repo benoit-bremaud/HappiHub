@@ -22,9 +22,24 @@ const CreateEvent = ({isLoggedIn}) => {
         const decodedToken = jwtDecode(token);
         console.log(decodedToken._id);
         // console.log(decodedToken);
+        const response = await fetch(`http://localhost:5000/api/users/${decodedToken._id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+        });
+        if (response.ok) {
+          const dataa = await response.json();
+          console.log(dataa._id);
+            setDataa(dataa._id);
+          if(dataa._id !== decodedToken._id){
 
+          }else{
+            console.log(dataa);
+          }
+        }
       } else {
-        navigate("/");
+        // navigate("/");
       }
     };
 
