@@ -5,8 +5,8 @@ const eventSchema = new mongoose.Schema({
   description: { type: String, required: true },
   date: { type: Date, required: true },
   location: { type: String, required: true },
-  image: { type: String, required: false },
-  isPrivate: { type: Boolean, required: false, default: false },
+  image: { type: String },
+  isPrivate: { type: Boolean, default: false },
   creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
