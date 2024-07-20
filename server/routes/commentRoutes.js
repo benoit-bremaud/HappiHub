@@ -1,4 +1,4 @@
-import { createComment, getCommentById, getCommentsByUserId } from "../controllers/commentController.js";
+import { createComment, getCommentById, getCommentsByEventId, getCommentsByUserId } from "../controllers/commentController.js";
 
 import authenticateToken from "../middleware/auth.js";
 import express from "express";
@@ -17,6 +17,9 @@ router.get("/:id", authenticateToken, getCommentById);
 
 // Get all comments by user id
 router.get("/user/:id", authenticateToken, getCommentsByUserId);
+
+// Get comments by event id
+router.get("/event/:id", authenticateToken, getCommentsByEventId);
 
 export default router;
 
