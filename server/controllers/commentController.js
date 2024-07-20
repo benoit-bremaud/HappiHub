@@ -58,3 +58,29 @@ export const getCommentsByEventId = async (req, res) => {
         res.status(500).json({ message: err.message});
     }
 };
+
+// Update comment by id
+export const updateCommentById = async (req, res) => {
+    try {
+        // Check if the comment exists
+        const comment = await Comment.findById(req.params.id);
+        if (!comment) {
+            return res.status(404).json({ message: 'Comment not found'});
+        }
+
+        // Check if the user is the author of the comment
+        if (comment.author.toString() !== req.user._id && req.user.role !== 'admin' && req.user.role !== 'moderator') {
+            return res.status(403).json({ message: 'You do not have permission to update this comment'});
+        }
+
+        // Update the comment
+        comment.content = req.body.content || comment.content;
+        comment.status = req.body.status || comment.status;
+
+        const updatedComment = await comment.save();
+        res.json(updatedComment);
+    }
+    catch (err) {
+        res.status(500).json({ message: err.message});
+    }
+};
