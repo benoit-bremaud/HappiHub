@@ -58,3 +58,18 @@ export const getCommentsByEventId = async (req, res) => {
         res.status(500).json({ message: err.message});
     }
 };
+
+// Update comment by id
+export const updateCommentById = async (req, res) => {
+    try {
+        const comment = await Comment.findById(req.params.id);
+        if (!comment) {
+            return res.status(404).json({ message: 'Comment not found'});
+        }
+        const updatedComment = await Comment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updatedComment);
+    }
+    catch (err) {
+        res.status(500).json({ message: err.message});
+    }
+};

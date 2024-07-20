@@ -5,8 +5,6 @@ const commentSchema = new mongoose.Schema({
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending'},
-    createdAt: { type: Date, required: true, default: Date.now },
-    updatedAt: { type: Date, required: true, default: Date.now },
 });
 
 // Create a new mongoose model for comments
