@@ -1,4 +1,5 @@
 import Comment from "../models/commentModel.js";
+import User from "../models/userModel.js";
 
 // Create a new comment
 export const createComment = async (req, res) => {
@@ -157,6 +158,34 @@ export const deleteCommentById = async (req, res) => {
 };
 
 // Delete all comments by user id
+export const deleteCommentsByUserId = async (req, res) => {
+    try {
+        // Check if the user exists
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found'});
+        }
+
+        // Check if there are comments to delete
+        const comments = await Comment.find({ author: req.params.id });
+        if (comments.length === 0) {
+            return res.status(404).json({ message: 'Comments not found'});
+        }
+
+        // Check if the user is the author of the comments
+        const isAuthor = comments.every(comment => comment.author.toString() === req.user._id);
+        if (!isAuthor) {
+            return res.status(403).json({ message: 'You do not have permission to delete these comments'});
+        }
+
+        // Delete the comments
+        await Comment.deleteMany({ author: req.params.id });
+        res.json({ message: 'Comments deleted successfully'});
+    }
+    catch (err) {
+        res.status(500).json({ message: err.message});
+    }
+}
 
 // Delete all comments by event id
 
