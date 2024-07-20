@@ -22,5 +22,12 @@ const authenticateToken = (req, res, next) => {
 
 export default authenticateToken;
 
-// Extract userId from the token
+// Check if the user is an admin
+export const isAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  next();
+};
 
+// Check if the user is a moderator
