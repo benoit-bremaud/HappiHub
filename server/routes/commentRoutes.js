@@ -1,5 +1,5 @@
 import authenticateToken, { isAdmin } from "../middleware/auth.js";
-import { createComment, deleteCommentById, getAllComments, getCommentById, getCommentsByEventId, getCommentsByUserId, patchCommentById, updateCommentById } from "../controllers/commentController.js";
+import { createComment, deleteCommentById, deleteCommentsByUserId, getAllComments, getCommentById, getCommentsByEventId, getCommentsByUserId, patchCommentById, updateCommentById } from "../controllers/commentController.js";
 
 import express from "express";
 
@@ -34,7 +34,7 @@ router.patch("/:id", authenticateToken, patchCommentById);
 router.delete("/:id", authenticateToken, deleteCommentById);
 
 // Delete all comments by user id
-// router.delete("/user/:id", authenticateToken, deleteCommentsByUserId);
+router.delete("/user/:id", authenticateToken, deleteCommentsByUserId);
 
 // Delete all comments by event id
 // router.delete("/event/:id", authenticateToken, deleteCommentsByEventId);
