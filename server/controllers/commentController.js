@@ -1,4 +1,5 @@
 import Comment from "../models/commentModel.js";
+import Event from "../models/eventModel.js";
 import User from "../models/userModel.js";
 
 // Create a new comment
@@ -188,5 +189,34 @@ export const deleteCommentsByUserId = async (req, res) => {
 }
 
 // Delete all comments by event id
+export const deleteCommentsByEventId = async (req, res) => {
+    try {
+        // Check if the event exists
+        const event = await Event.findById(req.params.id);
+        if (!event) {
+            return res.status(404).json({ message: 'Event not found'});
+        }
+
+        // Check if there are comments to delete
+        const comments = await Comment.find({ event: req.params.id });
+        if (comments.length === 0) {
+            return res.status(404).json({ message: 'Comments not found'});
+        }
+
+        // Check if the user is the creator of the event
+        const isCreator = event.creator.toString() === req.user._id;
+        if (!isCreator) {
+            return res.status(403).json({ message: 'You do not have permission to delete these comments'});
+        }
+
+        // Delete all the comments
+        await Comment.deleteMany({ event: req.params.id });
+        res.json({ message: 'Comments deleted successfully'});
+        
+    }
+    catch (err) {
+        res.status(500).json({ message: err.message});
+    }
+}
 
 // Delete all comments (for admin)
