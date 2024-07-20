@@ -1,5 +1,5 @@
 import authenticateToken, { isAdmin } from "../middleware/auth.js";
-import { createComment, getAllComments, getCommentById, getCommentsByEventId, getCommentsByUserId, updateCommentById } from "../controllers/commentController.js";
+import { createComment, getAllComments, getCommentById, getCommentsByEventId, getCommentsByUserId, patchCommentById, updateCommentById } from "../controllers/commentController.js";
 
 import express from "express";
 
@@ -26,6 +26,9 @@ router.get("/", authenticateToken, isAdmin, getAllComments);
 
 // Update comment by id
 router.put("/:id", authenticateToken, updateCommentById);
+
+// Update comment by id (partial update)
+router.patch("/:id", authenticateToken, patchCommentById);
 
 export default router;
 

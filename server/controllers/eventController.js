@@ -21,14 +21,13 @@ export const createEvent = async (req, res) => {
         const savedEvent = await newEvent.save();
         // Send the event data in the response
         res.status(201).json(savedEvent);
-        // res.status(201).json({ message: 'Event created successfully', event_id: savedEvent._id });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
 
-// Get all events
+// Get all events (admin only)
 export const getEvents = async (_req, res) => {
     try {
         const events = await Event.find();
