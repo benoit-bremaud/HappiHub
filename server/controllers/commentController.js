@@ -131,3 +131,33 @@ export const patchCommentById = async (req, res) => {
         res.status(500).json({ message: err.message});
     }
 };
+
+// Delete comment by id
+export const deleteCommentById = async (req, res) => {
+    try {
+        // Check if the comment exists
+        const comment = await Comment.findById(req.params.id);
+        if (!comment) {
+            return res.status(404).json({ message: 'Comment not found'});
+        }
+
+        // Check if the user is the author of the comment
+        const isAuthor = comment.author.toString() === req.user._id;
+        if (!isAuthor) {
+            return res.status(403).json({ message: 'You do not have permission to delete this comment'});
+        }
+
+        // Delete the comment
+        await comment.deleteOne();
+        res.json({ message: 'Comment deleted successfully'});
+    }
+    catch (err) {
+        res.status(500).json({ message: err.message});
+    }
+};
+
+// Delete all comments by user id
+
+// Delete all comments by event id
+
+// Delete all comments (for admin)
