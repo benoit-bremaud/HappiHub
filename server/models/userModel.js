@@ -35,6 +35,15 @@ const userSchema = new mongoose.Schema({
       return this.role === 'admin';
     },
   },
+  // add more fields here
+  // events: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' },
+  // comments: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment' },
+  // followers: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  // following: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  // friends: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+},
+{
+  timestamps: true,
 });
 
 // Encrypt password before saving the user

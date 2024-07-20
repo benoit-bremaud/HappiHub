@@ -5,6 +5,10 @@ const commentSchema = new mongoose.Schema({
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending'},
+    // add more fields here
+}, 
+{ 
+    timestamps: true
 });
 
 // Create a new mongoose model for comments
