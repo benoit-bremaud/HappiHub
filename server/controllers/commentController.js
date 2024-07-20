@@ -59,6 +59,20 @@ export const getCommentsByEventId = async (req, res) => {
     }
 };
 
+// Get all comments (for admin)
+export const getAllComments = async (req, res) => {
+    try {
+        const comments = await Comment.find({});
+        if (comments === null) {
+            return res.status(404).json({ message: 'Comments not found'});
+        }
+        res.json(comments);
+    }
+    catch (err) {
+        res.status(500).json({ message: err.message});
+    }
+};
+
 // Update comment by id
 export const updateCommentById = async (req, res) => {
     try {
