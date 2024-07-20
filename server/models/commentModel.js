@@ -6,6 +6,10 @@ const commentSchema = new mongoose.Schema({
     event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending'},
     // add more fields here
+    // likes: { type: Number, default: 0 },
+    // dislikes: { type: Number, default: 0 },
+    // reports: { type: Number, default: 0 },
+    // replies: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
 }, 
 { 
     timestamps: true

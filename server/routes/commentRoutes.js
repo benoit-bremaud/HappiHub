@@ -1,5 +1,5 @@
 import authenticateToken, { isAdmin } from "../middleware/auth.js";
-import { createComment, getAllComments, getCommentById, getCommentsByEventId, getCommentsByUserId, patchCommentById, updateCommentById } from "../controllers/commentController.js";
+import { createComment, deleteCommentById, getAllComments, getCommentById, getCommentsByEventId, getCommentsByUserId, patchCommentById, updateCommentById } from "../controllers/commentController.js";
 
 import express from "express";
 
@@ -29,6 +29,18 @@ router.put("/:id", authenticateToken, updateCommentById);
 
 // Update comment by id (partial update)
 router.patch("/:id", authenticateToken, patchCommentById);
+
+// Delete comment by id
+router.delete("/:id", authenticateToken, deleteCommentById);
+
+// Delete all comments by user id
+// router.delete("/user/:id", authenticateToken, deleteCommentsByUserId);
+
+// Delete all comments by event id
+// router.delete("/event/:id", authenticateToken, deleteCommentsByEventId);
+
+// Delete all comments (for admin)
+// router.delete("/", authenticateToken, isAdmin, deleteAllComments);
 
 export default router;
 
