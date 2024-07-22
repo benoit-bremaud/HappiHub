@@ -18,21 +18,38 @@ import { isValidUserId } from "../validation/userValidation.js";
  * @throws {Object} If there is an error during the comment creation process.
  */
 
-// Create a new comment
 export const createComment = async (req, res) => {
+    // Validate the comment data
+    const { error } = commentValidation(req.body);
+    if (error) return res.status(400).json({ message: error.details[0].message });
+
+    // Check if the user_id is valid
+    if (!isValidUserId(req.body.user_id)) {
+        return res.status(400).json({ message: "Invalid user_id" });
+    }
+
+    // Check if the event_id is valid
+    if (!isValidEventId(req.body.event_id)) {
+        return res.status(400).json({ message: "Invalid event_id" });
+    }
+
+    // Create a new comment
+    const newComment = new Comment({
+        content: req.body.content,
+        user_id: req.body.user_id,
+        event_id: req.body.event_id,
+    });
+
     try {
-        const newComment = new Comment({
-            content: req.body.content,
-            author: req.body.author,
-            event: req.body.event,
-            status: 'pending',
-        });
         const savedComment = await newComment.save();
+        // Send the comment data in the response
         res.status(201).json(savedComment);
+        // res.status(201).json({ message: 'Comment created successfully', comment_id: savedComment._id });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+        console.log(error);
     }
-    catch (err) {
-        res.status(500).json({ message: err.message});
-    }
+
 };
 
 // Get comment by id
@@ -66,15 +83,16 @@ export const getCommentsByUserId = async (req, res) => {
 // Get comments by event id
 export const getCommentsByEventId = async (req, res) => {
     try {
-        const comments = await Comment.find({ event: req.params.id });
-        if (comments === null) {
-            return res.status(404).json({ message: 'Comments not found'});
-        }
-        res.json(comments);
-    }
-    catch (err) {
-        res.status(500).json({ message: err.message});
-    }
+        const eventId = req.params.event_id;
+        const comments = await Comment.find({ event_id: eventId })
+          .populate({
+            path: 'user_id',
+            select: 'name'
+          });
+        res.status(200).json(comments);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
 };
 
 // Get all comments (for admin)

@@ -1,5 +1,14 @@
 import authenticateToken, { isAdmin } from "../middleware/auth.js";
-import { createComment, deleteCommentById, deleteCommentsByEventId, deleteCommentsByUserId, getAllComments, getCommentById, getCommentsByEventId, getCommentsByUserId, patchCommentById, updateCommentById } from "../controllers/commentController.js";
+import { createComment, 
+        deleteCommentById, 
+        deleteCommentsByEventId, 
+        deleteCommentsByUserId, 
+        getAllComments, 
+        getCommentById, 
+        getCommentsByEventId, 
+        getCommentsByUserId, 
+        patchCommentById, 
+        updateCommentById } from "../controllers/commentController.js";
 
 import express from "express";
 
