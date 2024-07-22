@@ -5,7 +5,7 @@ import { isValidEventId } from "../validation/eventValidation.js";
 import { isValidUserId } from "../validation/userValidation.js";
 
 /**
- * Create a new comment.
+ * 
  * 
  * @param {Object} req - The request object.
  * @param {Object} req.body - The request body containing the comment data.
