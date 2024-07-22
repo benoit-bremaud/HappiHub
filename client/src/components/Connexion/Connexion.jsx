@@ -39,7 +39,7 @@ const Connexion = () => {
 };
 
   return (
-<div class="form">
+<div class="form back">
       <div class="flex-column">
             <h2>Login</h2>
             <form onSubmit={handleSubmit} class="form">

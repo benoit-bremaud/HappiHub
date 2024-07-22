@@ -38,7 +38,7 @@ const Register = () => {
 };
 
   return (
-    <div class="form">
+    <div class="form back">
       <div class="flex-column">
             <h2>Register</h2>
             <form onSubmit={handleSubmit} class="form">
