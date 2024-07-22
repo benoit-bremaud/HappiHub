@@ -1,6 +1,22 @@
 import Comment from "../models/commentModel.js";
 import Event from "../models/eventModel.js";
 import User from "../models/userModel.js";
+import { commentValidation } from "../validation/commentValidation.js";
+import { isValidEventId } from "../validation/eventValidation.js";
+import { isValidUserId } from "../validation/userValidation.js";
+
+/**
+ * 
+ * 
+ * @param {Object} req - The request object.
+ * @param {Object} req.body - The request body containing the comment data.
+ * @param {string} req.body.content - The content of the comment.
+ * @param {string} req.body.user_id - The ID of the user creating the comment.
+ * @param {string} req.body.event_id - The ID of the event the comment is associated with.
+ * @param {Object} res - The response object.
+ * @returns {Object} The created comment.
+ * @throws {Object} If there is an error during the comment creation process.
+ */
 
 // Create a new comment
 export const createComment = async (req, res) => {
