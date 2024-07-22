@@ -38,6 +38,7 @@ const Connexion = () => {
     setPasswordType((prevType) => (prevType === 'password' ? 'text' : 'password'));
 };
 
+
   return (
 <div class="form back">
       <div class="flex-column">
