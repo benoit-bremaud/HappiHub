@@ -62,6 +62,9 @@ Si vous rencontrez un problème ou avez une suggestion d'amélioration, veuillez
 4. **Créez un fichier `.env` dans le répertoire `client` avec le contenu suivant** :
    ```
    REACT_APP_API_URL=http://localhost:5000/api
+   WDS_SOCKET_HOST=127.0.0.1 
+   CHOKIDAR_USEPOLLING=true
+   WATCHPACK_POLLING=true
    ```
 5. **Utilisez les fichiers `Dockerfile` et `docker-compose.yml` pour construire et démarrer les conteneurs Docker** :
    ```
