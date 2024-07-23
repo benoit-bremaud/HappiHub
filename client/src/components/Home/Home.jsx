@@ -17,7 +17,7 @@ const Home = ({ user }) => {
   
   return (
     <div className="home">
-      <h1 className="welcome-message">Bienvenue, {user ? user.name : "Visiteur"} !</h1>
+      <h1 className="welcome-message">Bienvenue {user ? user.name : "Visiteur"} !</h1>
       <p className="sub-text">
         Découvrez, créez et participez à des événements passionnants dans votre communauté.
       </p>
