@@ -1,0 +1,29 @@
+.App {
+    position: relative;
+    overflow: hidden;
+    height: 100vh;
+    margin: 0; /* Ensure no margin on body to avoid scroll */
+  }
+  
+  .background-video {
+    position: fixed; /* Use fixed to cover the entire viewport */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1; /* Ensure the video is behind other content */
+  }
+  
+  .video-background {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensure the video covers the container */
+  }
+  
+  .content {
+    position: relative;
+    z-index: 1; /* Ensure content appears above the video */
+    height: 100%;
+  }
+  
