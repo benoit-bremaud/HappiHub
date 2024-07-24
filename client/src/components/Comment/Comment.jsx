@@ -12,20 +12,13 @@ const Comment = () => {
   const decodedToken = jwtDecode(token);
   const navigate = useNavigate();
 
-  const optionss = {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    }
-  };
   useEffect(() => {
-    const getCommentEvent = async () => {
+    const getUser = async () => {
       if (token) {
         const decodedToken = jwtDecode(token);
         console.log(decodedToken._id);
         const fetchData = async () => {
-          const response = await fetch(`http://localhost:5000/api/comments/event/${id}`,optionss);
+          const response = await fetch(`http://localhost:5000/api/comments/events/${id}/comments`);
           if (response.ok) {
             const data = await response.json();
             console.log(data);
@@ -40,7 +33,7 @@ const Comment = () => {
       }
     };
 
-    getCommentEvent();
+    getUser();
   }, [token]);
 
   function refreshPage() {
@@ -66,7 +59,7 @@ const Comment = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/comments/", options);
+      const response = await fetch("http://localhost:5000/api/comments/add", options);
       if (response.ok) {
         // navigate("/events/:id");
         console.log("comment added");
