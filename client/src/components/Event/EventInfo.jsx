@@ -36,8 +36,8 @@ const EventInfo = ({ event }) => {
     
     return (
         <div className="event-info">
-        {data && <Card event={data} />}
-        <Comment />
+            {data && <Card event={data} />}
+            <Comment />
         </div>
     );
 };

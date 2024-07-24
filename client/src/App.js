@@ -4,14 +4,13 @@ import { jwtDecode } from 'jwt-decode';
 import Header from './components/Header/Header';
 import Home from './components/Home/Home';
 import Register from './components/Register/Register';
-import Connexion from './components/Connexion/Connexion';
+import Connexion from './components/Connexion/Connexion'; 
 import Profil from './components/Profil/Profil';
 import Event from './components/Event/Event';
 import Logout from './components/Logout/Logout';
 import EventCreate from './components/Event/EventCreate';
 import EventInfo from './components/Event/EventInfo';
 import { useState, useEffect } from 'react';
-import videoSrc from './videos/vid.mp4'; // Import the video file
 
 function App() {
   const [user, setUser] = useState(null);
@@ -38,7 +37,7 @@ function App() {
         <Header isLoggedIn={isLoggedIn} />
         <div className="background-video">
           <video autoPlay muted loop className="video-background">
-            <source src={videoSrc} type="video/mp4" />
+            <source src="/assets/videos/vid.mp4" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         </div>

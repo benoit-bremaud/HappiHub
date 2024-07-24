@@ -22,9 +22,9 @@ const Home = ({ user }) => {
         Découvrez, créez et participez à des événements passionnants dans votre communauté.
       </p>
       <div className="actions">
-        <button className="btn discover-btn" onClick={() => handleNavigate("/discover")}>Découvrir</button>
-        <button className="btn create-btn" onClick={() => handleNavigate("/create")}>Créer</button>
-        <button className="btn participate-btn" onClick={() => handleNavigate("/participate")}>Participer</button>
+        <button className="btn discover-btn" onClick={() => handleNavigate("/events")}>Découvrir</button>
+        <button className="btn create-btn" onClick={() => handleNavigate("/events/create")}>Créer</button>
+        <button className="btn participate-btn" onClick={() => handleNavigate("/events")}>Participer</button>
       </div>
     </div>
   );
