@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import Card from "../Card/Card";
 import { useNavigate, useParams } from 'react-router-dom';
 import Comment from "../Comment/Comment";
+import EventAttendees from "./EventAttendees";
+
 
 const EventInfo = ({ event }) => {
 
@@ -38,6 +40,7 @@ const EventInfo = ({ event }) => {
         <div className="event-info">
         {data && <Card event={data} />}
         <Comment />
+        <EventAttendees/>
         </div>
     );
 };

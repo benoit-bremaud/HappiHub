@@ -8,8 +8,9 @@ const eventSchema = new mongoose.Schema({
   image: { type: String },
   isPrivate: { type: Boolean, default: false },
   creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  // add more fields here
-  // attendees: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  attendees: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+
   // comments: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment'},
   // status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending'},
   // likes: { type: Number, default: 0 },

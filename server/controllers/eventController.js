@@ -61,3 +61,54 @@ export const getEventsId = async (req, res) => {
     }
   };
   
+  export const addAttendee = async (req, res) => {
+    try {
+      const event = await Event.findById(req.params.event_id);
+  
+      if (!event) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+  
+      if (event.attendees) {
+        event.attendees.push(req.body.attendees);
+      } else {
+        event.attendees = [req.body.attendees];
+      }
+      await event.save();
+  
+      res.status(200).json({ message: 'User added to event attendees' });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
+  export const getAttendees = async (req, res) => {
+    try {
+      const event = await Event.findById(req.params.event_id).populate({
+        path: 'attendees',
+        select: 'name'
+      });
+  
+      if (!event) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+  
+      if (!Array.isArray(event.attendees)) {
+        return res.status(500).json({ message: 'Event attendees is not an array' });
+      }
+  
+      const attendeesWithNames = event.attendees.map((attendee) => ({
+        _id: attendee._id,
+        name: attendee.name,
+      }));
+  
+      res.status(200).json(attendeesWithNames);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+  
+  
+  
+  
+  
