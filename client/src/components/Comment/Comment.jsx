@@ -98,7 +98,6 @@ const Comment = () => {
             ))}
         </div>
     </div>
-  </div>
   );
 };
 
