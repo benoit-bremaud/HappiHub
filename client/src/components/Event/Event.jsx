@@ -1,8 +1,9 @@
 import "./event.css";
-import React, { useState, useEffect } from "react";
+
+import React, { useEffect, useState } from "react";
+
 import Card from "../Card/Card";
 import { useNavigate } from 'react-router-dom';
-
 
 const Event = ({isLoggedIn}) => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const Event = ({isLoggedIn}) => {
     }, []);
   
     return (
-        <div className="container">
+        <div className="event-container">
           <h1>Event</h1>
           <div className="event-list">
             {events.map((event) => (

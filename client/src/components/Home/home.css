@@ -4,7 +4,6 @@
     align-items: center;
     justify-content: center;
     height: 100vh; /* Full viewport height */
-    background-color: rgba(0, 0, 0, 0.607); /* Semi-transparent background color */
     color: #ffffff;
     font-family: 'Roboto', sans-serif;
   }

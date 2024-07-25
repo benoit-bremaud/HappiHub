@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
 import "./profil.css";
-import PropTypes from "prop-types";
+
+import { useEffect, useState } from "react";
+
 import Home from "../Home/Home";
+import PropTypes from "prop-types";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from 'react-router-dom';
-
-
 
 const Profile = ({ user }) => {
     const [email, setEmail] = useState(user?.email || "");
@@ -73,7 +73,7 @@ const Profile = ({ user }) => {
     }
   
     return (
-      <div className="container">
+      <div className="profile-container">
           <h1>Profil</h1>
           <div className="user">
             <h2>name :{name}</h2>

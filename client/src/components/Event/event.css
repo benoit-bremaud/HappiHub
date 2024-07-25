@@ -1,9 +1,14 @@
+.event-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .event-list {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
+  flex-direction: column;
+  justify-content: space-between;
   padding: 20px;
   height: 80vh; /* Adjust this value as needed */
   overflow-y: auto; /* Vertical scrolling only */
@@ -14,6 +19,16 @@
 
 .event-list::-webkit-scrollbar {
   display: none; /* For Chrome, Safari, and Opera */
+}
+
+.event-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: fit-content;
+  padding-bottom: 20px; 
 }
 
 .event {
@@ -35,7 +50,6 @@
   background-color: #ffffff;
   border: 1.5px solid #ecedec;
   border-radius: 20px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 .event form label {
@@ -78,54 +92,4 @@
   font-size: 2em;
   color: #151717;
   text-align: center;
-}
-.event-info {
-  padding: 20px; /* Add padding if necessary */
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .event {
-    margin-top: 20px;
-  }
-
-  .event form {
-    width: 95%;
-    padding: 20px;
-  }
-
-  .event h1 {
-    font-size: 1.5em;
-  }
-
-  .event form input {
-    margin-bottom: 15px;
-  }
-
-  .event form button {
-    height: 45px;
-  }
-}
-
-@media (max-width: 480px) {
-  .event {
-    margin-top: 10px;
-  }
-
-  .event form {
-    width: 100%;
-    padding: 15px;
-  }
-
-  .event h1 {
-    font-size: 1.2em;
-  }
-
-  .event form input {
-    margin-bottom: 10px;
-  }
-
-  .event form button {
-    height: 40px;
-  }
 }

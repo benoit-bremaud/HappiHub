@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 
 .comment_div {
@@ -6,11 +7,56 @@
 }
 .commentaire {
 
+=======
+.comments-view {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 10px;
+}
+
+.comments-title {
+  width: 100%;
+  color: #ffffff;
+}
+
+.commentsAddForm {
+  width: 100%;
+}
+
+.comments-div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.commentaire {
+  position: relative; /* Change from fixed to relative */
+  width: 100%;
+>>>>>>> 6f71453 (chore: Remove unused CSS classes and update profile container class name)
   padding: 10px;
   border: 1px solid #e0e0e0;
   border-radius: 5px;
   background-color: #a3a3a3;
+<<<<<<< HEAD
 
   margin-top: 20px; /* Add space above the comment section */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Optional: Add shadow for better visibility */
 }
+=======
+  z-index: 1000; /* Ensure it's above other content if needed */
+  margin-top: 20px; /* Add space above the comment section */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Optional: Add shadow for better visibility */
+}
+
+.contents {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+>>>>>>> 6f71453 (chore: Remove unused CSS classes and update profile container class name)

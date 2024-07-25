@@ -1,8 +1,10 @@
 import "./comment.css";
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+
+import React, { useEffect, useState } from "react";
+
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 const Comment = () => {
   const { id } = useParams();
@@ -74,12 +76,9 @@ const Comment = () => {
   };
 
   return (
-    <div className="container">
-      <div className="comment_div">
-      <h1>
-        Add comments
-      </h1>
-      <form onSubmit={handleSubmit} className="test">
+    <div className="comments-div">
+      <h1 className="comments-title">Add comments</h1>
+      <form onSubmit={handleSubmit} className="commentsAddForm">
         <input
           type="text"
           placeholder="content"
@@ -88,7 +87,7 @@ const Comment = () => {
         />
         <button onClick={refreshPage} type="submit">Submit</button>
       </form>
-      <div>
+      <div className="comments-view">
         {data.map(comment => (
             <div className="commentaire" key={comment._id}>
                 <strong>{comment.user_id.name}</strong>
