@@ -1,4 +1,4 @@
-import { isValidUserId, loginValidation, signupValidation } from '../validation/userValidation.js';
+import { loginValidation, signupValidation } from '../validation/userValidation.js';
 
 import User from '../models/userModel.js';
 import dotenv from 'dotenv';
@@ -78,39 +78,18 @@ export const login = async (req, res) => {
   }
 }; 
 
-// Get user by ID
-export const getUserById = async (req, res) => {
-  // Validate the user ID
-  const { error } = isValidUserId(req.params.id);
-  if (error) return res.status(400).json({ message: error.details[0].message });
-  
-  try {
-    // Find the user by ID
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Send all the user data in the response
-    res.status(200).json({ user });
-
-  } catch (err) {
-    // Send the error message in the response
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-// Get user profile
 export const getUserProfile = async (req, res) => {
+  console.log('User in request:', req.user);
   try {
+    // check if the user exists
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    res.status(200).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-    });
+    // Send the user data in the response
+    res.status(200).json({ user });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error fetching user profile:', err);
+    res.status(500).json({ message: 'Server error', error: err.message});
   }
 };
 
