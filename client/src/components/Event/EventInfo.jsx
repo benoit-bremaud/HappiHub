@@ -35,9 +35,11 @@ const EventInfo = ({ event }) => {
     }, [id, navigate]);
     
     return (
+        <div className="container">
         <div className="event-info">
             {data && <Card event={data} />}
             <Comment />
+        </div>
         </div>
     );
 };
