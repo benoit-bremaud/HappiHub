@@ -75,11 +75,11 @@ const Comment = () => {
 
   return (
     <div className="container">
-
+      <div className="comment_div">
       <h1>
         Add comments
       </h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="test">
         <input
           type="text"
           placeholder="content"
@@ -99,6 +99,7 @@ const Comment = () => {
             ))}
         </div>
     </div>
+  </div>
   );
 };
 
