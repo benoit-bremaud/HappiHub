@@ -36,7 +36,7 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Define the routes
 app.use('/api/users', userRoutes);
-app.use('/api', eventRoutes);
+app.use('/api/events', eventRoutes);
 app.use('/api/comments', commentRoutes);
 
 // Define a test route

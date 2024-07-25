@@ -1,4 +1,4 @@
-import { createEvent, getEvents, getPublicEvents, getEventsId } from '../controllers/eventController.js';
+import { addAttendee, createEvent, getEvents, getEventsId, getPublicEvents } from '../controllers/eventController.js';
 
 import authenticateToken from '../middleware/auth.js';
 import express from 'express';
@@ -7,9 +7,12 @@ import express from 'express';
 const router = express.Router();
 
 // Routes for events
-router.post('/events', authenticateToken, createEvent);
-router.get('/events', authenticateToken, getEvents);
-router.get('/events/:id', authenticateToken, getEventsId);
-router.get('/events/public', authenticateToken, getPublicEvents);
+router.post('/', authenticateToken, createEvent);
+router.get('/', authenticateToken, getEvents);
+router.get('/:id', authenticateToken, getEventsId);
+router.get('/public', authenticateToken, getPublicEvents);
+
+// Add user id into event attendees array
+router.patch('/:id', authenticateToken, addAttendee);
 
 export default router;
