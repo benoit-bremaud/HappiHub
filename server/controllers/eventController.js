@@ -61,6 +61,9 @@ export const getEventsId = async (req, res) => {
     }
   };
   
+
+
+  // fucking bugued of the dead 
   export const addAttendee = async (req, res) => {
     try {
       const event = await Event.findById(req.params.event_id);
@@ -69,11 +72,15 @@ export const getEventsId = async (req, res) => {
         return res.status(404).json({ message: 'Event not found' });
       }
   
-      if (event.attendees) {
-        event.attendees.push(req.body.attendees);
-      } else {
-        event.attendees = [req.body.attendees];
+      // Vérifier si event.attendees est un tableau
+      if (!Array.isArray(event.attendees)) {
+        // Convertir event.attendees en tableau
+        event.attendees = [event.attendees];
       }
+  
+      // Ajouter l'ID de l'utilisateur à event.attendees
+      event.attendees.push(req.body.attendees[0]);
+  
       await event.save();
   
       res.status(200).json({ message: 'User added to event attendees' });
@@ -81,6 +88,7 @@ export const getEventsId = async (req, res) => {
       res.status(500).json({ message: error.message });
     }
   };
+  
 
   export const getAttendees = async (req, res) => {
     try {
