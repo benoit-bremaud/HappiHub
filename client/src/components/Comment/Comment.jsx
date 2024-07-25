@@ -92,7 +92,7 @@ const Comment = () => {
         {data.map(comment => (
             <div className="commentaire" key={comment._id}>
                 <strong>{comment.user_id.name}</strong>
-                <div className="content">
+                <div className="contents">
                 <p>{comment.content}</p>
                 </div>
             </div>

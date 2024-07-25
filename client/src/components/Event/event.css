@@ -5,6 +5,15 @@
   justify-content: center;
   gap: 20px;
   padding: 20px;
+  height: 80vh; /* Adjust this value as needed */
+  overflow-y: auto; /* Vertical scrolling only */
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+  /* Hide scrollbar for WebKit browsers */
+  scrollbar-width: none; /* For Firefox */
+}
+
+.event-list::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
 }
 
 .event {
@@ -69,6 +78,9 @@
   font-size: 2em;
   color: #151717;
   text-align: center;
+}
+.event-info {
+  padding: 20px; /* Add padding if necessary */
 }
 
 /* Responsive Styles */
