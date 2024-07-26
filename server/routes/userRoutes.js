@@ -2,6 +2,7 @@ import { getUserProfile, getUserRole, login, signup, updateUserProfile } from '.
 
 import authenticateToken from '../middleware/auth.js';
 import express from 'express';
+import { getUserId } from '../utils/jwt.js';
 
 // Create an express router
 const router = express.Router();
@@ -14,7 +15,7 @@ router.post('/login', login);
 router.put('/profile', authenticateToken, updateUserProfile);
 
 // Get user profile
-router.get('/profile', authenticateToken ,getUserProfile);
+router.get('/profile', authenticateToken, getUserId, getUserProfile);
 
 // Role based routes
 router.get('/role', authenticateToken, getUserRole);

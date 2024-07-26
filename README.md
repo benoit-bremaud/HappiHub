@@ -7,6 +7,7 @@ HappiHub est une application web de réseau social pour les événements culture
 - [Prérequis](#prérequis)
 - [Installation](#installation)
 - [Configuration de l'Environnement](#configuration-de-lenvironnement)
+- [Démarrage des Conteneurs Docker](#démarrage-des-conteneurs-docker)
 - [Vérification du Bon Fonctionnement](#vérification-du-bon-fonctionnement)
 - [Contribution](#contribution)
 - [Licence](#licence)
@@ -41,15 +42,34 @@ Avant de démarrer le projet, assurez-vous de configurer correctement les variab
 
 1. Allez dans le répertoire `server/`.
 
-2. Copiez le fichier `.env.example` et renommez-le en `.env` :
+2. Copiez le fichier `.env.example` et créez les fichiers `.env` pour chaque environnement :
    ```
-   cp server/.env.example server/.env
+   cp server/.env.example server/.env.development
+   cp server/.env.example server/.env.production
+   cp server/.env.example server/.env.test
    ```
-3. Ouvrez le fichier `.env` et configurez les variables d'environnement selon vos besoins.
+3. Ouvrez les fichiers `.env` correspondants et configurez les variables d'environnement selon vos besoins pour chaque environnement :
 
-   Voici un exemple :
+   **Exemple pour `.env.development`** :
    ```
-   MONGO_URI=mongodb://mongo:27017/happihub
+   NODE_ENV=development
+   MONGO_URI=mongodb://localhost:27017/happihub_dev
+   JWT_SECRET=your_jwt_secret
+   PORT=5000
+   ```
+
+   **Exemple pour `.env.production`** :
+   ```
+   NODE_ENV=production
+   MONGO_URI=mongodb://mongo:27017/happihub_prod
+   JWT_SECRET=your_jwt_secret
+   PORT=5000
+   ```
+
+   **Exemple pour `.env.test`** :
+   ```
+   NODE_ENV=test
+   MONGO_URI=mongodb://localhost:27017/happihub_test
    JWT_SECRET=your_jwt_secret
    PORT=5000
    ```
@@ -58,7 +78,7 @@ Avant de démarrer le projet, assurez-vous de configurer correctement les variab
 
 1. Allez dans le répertoire `client/`.
 
-2. Copiez le fichier `.env.example` et renommez-le en `.env` :
+2. Copiez le fichier `.env.example` et créez le fichier `.env` :
    ```
    cp client/.env.example client/.env
    ```
@@ -73,106 +93,27 @@ Assurez-vous que les valeurs des variables d'environnement correspondent à la c
 
 ## Démarrage des Conteneurs Docker
 
-Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construire et démarrer les conteneurs Docker :
+Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construire et démarrer les conteneurs Docker. Vous pouvez démarrer les conteneurs pour différents environnements à l'aide des profils.
 
-   ```
-   docker-compose up --build
-   ```
+### Environnement de Développement (Défaut)
 
-### Nettoyage Complet de Docker
+```bash
+docker-compose up --build
+```
 
-Pour nettoyer tous les éléments liés à Docker sur Linux, Windows et macOS, suivez les étapes ci-dessous. Cela inclut la suppression des conteneurs, des images, des volumes et des réseaux Docker inutilisés.
+### Environnement de Production
 
-#### Linux (Ubuntu)
+```bash
+docker-compose --profile prod up --build
+```
 
-1. **Arrêter tous les conteneurs en cours d'exécution :**
-   ```bash
-   docker stop $(docker ps -q)
-   ```
-2. **Supprimer tous les conteneurs :**
-   ```bash
-   docker rm $(docker ps -a -q)
-   ```
-3. **Supprimer toutes les images :**
-   ```bash
-   docker rmi $(docker images -q)
-   ```
-4. **Supprimer tous les volumes non utilisés :**
-   ```bash
-   docker volume prune -f
-   ```
-5. **Supprimer tous les réseaux non utilisés :**
-   ```bash
-   docker network prune -f
-   ```
-6. **Supprimer toutes les données restantes de Docker :**
-   ```bash
-   sudo rm -rf /var/lib/docker
-   sudo rm -rf /var/lib/containerd
-   ```
+### Environnement de Test
 
-#### Windows
+```bash
+docker-compose --profile test up --build
+```
 
-1. **Arrêter tous les conteneurs en cours d'exécution :**
-   ```powershell
-   docker stop $(docker ps -q)
-   ```
-2. **Supprimer tous les conteneurs :**
-   ```powershell
-   docker rm $(docker ps -a -q)
-   ```
-3. **Supprimer toutes les images :**
-   ```powershell
-   docker rmi $(docker images -q)
-   ```
-4. **Supprimer tous les volumes non utilisés :**
-   ```powershell
-   docker volume prune -f
-   ```
-5. **Supprimer tous les réseaux non utilisés :**
-   ```powershell
-   docker network prune -f
-   ```
-6. **Supprimer toutes les données restantes de Docker :**
-   ```powershell
-   Remove-Item -Recurse -Force C:\ProgramData\Docker
-   Remove-Item -Recurse -Force C:\ProgramData\DockerDesktop
-   ```
-
-#### macOS
-
-1. **Arrêter tous les conteneurs en cours d'exécution :**
-   ```bash
-   docker stop $(docker ps -q)
-   ```
-2. **Supprimer tous les conteneurs :**
-   ```bash
-   docker rm $(docker ps -a -q)
-   ```
-3. **Supprimer toutes les images :**
-   ```bash
-   docker rmi $(docker images -q)
-   ```
-4. **Supprimer tous les volumes non utilisés :**
-   ```bash
-   docker volume prune -f
-   ```
-5. **Supprimer tous les réseaux non utilisés :**
-   ```bash
-   docker network prune -f
-   ```
-6. **Supprimer toutes les données restantes de Docker :**
-   ```bash
-   sudo rm -rf /var/lib/docker
-   sudo rm -rf /var/lib/containerd
-   ```
-
-**Raisons du nettoyage :**
-
-- **Récupération d'espace disque :** Les conteneurs, images et volumes Docker peuvent consommer beaucoup d'espace disque. Les supprimer libère cet espace.
-- **Maintien de la performance :** Un grand nombre de conteneurs, images et volumes inutilisés peut ralentir les opérations Docker.
-- **Gestion de la sécurité :** La suppression des conteneurs et images obsolètes réduit les risques de sécurité liés à des versions vulnérables.
-- **Prévention des conflits :** Des conteneurs et images obsolètes peuvent causer des conflits lors de la création de nouveaux conteneurs.
+Ces commandes démarrent les services avec les configurations appropriées pour chaque environnement.
 
 ## Vérification du Bon Fonctionnement
 
@@ -182,14 +123,14 @@ Vérifiez que le backend fonctionne en accédant à `http://localhost:5000`.
 
 1. **Utiliser un Navigateur Web** :
    - Ouvrez votre navigateur web.
-   - Accédez à `http://localhost:5000`.
+   - Accédez à `http://localhost:5000/test`.
    - Vous devriez voir la réponse "Hello HappiHub Server!".
 
 2. **Utiliser `curl` (ligne de commande)** :
    - Ouvrez votre terminal.
    - Exécutez la commande suivante :
      ```
-     curl http://localhost:5000
+     curl http://localhost:5000/test
      ```
    - Vous devriez voir la réponse "Hello HappiHub Server!".
 
@@ -209,13 +150,6 @@ Vérifiez que le frontend fonctionne en accédant à `http://localhost:3000`.
      curl http://localhost:3000
      ```
    - Vous devriez voir le code HTML de la page d'accueil par défaut de l'application React.
-
-3. **Utiliser Postman** :
-   - Ouvrez Postman.
-   - Créez une nouvelle requête GET à l'URL `http://localhost:3000`.
-   - Envoyez la requête.
-   - Vous devriez voir le code HTML de la page d'accueil par défaut de l'application React.
-
 
 ## Correction des Erreurs Courantes
 
@@ -314,7 +248,9 @@ Pour plus d'informations, veuillez lire le fichier [CONTRIBUTING](docs/CONTRIBUT
 
 ## Code de Conduite
 
-Nous avons adopté un code de conduite pour notre communauté. Pour en savoir plus, consultez le [Code de Conduite](docs/CODE_OF_CONDUCT.md).
+Nous avons adopté un code de conduite pour notre communauté. Pour en savoir plus, consultez le [Code de Conduite
+
+](docs/CODE_OF_CONDUCT.md).
 
 ## Sécurité
 
@@ -354,10 +290,16 @@ Pour répondre aux questions fréquemment posées, nous avons créé un fichier 
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
-## start manualy server
+## Start Manually Server
 
-npm start 
+```bash
+npm start
+```
 
-## start manualy client
+## Start Manually Client
 
+```bash
 npm run start
+```
+
+---

@@ -1,6 +1,17 @@
 // middleware/authMiddleware.js
 import jwt from 'jsonwebtoken';
 
+const getJwtSecret = () => {
+    switch (process.env.NODE_ENV) {
+        case 'production':
+            return process.env.JWT_SECRET_PROD;
+        case 'test':
+            return process.env.JWT_SECRET_TEST;
+        default:
+            return process.env.JWT_SECRET_DEV; // Par défaut, environnement de développement
+    }
+};
+
 // Authenticate the token
 const authenticateToken = (req, res, next) => {
   const token = req.header('Authorization').replace('Bearer ', '');
@@ -8,7 +19,7 @@ const authenticateToken = (req, res, next) => {
 
   try {
     // Verify the token
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    const verified = jwt.verify(token, getJwtSecret());
 
     // Extract the user id from the token
             

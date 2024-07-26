@@ -1,25 +1,6 @@
 version: '3.8'
 
 services:
-  mongo:
-    image: mongo
-    ports:
-      - '27017:27017'
-    volumes:
-      - mongo-data:/data/db
-
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    ports:
-      - '5000:5000'
-    env_file:
-      - ./server/.env
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-
   client:
     build:
       context: ./client
@@ -31,6 +12,88 @@ services:
     volumes:
       - ./client:/app
       - /app/node_modules
-      
+    depends_on:
+      - server
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - '5000:5000'
+    env_file:
+      - ./server/.env.development  # Par défaut, environnement de développement
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      - mongo
+    environment:
+      - NODE_ENV=development
+
+  mongo:
+    image: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    # Pas d'authentification pour développement et test par défaut
+
+  server_production:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - '5000:5000'
+    env_file:
+      - ./server/.env.production
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      - mongo
+    environment:
+      - NODE_ENV=production
+    profiles:
+      - prod
+
+  mongo_production:
+    image: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=secureUsername
+      - MONGO_INITDB_ROOT_PASSWORD=securePassword
+    profiles:
+      - prod
+
+  server_test:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: npm test
+    env_file:
+      - ./server/.env.test
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      - mongo
+    environment:
+      - NODE_ENV=test
+    profiles:
+      - test
+  
+  mongo_test:
+    image: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    profiles:
+      - test
+
 volumes:
   mongo-data:
