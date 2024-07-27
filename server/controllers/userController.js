@@ -1,6 +1,7 @@
 import { loginValidation, signupValidation } from '../validation/userValidation.js';
 
 import User from '../models/userModel.js';
+import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import { generateToken } from '../utils/jwt.js';
 
@@ -27,6 +28,7 @@ export const signup = async (req, res) => {
   try {
     // Save the user to the database
     await user.save();
+    console.log(user);
 
     // Send the user data in the response
     res.status(201).json({ message: 'User registered successfully'});
@@ -46,17 +48,11 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(400).json({ message: 'Email is not found ' });
     
-    // Compare the passwords
-    const validPassword = await user.matchPassword(req.body.password);
-
-
-    if (!validPassword) {
-      // Return the error message with the two hashed passwords
-      return res.status(400).json({
-        message: 'Invalid password',
-      });
+    // Check if the password is correct
+    if (!user.isValidPassword(req.body.password)) {
+      return res.status(400).json({ message: 'Invalid password' });
     }
-
+    
     // Create and assign a token
     const token = generateToken(user);
  
@@ -71,6 +67,7 @@ export const login = async (req, res) => {
         role: user.role,
       },
     });
+    console.log(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

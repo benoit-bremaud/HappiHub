@@ -20,10 +20,8 @@ const authenticateToken = (req, res, next) => {
   try {
     // Verify the token
     const verified = jwt.verify(token, getJwtSecret());
-
-    // Extract the user id from the token
-            
-
+                
+    // Add the user to the request object
     req.user = verified;
     next();
   } catch (err) {

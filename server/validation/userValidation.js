@@ -11,7 +11,7 @@ const signupValidation = (data) => {
     name: Joi.string().min(3).required(),
     email: Joi.string().min(6).required().email(),
     password: Joi.string().min(6).required(),
-    role: Joi.string().valid('user', 'admin').required(),
+    role: Joi.string().valid('user', 'admin').optional(),
     rank: Joi.string().valid('Visitor', 'Friend', 'Companion', 'Organizer', 'Unifier', 'Ambassador', 'Guardian').optional(),
   });
 

@@ -35,12 +35,6 @@ const userSchema = new mongoose.Schema({
       return this.role === 'admin';
     },
   },
-  // add more fields here
-  // events: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' },
-  // comments: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment' },
-  // followers: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  // following: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  // friends: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 },
 {
   timestamps: true,
@@ -56,9 +50,10 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Match user entered password to hashed password in database
-userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+// Password verification
+userSchema.methods.isValidPassword = async function (password) {
+  const compare = await bcrypt.compare(password, this.password);
+  return compare;
 };
 
 const User = mongoose.model('User', userSchema);
