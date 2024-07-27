@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
 import './register.css';
+
+import React, { useState } from 'react';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -50,6 +51,7 @@ const Register = () => {
             className="input"
             type="text"
             id="name"
+            name="name"
             placeholder='Enter your Name'
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -62,6 +64,7 @@ const Register = () => {
             className="input"
             type="email"
             id="email"
+            name="email"
             placeholder='Enter your Email'
             value={email}
             onChange={(e) => setEmail(e.target.value)}

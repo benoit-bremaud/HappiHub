@@ -2,6 +2,7 @@
   "name": "happihub",
   "version": "1.0.0",
   "description": "HappiHub - La culture, le partage, la communauté",
+  "type": "module",
   "scripts": {
     "start": "cd server && npm start",
     "client": "cd client && npm start",

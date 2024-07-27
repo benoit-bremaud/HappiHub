@@ -16,8 +16,6 @@ export const signup = async (req, res) => {
   const emailExist = await User.findOne({ email: req.body.email });
   if (emailExist) return res.status(400).json({ message: 'Email already exists' });
 
-
-
   // Create a new user
   const user = new User({
     name: req.body.name,
@@ -96,7 +94,6 @@ export const getUserProfile = async (req, res) => {
 // Update user profile
 export const updateUserProfile = async (req, res) => {
   // Validate the new profile data
-
 
   try {
     const user = await User.findById(req.user._id);
