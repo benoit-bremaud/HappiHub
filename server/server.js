@@ -23,13 +23,14 @@ const corsOptions = {
   credentials: true, // Allow credentials (cookies, authorization headers)
   optionsSuccessStatus: 204 // For legacy browser support
 };
-console.log(corsOptions);
 
 if (process.env.NODE_ENV === 'production') {
   corsOptions.origin = process.env.APP_URL_PROD;
 } else if (process.env.NODE_ENV === 'test') {
   corsOptions.origin = process.env.APP_URL_TEST;
 }
+console.log(corsOptions);
+
 app.use(cors(corsOptions));
 
 // Middleware to parse the request body as JSON
