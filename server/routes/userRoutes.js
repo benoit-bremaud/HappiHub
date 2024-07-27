@@ -15,7 +15,7 @@ router.post('/login', login);
 router.put('/profile', authenticateToken, updateUserProfile);
 
 // Get user profile
-router.get('/profile', authenticateToken, getUserId, getUserProfile);
+router.get('/profile', authenticateToken, getUserProfile);
 
 // Role based routes
 router.get('/role', authenticateToken, getUserRole);
