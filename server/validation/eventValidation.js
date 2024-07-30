@@ -14,6 +14,15 @@ const eventValidation = (data) => {
     location: joi.string().min(3).required(),
     image: joi.string().allow(null, '').optional(),
     creator: joi.string().required(),
+    attendees: joi.array().items(joi.string()).optional(),
+    comments: joi.array().items(joi.object({
+      user: joi.string().required(),
+      comment: joi.string().required(),
+      date: joi.date().required(),
+    })).optional(),
+    likes: joi.array().items(joi.string()).optional(),
+    dislikes: joi.array().items(joi.string()).optional(),
+    report: joi.array().items(joi.string()).optional(),
   });
 
   return schema.validate(data);
