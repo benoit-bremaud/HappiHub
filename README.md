@@ -248,9 +248,7 @@ Pour plus d'informations, veuillez lire le fichier [CONTRIBUTING](docs/CONTRIBUT
 
 ## Code de Conduite
 
-Nous avons adopté un code de conduite pour notre communauté. Pour en savoir plus, consultez le [Code de Conduite
-
-](docs/CODE_OF_CONDUCT.md).
+Nous avons adopté un code de conduite pour notre communauté. Pour en savoir plus, consultez le [Code de Conduite](docs/CODE_OF_CONDUCT.md).
 
 ## Sécurité
 
