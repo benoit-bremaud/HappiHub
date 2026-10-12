@@ -1,3 +1,4 @@
+import { apiFetch } from '../../api';
 import React, { useState } from "react";
 import "./connexion.css";
 import { useNavigate } from "react-router-dom";
@@ -23,7 +24,7 @@ const Connexion = () => {
       body: JSON.stringify(data),
     };
 
-    const response = await fetch("http://localhost:5000/api/users/login", options);
+    const response = await apiFetch("/users/login", options);
     const json = await response.json();
     if (response.ok) {
       localStorage.setItem("token", json.token);

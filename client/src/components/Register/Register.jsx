@@ -1,3 +1,4 @@
+import { apiFetch } from '../../api';
 import './register.css';
 
 import React, { useState } from 'react';
@@ -20,7 +21,7 @@ const Register = () => {
       // rank
     };
 
-    const response = await fetch('http://localhost:5000/api/users/signup', {
+    const response = await apiFetch('/users/signup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,7 +30,6 @@ const Register = () => {
     });
 
     const data = await response.json();
-    console.log(data);
   };
 
   const [passwordType, setPasswordType] = useState('password');
@@ -104,4 +104,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export { Register };

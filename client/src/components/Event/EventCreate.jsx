@@ -1,7 +1,8 @@
+import { apiFetch } from '../../api';
 import "./event.css";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import { decodeSession } from "../../session";
 
 
 const CreateEvent = ({isLoggedIn}) => {
@@ -10,62 +11,37 @@ const CreateEvent = ({isLoggedIn}) => {
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
-  const [dataa, setDataa] = useState(null);
   const [image, setImage] = useState(null);
-  const decodedToken = jwtDecode(localStorage.getItem("token"));
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    const getUser = async () => {
-      if (token) {
-        const decodedToken = jwtDecode(token);
-        console.log(decodedToken._id);
-        // console.log(decodedToken);
-        const response = await fetch(`http://localhost:5000/api/users/${decodedToken._id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-        });
-        if (response.ok) {
-          const dataa = await response.json();
-          console.log(dataa._id);
-            setDataa(dataa._id);
-          if(dataa._id !== decodedToken._id){
-
-          }else{
-            console.log(dataa);
-          }
-        }
-      } else {
-        // navigate("/");
-      }
-    };
-
-    getUser();
-  }, [token]);
+    if (!decodeSession(token)) navigate('/login');
+  }, [token, navigate]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    console.log(file);
     reader.onloadend = () => {
       setImage(reader.result);
     };
-    console.log(image);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (saving) return;
+    if (!decodeSession(token)) { setError('Please sign in before creating an event.'); return; }
+    setSaving(true); setError('');
     const data = {
       title,
       description,
       date,
       location,
-      creator: decodedToken._id,
       image
     };
 
@@ -79,20 +55,21 @@ const CreateEvent = ({isLoggedIn}) => {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/events", options);
+      const response = await apiFetch("/events", options);
       if (response.ok) {
         navigate("/events");
       } else {
-        console.log("Error creating event");
+        setError('Unable to create your event. Check the details and image, then try again.');
       }
-    } catch (error) {
-      console.log("Error creating event:", error);
-    }
+    } catch {
+      setError('Unable to create your event. Your changes have been kept. Please try again.');
+    } finally { setSaving(false); }
   };
 
   return (
     <div className="container">
       <h1>Event Creation</h1>
+      {error && <p role="alert">{error}</p>}
       <div className="event">
         <form onSubmit={handleSubmit}>
           <label htmlFor="title">title</label>
@@ -132,11 +109,11 @@ const CreateEvent = ({isLoggedIn}) => {
 
           <input type="file" accept="image/*" onChange={handleImageChange} />
 
-          <button type="submit">Validate</button>
+          <button type="submit" disabled={saving}>{saving ? "Saving…" : "Validate"}</button>
         </form>
       </div>
     </div>
   );
 };
 
-export default CreateEvent;
+export { CreateEvent as EventCreate };

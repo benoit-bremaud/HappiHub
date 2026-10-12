@@ -1,15 +1,15 @@
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
+import { decodeSession } from './session';
 import Header from './components/Header/Header';
 import Home from './components/Home/Home';
-import Register from './components/Register/Register';
+import { Register } from './components/Register/Register';
 import Connexion from './components/Connexion/Connexion'; 
-import Profil from './components/Profil/Profil';
-import Event from './components/Event/Event';
+import { Profil } from './components/Profil/Profil';
+import { Event } from './components/Event/Event';
 import Logout from './components/Logout/Logout';
-import EventCreate from './components/Event/EventCreate';
-import EventInfo from './components/Event/EventInfo';
+import { EventCreate } from './components/Event/EventCreate';
+import { EventInfo } from './components/Event/EventInfo';
 import { useState, useEffect } from 'react';
 
 function App() {
@@ -19,8 +19,8 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      setIsLoggedIn(true);
-      const decodedToken = jwtDecode(token);
+      setIsLoggedIn(Boolean(decodeSession(token)));
+      const decodedToken = decodeSession(token);
       setUser(decodedToken);
     }
   }, []);
@@ -58,4 +58,4 @@ function App() {
   );
 }
 
-export default App;
+export { App };

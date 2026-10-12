@@ -1,15 +1,19 @@
+import { apiFetch } from '../../api';
 import "./profil.css";
 
 import { useEffect, useState } from "react";
 
 import PropTypes from "prop-types";
-import {jwtDecode} from "jwt-decode";
+import { decodeSession } from "../../session";
 import { useNavigate } from "react-router-dom";
 
 const Profile = ({ user }) => {
   const [email, setEmail] = useState(user?.email || "");
   const [name, setName] = useState(user?.name || "");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
@@ -21,15 +25,15 @@ const Profile = ({ user }) => {
       }
 
       try {
-        const decodedToken = jwtDecode(token);
+        const decodedToken = decodeSession(token);
 
         // Vérifiez si le token est expiré
-        if (decodedToken.exp * 1000 < Date.now()) {
+        if (!decodedToken) {
           navigate("/");
           return;
         }
 
-        const response = await fetch("http://localhost:5000/api/users/profile", {
+        const response = await apiFetch("/users/profile", {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
@@ -38,7 +42,7 @@ const Profile = ({ user }) => {
 
         if (response.ok) {
           const data = await response.json();
-          if (data.user._id !== decodedToken._id) {
+          if (data.user._id !== decodedToken?._id) {
             navigate("/");
           } else {
             setEmail(data.user.email);
@@ -48,8 +52,7 @@ const Profile = ({ user }) => {
           navigate("/");
         }
       } catch (error) {
-        console.error("Failed to fetch user data", error);
-        navigate("/");
+        setError('Unable to load your profile. Please try again.');
       }
     };
 
@@ -59,12 +62,14 @@ const Profile = ({ user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (saving) return;
+    setSaving(true); setError(''); setSaved(false);
     const tokent = localStorage.getItem("token");
 
     const data = {
       email,
       name,
-      password,
+      ...(password ? { password } : {}),
     };
 
     const options = {
@@ -76,7 +81,13 @@ const Profile = ({ user }) => {
       body: JSON.stringify(data),
     };
 
-    const response = await fetch("http://localhost:5000/api/users/profile", options);
+    try {
+      const response = await apiFetch("/users/profile", options);
+      if (!response.ok) throw new Error('Request failed');
+      setPassword(''); setSaved(true);
+    } catch {
+      setError('Unable to save your profile. Your changes have been kept. Please try again.');
+    } finally { setSaving(false); }
   };
 
   if (!user) {
@@ -86,6 +97,8 @@ const Profile = ({ user }) => {
   return (
     <div className="profile-container">
       <h1>Profil</h1>
+      {error && <p role="alert">{error}</p>}
+      {saved && <p role="status">Profile saved.</p>}
       <div className="user">
         <h2>name : {name}</h2>
         <p>{email}</p>
@@ -116,7 +129,7 @@ const Profile = ({ user }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <button type="submit">Submit</button>
+          <button type="submit" disabled={saving}>{saving ? "Saving…" : "Submit"}</button>
         </form>
       </div>
     </div>
@@ -127,4 +140,4 @@ Profile.propTypes = {
   user: PropTypes.object,
 };
 
-export default Profile;
+export { Profile as Profil };
