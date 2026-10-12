@@ -1,6 +1,10 @@
 import { loginValidation, signupValidation, profileValidation } from '../validation/userValidation.js';
 import { User } from '../models/userModel.js';
-import { generateToken } from '../utils/jwt.js';
+import { randomBytes } from 'node:crypto';
+import bcrypt from 'bcryptjs';
+import { sessionOperation, clearSessionCookie } from '../config/session.js';
+import { trustedOrigin } from '../middleware/csrf.js';
+import { IDLE_MS } from '../utils/sessionPolicy.js';
 
 const profile = (user) => ({ _id: user._id, name: user.name, email: user.email, role: user.role });
 
@@ -17,16 +21,23 @@ export const signup = async (req, res) => {
   }
 };
 
-/** Verify credentials and issue an expiring configured token with projected user data. Invalid credentials return 401; never returns a password hash. */
+/** Verify credentials and persist a regenerated server session with projected user data. Invalid credentials return 401; never returns a password hash. */
 export const login = async (req, res) => {
   const { error, value } = loginValidation(req.body);
   if (error) return res.status(400).json({ message: 'Invalid login data' });
   try {
     const user = await User.findOne({ email: value.email }).select('+password');
     if (!user || !(await user.isValidPassword(value.password))) return res.status(401).json({ message: 'Invalid credentials' });
-    return res.status(200).json({ message: 'Logged in successfully', token: generateToken(user, req.app.locals.config), user: profile(user) });
+    await sessionOperation(req.session, 'regenerate');
+    const now = req.app.locals.now();
+    Object.assign(req.session, { userId: String(user._id), authVersion: user.authVersion || 0,
+      startedAt: now, csrfToken: randomBytes(32).toString('hex') });
+    req.session.cookie.maxAge = IDLE_MS;
+    await sessionOperation(req.session, 'save');
+    return res.status(200).json({ user: profile(user), csrfToken: req.session.csrfToken });
   } catch {
-    return res.status(500).json({ message: 'Unable to log in' });
+    req.session = null; clearSessionCookie(req, res);
+    return res.status(503).json({ message: 'Unable to log in' });
   }
 };
 
@@ -48,7 +59,20 @@ export const updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
-    Object.assign(user, value);
+    const { password, currentPassword, ...changes } = value;
+    if (password) {
+      const credential = await User.findById(req.user._id).select('+password');
+      if (!credential || !(await credential.isValidPassword(currentPassword)))
+        return res.status(401).json({ message: 'Invalid credentials' });
+      const hash = await bcrypt.hash(password, 12);
+      // Match the verified hash to prevent concurrent password changes from racing.
+      const updated = await User.findOneAndUpdate({ _id: user._id, password: credential.password },
+        { $set: { ...changes, password: hash }, $inc: { authVersion: 1 } }, { new: true });
+      if (!updated) return res.status(409).json({ message: 'Account changed. Sign in again.' });
+      await sessionOperation(req.session, 'destroy'); clearSessionCookie(req, res);
+      return res.json(profile(updated));
+    }
+    Object.assign(user, changes);
     await user.save();
     return res.json(profile(user));
   } catch {
@@ -58,3 +82,28 @@ export const updateUserProfile = async (req, res) => {
 
 /** Return the current account role established by authentication middleware. */
 export const getUserRole = async (req, res) => res.json({ role: req.user.role });
+
+/** Bootstrap a CSRF-protected visit without issuing a browser-readable credential. */
+export const getSession = async (req, res) => {
+  if (!trustedOrigin(req)) return res.status(403).json({ message: 'Request origin rejected' });
+  try {
+    if (req.session.userId) {
+      const user = await User.findById(req.session.userId);
+      if (user && (user.authVersion || 0) === req.session.authVersion) {
+        return res.json({ user: profile(user), csrfToken: req.session.csrfToken });
+      }
+      await sessionOperation(req.session, 'regenerate');
+    }
+    if (!req.session.csrfToken) {
+      const now = req.app.locals.now();
+      Object.assign(req.session, { startedAt: now, csrfToken: randomBytes(32).toString('hex') });
+      req.session.cookie.maxAge = IDLE_MS;
+      await sessionOperation(req.session, 'save');
+    }
+    return res.json({ user: null, csrfToken: req.session.csrfToken });
+  } catch { return res.status(503).json({ message: 'Session unavailable' }); }
+};
+export const logout = async (req, res) => {
+  try { await sessionOperation(req.session, 'destroy'); clearSessionCookie(req, res); return res.status(204).end(); }
+  catch { return res.status(503).json({ message: 'Unable to revoke session' }); }
+};

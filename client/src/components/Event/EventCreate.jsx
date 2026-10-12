@@ -2,10 +2,10 @@ import { apiFetch } from '../../api';
 import "./event.css";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { decodeSession } from "../../session";
+import { useSession } from "../../session";
 
 
-const CreateEvent = ({isLoggedIn}) => {
+const CreateEvent = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -15,11 +15,11 @@ const CreateEvent = ({isLoggedIn}) => {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const token = localStorage.getItem("token");
+  const { user: session, status } = useSession();
 
   useEffect(() => {
-    if (!decodeSession(token)) navigate('/login');
-  }, [token, navigate]);
+    if (status === 'anonymous') navigate('/login');
+  }, [status, navigate]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -35,7 +35,7 @@ const CreateEvent = ({isLoggedIn}) => {
     e.preventDefault();
 
     if (saving) return;
-    if (!decodeSession(token)) { setError('Please sign in before creating an event.'); return; }
+    if (!session) { setError('Please sign in before creating an event.'); return; }
     setSaving(true); setError('');
     const data = {
       title,
@@ -49,7 +49,7 @@ const CreateEvent = ({isLoggedIn}) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+
       },
       body: JSON.stringify(data),
     };
@@ -66,6 +66,8 @@ const CreateEvent = ({isLoggedIn}) => {
     } finally { setSaving(false); }
   };
 
+  if (status === 'loading') return <p role="status">Checking your session…</p>;
+  if (status === 'unavailable') return <p role="alert">Authentication unavailable. Your event cannot be submitted.</p>;
   return (
     <div className="container">
       <h1>Event Creation</h1>

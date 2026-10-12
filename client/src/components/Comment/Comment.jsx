@@ -2,13 +2,12 @@ import { apiFetch } from '../../api';
 import './comment.css';
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { decodeSession } from '../../session';
+import { useSession } from '../../session';
 
 /** View permitted comments anonymously; posting requires a current organizer session. */
 export const Comment = () => {
   const { id } = useParams();
-  const token = localStorage.getItem('token');
-  const session = decodeSession(token);
+  const { user: session, status } = useSession();
   const [comments, setComments] = useState([]);
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
@@ -16,12 +15,13 @@ export const Comment = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (status === 'loading') return;
     const controller = new AbortController();
     setComments([]); setLoading(true); setError('');
     const load = async () => {
       try {
         const response = await apiFetch(`/comments/events/${id}/comments`, {
-          signal: controller.signal, headers: decodeSession(token) ? { Authorization: `Bearer ${token}` } : {},
+          signal: controller.signal,
         });
         if (!response.ok) throw new Error('Request failed');
         const result = await response.json();
@@ -35,16 +35,16 @@ export const Comment = () => {
     };
     load();
     return () => controller.abort();
-  }, [id, token]);
+  }, [id, session, status]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (saving) return;
-    if (!decodeSession(token)) { setError('Please sign in before posting.'); return; }
+    if (!session) { setError('Please sign in before posting.'); return; }
     setSaving(true); setError('');
     try {
       const response = await apiFetch('/comments/add', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, event_id: id }),
       });
       if (!response.ok) throw new Error('Request failed');

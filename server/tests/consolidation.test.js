@@ -1,26 +1,25 @@
 import { readAppConfig } from '../config/appConfig.js';
 import { createApp } from '../app.js';
-import { generateToken } from '../utils/jwt.js';
+import { config, makeStore } from './sessionFixture.js';
 import { canReadEvent } from '../utils/access.js';
 import { publicEventFilter, readableEventFilter } from '../queries/eventAccess.js';
 import { passwordSchema } from '../validation/password.js';
-import jwt from 'jsonwebtoken';
 const id = '000000000000000000000001';
 const other = '000000000000000000000002';
-const config = { jwtSecret: 'synthetic-config-key', jwtExpiration: '5m', origin: 'http://localhost:3000', port: 5000 };
-test('app instances isolate signing configuration', () => {
-  const a = createApp(config); const b = createApp({ ...config, jwtSecret: 'different-synthetic-key' });
-  const token = generateToken({ _id: id, role: 'user' }, a.locals.config);
-  expect(jwt.verify(token, a.locals.config.jwtSecret)._id).toBe(id);
-  expect(() => jwt.verify(token, b.locals.config.jwtSecret)).toThrow();
+test('app instances isolate session configuration and require an explicit store', () => {
+  const a = createApp(config, { store: makeStore() });
+  const b = createApp({ ...config, sessionSecret: 'different-synthetic-secret-32bytes' }, { store: makeStore() });
+  expect(a.locals.config.sessionSecret).not.toBe(b.locals.config.sessionSecret);
   expect(Object.isFrozen(a.locals.config)).toBe(true);
+  expect(() => createApp(config)).toThrow('Session store is required');
 });
-test('configuration resolves supplied environment without global state', () => {
-  const env = { NODE_ENV: 'test', JWT_SECRET_TEST: config.jwtSecret, JWT_EXPIRATION_TEST: '5m', APP_URL_TEST: config.origin };
+test('configuration validates session key and production HTTPS', () => {
+  const env = { NODE_ENV: 'test', SESSION_SECRET_TEST: config.sessionSecret, APP_URL_TEST: config.origin };
   expect(readAppConfig(env)).toEqual(config);
   expect(() => readAppConfig({})).toThrow();
-  expect(() => readAppConfig({ ...env, JWT_EXPIRATION_TEST: 'invalid' })).toThrow();
+  expect(() => readAppConfig({ ...env, SESSION_SECRET_TEST: 'short' })).toThrow();
   expect(() => readAppConfig({ ...env, APP_URL_TEST: 'javascript:alert(1)' })).toThrow();
+  expect(() => readAppConfig({ NODE_ENV: 'production', SESSION_SECRET_PROD: config.sessionSecret, APP_URL_PROD: config.origin })).toThrow();
 });
 // Evaluate the adapter's narrow query shape to detect drift from the domain truth table.
 const matches = (event, filter) => filter.$or ? filter.$or.some((entry) => matches(event, entry)) : Object.entries(filter).every(([key, value]) => event[key] === value);

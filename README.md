@@ -193,17 +193,13 @@ Pour des instructions détaillées sur comment, quand et pourquoi mettre à jour
 
 Pour une documentation détaillée de l'API de HappiHub, veuillez consulter le fichier [API_DOCUMENTATION](docs/API_DOCUMENTATION.md). Ce document inclut des descriptions des endpoints, des paramètres, et des exemples de requêtes et de réponses.
 
-## Documentation de la Gestion des Tokens JWT
+## Authentication
 
-Nous avons ajouté une documentation complète pour la gestion des tokens JWT dans le projet HappiHub. Cette documentation couvre les aspects suivants :
+HappiHub now uses server-managed MongoDB sessions and HttpOnly cookies. Browser bearer
+JWT authentication and JWT refresh examples are historical. See the current
+[API contract](docs/API_DOCUMENTATION.md), [configuration](docs/CONFIGURATION.md), and
+[cookie-session specification](docs/architecture/specs/cookie-sessions.md).
 
-- Introduction à JWT et son utilisation dans HappiHub
-- Étapes détaillées pour générer des tokens JWT avec des exemples de codes
-- Méthodes pour valider des tokens JWT avec des exemples de code
-- Procédures pour rafraîchir des tokens JWT avec des exemples de code
-- Bonnes pratiques de sécurité pour la gestion des tokens JWT
-
-Pour consulter la documentation complète, veuillez suivre ce [JWT_DOCUMENTATION](docs/jwt/JWT_DOCUMENTATION.md).
 
 ## Guide Général
 

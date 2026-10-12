@@ -1,10 +1,10 @@
 import express from 'express';
-import { authenticateToken, optionalAuthentication } from '../middleware/auth.js';
+import { authenticateSession, optionalAuthentication } from '../middleware/auth.js';
 import { createEvent, getEvents, getEventsId, getPublicEvents, addAttendee } from '../controllers/eventController.js';
 const router = express.Router();
 router.get('/public', getPublicEvents);
-router.post('/', authenticateToken, createEvent);
-router.get('/', authenticateToken, getEvents);
+router.post('/', authenticateSession, createEvent);
+router.get('/', authenticateSession, getEvents);
 router.get('/:id', optionalAuthentication, getEventsId);
-router.patch('/:id', authenticateToken, addAttendee);
+router.patch('/:id', authenticateSession, addAttendee);
 export { router as eventRoutes };

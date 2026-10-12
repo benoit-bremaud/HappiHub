@@ -1,35 +1,27 @@
-import jwt from 'jsonwebtoken';
 import { User } from '../models/userModel.js';
+import { isSessionCurrent, ABSOLUTE_MS, IDLE_MS } from '../utils/sessionPolicy.js';
+import { clearSessionCookie, sessionOperation } from '../config/session.js';
 
-/** Verify the current account as well as the token, so stale roles are not trusted. */
-export const authenticateToken = async (req, res, next) => {
-  const match = /^Bearer ([^\s]+)$/.exec(req.get('Authorization') || '');
-  if (!match) return res.status(401).json({ message: 'Authentication required' });
-  const secret = req.app.locals.config.jwtSecret;
-  if (!secret) return res.status(503).json({ message: 'Authentication unavailable' });
-  let verified;
+/** Resolve current account authority; cached roles and legacy bearer tokens are never trusted. */
+export const authenticateSession = async (req, res, next) => {
+  if (!req.session?.userId || !isSessionCurrent(req.session, req.app.locals.now()))
+    return res.status(401).json({ message: 'Authentication required' });
   try {
-    verified = jwt.verify(match[1], secret, { algorithms: ['HS256'] });
-    if (!verified || typeof verified !== 'object' || !/^[a-f0-9]{24}$/i.test(verified._id || '') || !Number.isInteger(verified.exp)) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    const user = await User.findById(req.session.userId).select('_id role authVersion');
+    if (!user || (user.authVersion || 0) !== req.session.authVersion) {
+      await sessionOperation(req.session, 'destroy'); clearSessionCookie(req, res);
+      return res.status(401).json({ message: 'Authentication required' });
     }
-  } catch {
-    return res.status(401).json({ message: 'Invalid credentials' });
-  }
-  try {
-    const user = await User.findById(verified._id).select('_id role');
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    req.session.cookie.maxAge = Math.min(IDLE_MS, req.session.startedAt + ABSOLUTE_MS - req.app.locals.now());
     req.user = { _id: String(user._id), role: user.role };
     return next();
-  } catch {
-    return res.status(503).json({ message: 'Authentication unavailable' });
-  }
+  } catch { return res.status(503).json({ message: 'Authentication unavailable' }); }
 };
-
-/** Anonymous reads are allowed, but a supplied invalid credential still fails closed. */
-export const optionalAuthentication = (req, res, next) =>
-  req.get('Authorization') ? authenticateToken(req, res, next) : next();
-
+/** An expired visit may still read public events, but receives no owner authority. */
+export const optionalAuthentication = (req, res, next) => {
+  if (!req.session?.userId || !isSessionCurrent(req.session, req.app.locals.now())) return next();
+  return authenticateSession(req, res, next);
+};
 export const isAdmin = (req, res, next) => {
   if (req.user?.role !== 'admin') return res.status(403).json({ message: 'Access denied' });
   return next();

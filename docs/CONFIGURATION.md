@@ -1,23 +1,27 @@
-# Private configuration and credential cleanup
+# Runtime configuration
 
-Only .env.example files belong in version control. Local credentials and deployed settings use ignored files or the deployment secret store. Existing server environment files were removed from Git tracking but preserved on this machine with owner-only file permissions.
+Only `.env.example` belongs in Git. Local files and mounted secrets remain ignored.
+Use DEV keys in local development mode, TEST in tests, and PROD in production mode.
+These legacy suffixes are runtime keys, not additional environment tiers.
 
-## Current runtime
+Supply `SESSION_SECRET_<suffix>` with a freshly generated private key containing at least
+32 random bytes. Do not reuse former JWT keys. Startup accepts `SESSION_SECRET_PROD_FILE`
+and `MONGO_URI_PROD_FILE` for mounted production secrets. JWT keys and expiry settings
+are no longer used by the application authentication flow.
 
-For local execution, copy server/.env.example to server/.env.development if no local file already exists. Configure the DEV-suffixed variables and privately supply JWT_SECRET_DEV. For test-mode startup, use the TEST suffix; integration tests supply synthetic settings directly and do not read a database URI from these files. Production uses PROD suffix and settings supplied by the deployment operator. These suffixes are legacy runtime keys, not a new environment-tier convention.
+APP_URL is the exact browser origin. Production requires HTTPS. TRUSTED_PROXY, if set,
+is an explicit IP address or CIDR of the controlled reverse proxy, never a blanket boolean
+or unrestricted hop count. Compose trusts only the fixed runtime Nginx address.
+Client REACT_APP_API_URL includes /api and is public configuration, never a secret.
 
-Signing keys must be freshly generated privately before using an environment with real accounts. Existing local/test values were preserved, not certified safe or rotated. Do not reuse the former tracked values in deployments. Use an OS CSPRNG or secret manager; do not copy tutorial strings.
+Use the existing Mongo database for accounts and the sessions collection. The application
+identity needs readWrite permissions and permission to create the collection's TTL index.
+Session idle lifetime is 30 minutes and absolute lifetime eight hours. Anonymous bootstrap
+lifetime is 30 minutes. Expiry policy is checked before authority is granted, independent
+of physical TTL deletion. Session-store failures fail closed for protected requests.
 
-JWT expiration needs an explicit unit, such as 15m. Configure APP_URL with the exact origin and PORT with an integer. MONGO_URI must target the intended database. Client REACT_APP_API_URL includes /api and is public, never a secret.
+Local Docker uses the ignored server/.env.docker.local file. Follow [Docker workflows](DOCKER.md)
+for secret permissions, HTTPS gateway requirements and isolated volumes.
 
-## Compose
-
-Follow [Docker workflows](DOCKER.md). Local settings use ignored server/.env.docker.local. Production baseline uses a separate Compose file and private mounted secret files; credentials are never embedded in images or YAML. Existing database credentials are not rotated by changing initialization files.
-
-## Examples
-
-The REST file references accessToken from a private client environment. Get it through login; do not paste it into the repository. JWT tutorial examples reference private process.env values and nonfunctional token placeholders. API documentation describes actual endpoints, not all historical tutorial examples.
-
-## History and rotation
-
-Removing files from the current tree does not erase earlier commits. Verify whether tracked signing/database values were ever used by a live service. If used, rotate through that service's configuration and invalidate affected sessions in a coordinated rollout. No live target was established in this cleanup. No deployment rotation or history rewrite was performed.
+Earlier tracked values may still exist in Git history. Current source cleanup does not
+rotate deployed credentials or rewrite that history. Verify real deployments separately.

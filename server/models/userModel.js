@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
+  authVersion: { type: Number, default: 0 },
   name: {
     type: String,
     required: true,

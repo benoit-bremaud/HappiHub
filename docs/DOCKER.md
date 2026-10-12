@@ -10,7 +10,7 @@ Both build contexts exclude environment files, host node_modules, output and tes
 
 ## Local stack
 
-Create the ignored server/.env.docker.local file with a private JWT_SECRET_DEV and JWT_EXPIRATION_DEV=1h. Compose supplies database URI, port and CORS origin. The local database has no authentication but is confined to an internal network without any host port. Use synthetic data only.
+Create the ignored server/.env.docker.local file with a fresh private SESSION_SECRET_DEV (at least 32 random bytes). Compose supplies database URI, port and CORS origin. The local database has no authentication but is confined to an internal network without any host port. Use synthetic data only.
 
 ```sh
 docker compose -p happihub-local build
@@ -27,7 +27,7 @@ Use only docker-compose.prod.yml, not an override of the local file. Choose a di
 
 Supply a private HAPPIHUB_SECRETS_DIR with files:
 
-- jwt_key: signing key.
+- session_key: fresh session signing key (independent of former JWT keys).
 - mongo_root_user and mongo_root_password: database bootstrap administration identity.
 - mongo_app_user and mongo_app_password: separate application identity.
 - mongo_uri: URI for the application identity, mongodb://<app-user>:<encoded-app-password>@mongo:27017/happihub?authSource=happihub.
@@ -44,7 +44,11 @@ docker compose -f docker-compose.prod.yml -p happihub-prod config --quiet
 
 Startup resolves mounted signing/database files at the server boundary. The API receives readWrite access only to happihub, not Mongo root credentials. Application-user bootstrap runs on first initialization only. Changing files does not rotate existing database users; use an explicit coordinated rotation procedure. No existing volume is migrated automatically.
 
-Only the static web service publishes a loopback port. API and database are internal. Database is on a separate internal network; client cannot directly reach it. Public TLS/reverse proxy, backups/restores, resource limits, image scanning, deployment operations and session hardening remain to be validated before real use. HTTP origin was used only for disposable verification.
+Only the static web service publishes a loopback port. API and database are internal. Database is on a separate internal network; client cannot directly reach it. Production requires an external HTTPS gateway in front of the loopback web port. Runtime Nginx overwrites X-Forwarded-Proto with https and the API trusts only Nginx's explicit IP. This is an ingress contract: never publish the HTTP web port directly. Secure cookies cannot authenticate an HTTP browser visit. Nginx discards caller-supplied scheme values.
+
+The production frontend network defaults to 10.254.240.0/28 and Nginx to 10.254.240.2. The API uses 10.254.240.3 to avoid an automatic allocation taking the gateway address. Override HAPPIHUB_FRONTEND_SUBNET, HAPPIHUB_PROXY_IP and HAPPIHUB_API_IP together if the subnet conflicts. The API TRUSTED_PROXY tracks that same address. The local stack trusts no forwarded scheme headers.
+
+Backups/restores, resource limits, image scanning and deployment operations remain to be validated before real use. The old HTTP-only production smoke test does not validate cookie authentication. Cookie-session validation uses a disposable HTTPS gateway and isolated browser context.
 
 ## Health and lifecycle
 

@@ -3,22 +3,23 @@ import './event.css';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Card from '../Card/Card';
-import { decodeSession } from '../../session';
+import { useSession } from '../../session';
 /** Render public events, plus owned events for a signed-in user. */
 export const Event = () => {
   const { id } = useParams();
-  const token = localStorage.getItem('token');
+  const { user: session, status } = useSession();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
+    if (status === 'loading') return;
     const controller = new AbortController();
     setData([]); setError(''); setLoading(true);
     const load = async () => {
       try {
-        const authenticated = Boolean(decodeSession(token));
+        const authenticated = Boolean(session);
         const response = await apiFetch(authenticated ? '/events' : '/events/public', {
-          signal: controller.signal, headers: authenticated ? { Authorization: `Bearer ${token}` } : {},
+          signal: controller.signal,
         });
         if (!response.ok) throw new Error('Request failed');
         const result = await response.json();
@@ -28,7 +29,7 @@ export const Event = () => {
       } finally { if (!controller.signal.aborted) setLoading(false); }
     };
     load(); return () => controller.abort();
-  }, [id, token]);
+  }, [id, session, status]);
   return <div className="event-container">
     {loading && <p role="status">Loading…</p>}
     {error && <p role="alert">{error}</p>}

@@ -4,7 +4,7 @@ import "./profil.css";
 import { useEffect, useState } from "react";
 
 import PropTypes from "prop-types";
-import { decodeSession } from "../../session";
+import { useSession } from "../../session";
 import { useNavigate } from "react-router-dom";
 
 const Profile = ({ user }) => {
@@ -14,69 +14,33 @@ const Profile = ({ user }) => {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const token = localStorage.getItem("token");
+  const { user: session, status, refresh } = useSession();
+  const [currentPassword, setCurrentPassword] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    const getUser = async () => {
-      if (!token) {
-        navigate("/");
-        return;
-      }
-
-      try {
-        const decodedToken = decodeSession(token);
-
-        // Vérifiez si le token est expiré
-        if (!decodedToken) {
-          navigate("/");
-          return;
-        }
-
-        const response = await apiFetch("/users/profile", {
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.user._id !== decodedToken?._id) {
-            navigate("/");
-          } else {
-            setEmail(data.user.email);
-            setName(data.user.name);
-          }
-        } else {
-          navigate("/");
-        }
-      } catch (error) {
-        setError('Unable to load your profile. Please try again.');
-      }
-    };
-
-    getUser();
-  }, [token, navigate]);
+    if (status === 'anonymous') { navigate('/login'); return; }
+    if (session) { setEmail(session.email); setName(session.name); }
+  }, [session, status, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (saving) return;
     setSaving(true); setError(''); setSaved(false);
-    const tokent = localStorage.getItem("token");
+
 
     const data = {
       email,
       name,
-      ...(password ? { password } : {}),
+      ...(password ? { password, currentPassword } : {}),
     };
 
     const options = {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${tokent}`,
+
       },
       body: JSON.stringify(data),
     };
@@ -84,15 +48,17 @@ const Profile = ({ user }) => {
     try {
       const response = await apiFetch("/users/profile", options);
       if (!response.ok) throw new Error('Request failed');
-      setPassword(''); setSaved(true);
+      setPassword(''); setCurrentPassword(''); setSaved(true);
+      await refresh();
+      if (password) navigate('/login');
     } catch {
       setError('Unable to save your profile. Your changes have been kept. Please try again.');
     } finally { setSaving(false); }
   };
 
-  if (!user) {
-    return <div>Chargement du profil...</div>;
-  }
+  if (status === 'loading') return <p role="status">Checking your session…</p>;
+  if (status === 'unavailable') return <p role="alert">Authentication unavailable.</p>;
+  if (!session) return null;
 
   return (
     <div className="profile-container">
@@ -129,6 +95,9 @@ const Profile = ({ user }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          {password && <><label htmlFor="current-password">Current password</label>
+            <input id="current-password" type="password" value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)} required /></>}
           <button type="submit" disabled={saving}>{saving ? "Saving…" : "Submit"}</button>
         </form>
       </div>

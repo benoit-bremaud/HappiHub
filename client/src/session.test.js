@@ -1,10 +1,24 @@
-import { decodeSession } from './session';
-const token = (value) => `e30.${btoa(JSON.stringify(value))}.signature`;
-test('malformed, absent and expired credentials are rejected', () => {
-  expect(decodeSession(null)).toBeNull(); expect(decodeSession('bad')).toBeNull();
-  expect(decodeSession(token({ _id: 'user', exp: 1 }))).toBeNull();
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { SessionProvider, useSession } from './session';
+const Consumer = () => { const { user, status, refresh } = useSession(); return <div>{status} {user?.name}<button onClick={refresh}>Refresh</button></div>; };
+afterEach(() => { delete global.fetch; localStorage.clear(); });
+test('bootstrap restores server-confirmed account and removes only legacy token', async () => {
+  localStorage.setItem('token', 'legacy'); localStorage.setItem('preference', 'keep');
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ user: { name: 'Owner' }, csrfToken: 'csrf' }) });
+  render(<SessionProvider><Consumer /></SessionProvider>);
+  expect(await screen.findByText(/authenticated Owner/)).toBeInTheDocument();
+  expect(localStorage.getItem('token')).toBeNull(); expect(localStorage.getItem('preference')).toBe('keep');
 });
-test('valid unexpired credential can restore browser state', () => {
-  const value = { _id: 'user', exp: Math.floor(Date.now() / 1000) + 60 };
-  expect(decodeSession(token(value))).toEqual(value);
+test('outage is unavailable rather than authenticated and explicit retry recovers', async () => {
+  global.fetch = jest.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ ok: true, json: async () => ({ user: null, csrfToken: 'csrf' }) });
+  render(<SessionProvider><Consumer /></SessionProvider>);
+  await screen.findByText(/unavailable/); fireEvent.click(screen.getByText('Refresh'));
+  await waitFor(() => expect(screen.getByText(/anonymous/)).toBeInTheDocument());
+});
+
+test('StrictMode bootstrap is deduplicated to prevent competing anonymous cookies', async () => {
+  const { StrictMode } = require('react');
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ user: null, csrfToken: 'csrf' }) });
+  render(<StrictMode><SessionProvider><Consumer /></SessionProvider></StrictMode>);
+  await screen.findByText(/anonymous/); expect(fetch).toHaveBeenCalledTimes(1);
 });

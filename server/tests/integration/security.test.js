@@ -1,3 +1,5 @@
+import { createSessionStore } from '../../config/session.js';
+import { config, origin } from '../sessionFixture.js';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
@@ -7,33 +9,44 @@ import Event from '../../models/eventModel.js';
 import Comment from '../../models/commentModel.js';
 
 let database;
-const app = createApp({ jwtSecret: 'synthetic-integration-key', jwtExpiration: '5m', origin: 'http://localhost:3000' });
+let app, store;
 const password = 'Synthetic-password-123';
 let owner, outsider, token, outsiderToken;
-const login = (email, input = password) => request(app).post('/api/users/login').send({ email, password: input });
-const authenticated = (query, credential = token) => query.set('Authorization', `Bearer ${credential}`);
+const login = async (email, input = password) => {
+  const bootstrap = await request(app).get('/api/users/session').set('Origin', origin);
+  return request(app).post('/api/users/login').set('Origin', origin)
+    .set('Cookie', bootstrap.headers['set-cookie']).set('X-CSRF-Token', bootstrap.body.csrfToken)
+    .send({ email, password: input });
+};
+const credential = (response) => ({ cookie: response.headers['set-cookie'], csrf: response.body.csrfToken });
+const authenticated = (query, identity = token) => query.set('Origin', origin)
+  .set('Cookie', identity.cookie).set('X-CSRF-Token', identity.csrf);
 const eventData = { title: 'Synthetic event', description: 'Synthetic description', date: '2030-01-01', location: 'Test venue' };
 
 beforeAll(async () => {
   // Never consult an existing connection URI: only connect to this loopback process.
   database = await MongoMemoryServer.create({ binary: { version: '7.0.40', checkMD5: true }, instance: { ip: '127.0.0.1', dbName: 'happihub_integration' } });
   await mongoose.connect(database.getUri(), { serverSelectionTimeoutMS: 10000 });
+  store = createSessionStore(mongoose.connection.getClient(), mongoose.connection.name);
+  app = createApp(config, { store });
   await Promise.all([User.init(), Event.init(), Comment.init()]);
 }, 120000);
 beforeEach(async () => {
   await Promise.all([User.deleteMany({}), Event.deleteMany({}), Comment.deleteMany({})]);
+  store.removeAllListeners('connect'); store.removeAllListeners('disconnect');
+  app = createApp(config, { store });
   owner = await User.create({ name: 'Synthetic owner', email: 'owner@example.com', password });
   outsider = await User.create({ name: 'Synthetic outsider', email: 'outsider@example.com', password });
-  token = (await login(owner.email)).body.token;
-  outsiderToken = (await login(outsider.email)).body.token;
-  expect(token).toEqual(expect.any(String)); expect(outsiderToken).toEqual(expect.any(String));
+  token = credential(await login(owner.email));
+  outsiderToken = credential(await login(outsider.email));
+  expect(token.csrf).toEqual(expect.any(String)); expect(outsiderToken.csrf).toEqual(expect.any(String));
 });
 afterAll(async () => {
-  try { await mongoose.disconnect(); } finally { if (database) await database.stop(); }
+  try { if (store) await store.close(); await mongoose.disconnect(); } finally { if (database) await database.stop(); }
 });
 
 test('HTTP signup stores a hash and ordinary role; normal queries exclude password', async () => {
-  const res = await request(app).post('/api/users/signup').send({ name: 'Synthetic new', email: 'new@example.com', password });
+  const res = await authenticated(request(app).post('/api/users/signup')).send({ name: 'Synthetic new', email: 'new@example.com', password });
   expect(res.status).toBe(201);
   const stored = await User.findOne({ email: 'new@example.com' }).select('+password');
   expect(stored.password).not.toBe(password); expect(await stored.isValidPassword(password)).toBe(true); expect(stored.role).toBe('user');
@@ -47,12 +60,12 @@ test('real login rejects incorrect password and profile response excludes hash',
 test('profile changes preserve password unless explicitly changed, then rehash it', async () => {
   expect((await authenticated(request(app).put('/api/users/profile')).send({ name: 'Updated owner' })).status).toBe(200);
   expect((await login(owner.email)).status).toBe(200);
-  expect((await authenticated(request(app).put('/api/users/profile')).send({ password: 'New-synthetic-password' })).status).toBe(200);
+  expect((await authenticated(request(app).put('/api/users/profile')).send({ password: 'New-synthetic-password', currentPassword: password })).status).toBe(200);
   expect((await login(owner.email)).status).toBe(401);
   expect((await login(owner.email, 'New-synthetic-password')).status).toBe(200);
 });
 test('signup cannot create an administrator and unique email index is enforced', async () => {
-  const res = await request(app).post('/api/users/signup').send({ name: 'Synthetic admin', email: 'admin@example.com', password, role: 'admin' });
+  const res = await authenticated(request(app).post('/api/users/signup')).send({ name: 'Synthetic admin', email: 'admin@example.com', password, role: 'admin' });
   expect(res.status).toBe(400); expect(await User.countDocuments({ email: 'admin@example.com' })).toBe(0);
   await expect(User.create({ name: 'Duplicate', email: owner.email, password })).rejects.toMatchObject({ code: 11000 });
 });
@@ -101,11 +114,46 @@ test('concurrent participation stores one account entry and denies private outsi
   await Event.updateOne({ _id: event._id }, { isPrivate: true });
   expect((await authenticated(request(app).patch(path), outsiderToken).send({})).status).toBe(404);
 });
-test('deleted accounts cannot continue using a signed token', async () => {
+test('deleted accounts cannot continue using a cookie session', async () => {
   await User.deleteOne({ _id: owner._id });
   expect((await authenticated(request(app).get('/api/users/profile'))).status).toBe(401);
 });
 
 test('readiness succeeds for an established database connection', async () => {
   const res = await request(app).get('/ready'); expect(res.status).toBe(200); expect(res.body).toEqual({ ready: true });
+});
+
+test('logout remains revoked during an in-flight read and store survives app recreation', async () => {
+  const recreated = createApp(config, { store });
+  const resumed = await request(recreated).get('/api/users/profile').set('Cookie', token.cookie);
+  expect(resumed.status).toBe(200);
+  let release, entered;
+  const gate = new Promise(resolve => { release = resolve; });
+  const began = new Promise(resolve => { entered = resolve; });
+  app.get('/api/slow-read', async (_req, res) => { entered(); await gate; res.json({ ok: true }); });
+  const reading = authenticated(request(app).get('/api/slow-read')).then(response => response);
+  await began;
+  expect((await authenticated(request(app).post('/api/users/logout')).send({})).status).toBe(204);
+  release(); await reading;
+  expect((await authenticated(request(app).get('/api/users/profile'))).status).toBe(401);
+});
+test('password change invalidates a second session and requires the current password', async () => {
+  const second = credential(await login(owner.email));
+  expect((await authenticated(request(app).put('/api/users/profile')).send({ password: 'Replacement-password' })).status).toBe(400);
+  expect((await authenticated(request(app).put('/api/users/profile')).send({ password: 'Replacement-password', currentPassword: 'Wrong-password' })).status).toBe(401);
+  expect((await authenticated(request(app).put('/api/users/profile')).send({ password: 'Replacement-password', currentPassword: password })).status).toBe(200);
+  expect((await authenticated(request(app).get('/api/users/profile'), second)).status).toBe(401);
+  const bootstrap = await request(app).get('/api/users/session').set('Origin', origin).set('Cookie', second.cookie);
+  expect(bootstrap.status).toBe(200); expect(bootstrap.body.user).toBeNull();
+});
+test('Mongo touch renews activity without restoring a destroyed session', async () => {
+  const collection = mongoose.connection.db.collection('sessions');
+  const document = await collection.findOne({ 'session': { $regex: String(owner._id) } });
+  expect(document).not.toBeNull();
+  const stored = await new Promise((resolve, reject) => store.get(document._id, (error, value) => error ? reject(error) : resolve(value)));
+  expect(stored.lastModified).toBeInstanceOf(Date);
+  await collection.updateOne({ _id: document._id }, { $set: { lastModified: new Date(Date.now() - 2000) } });
+  expect((await authenticated(request(app).get('/api/users/role'))).status).toBe(200);
+  const renewed = await collection.findOne({ _id: document._id });
+  expect(renewed.lastModified.getTime()).toBeGreaterThan(document.lastModified.getTime());
 });

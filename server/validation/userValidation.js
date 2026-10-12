@@ -52,4 +52,5 @@ export const profileValidation = (data) => Joi.object({
   name: Joi.string().min(3).max(100),
   email: Joi.string().email().max(254),
   password: passwordSchema,
+  currentPassword: Joi.string().max(72).when('password', { is: Joi.exist(), then: Joi.required(), otherwise: Joi.forbidden() }),
 }).min(1).validate(data);

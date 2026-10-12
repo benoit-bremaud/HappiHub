@@ -7,15 +7,17 @@ import { EventInfo } from './components/Event/EventInfo';
 import { EventCreate } from './components/Event/EventCreate';
 import { Profil } from './components/Profil/Profil';
 const account = '000000000000000000000001';
-const signIn = () => localStorage.setItem('token', `e30.${btoa(JSON.stringify({ _id: account, exp: Math.floor(Date.now()/1000)+3600 }))}.signature`);
+let mockSessionState;
+const signIn = () => { mockSessionState = { user: { _id: account, name: 'Original', email: 'audit@example.com' }, status: 'authenticated', refresh: jest.fn().mockResolvedValue(undefined) }; };
+jest.mock('./session', () => ({ useSession: () => mockSessionState }));
 const reply = (body, ok = true) => Promise.resolve({ ok, json: async () => body });
 const mount = (element) => render(<MemoryRouter initialEntries={['/events/abc']}><Routes><Route path="/events/:id" element={element} /><Route path="/login" element={<p>Login screen</p>} /></Routes></MemoryRouter>);
-beforeEach(() => { localStorage.clear(); global.fetch = jest.fn(); });
+beforeEach(() => { localStorage.clear(); mockSessionState = { user: null, status: 'anonymous' }; global.fetch = jest.fn(); });
 afterEach(() => { jest.restoreAllMocks(); delete global.fetch; });
 test('anonymous comments render without private author objects', async () => {
   fetch.mockImplementation(() => reply([{ _id: 'c1', content: 'Public comment' }])); mount(<Comment />);
   expect(await screen.findByText('Public comment')).toBeInTheDocument();
-  expect(fetch.mock.calls[0][1].headers).toEqual({});
+  expect([...fetch.mock.calls[0][1].headers]).toEqual([]);
   expect(screen.getByRole('link', { name: /sign in/i })).toBeInTheDocument();
 });
 test('posting appends secured response without author identity', async () => {
@@ -35,20 +37,20 @@ test('failed comments preserve text', async () => {
 });
 test('anonymous event detail omits credentials', async () => {
   fetch.mockImplementation((url) => reply(url.includes('/comments/') ? [] : { _id: 'abc', title: 'Public event', description: 'Details' })); await act(async () => { mount(<EventInfo />); });
-  expect(await screen.findByText('Public event')).toBeInTheDocument(); await screen.findByRole('heading', { name: 'Comments' }); await waitFor(() => expect(screen.queryByText('Loading comments…')).not.toBeInTheDocument()); expect(fetch.mock.calls.every(([, options]) => !options.headers.Authorization)).toBe(true);
+  expect(await screen.findByText('Public event')).toBeInTheDocument(); await screen.findByRole('heading', { name: 'Comments' }); await waitFor(() => expect(screen.queryByText('Loading comments…')).not.toBeInTheDocument()); expect(fetch.mock.calls.every(([, options]) => !options.headers.has('Authorization'))).toBe(true);
 });
 test('anonymous listing uses public endpoint', async () => {
   fetch.mockImplementation(() => reply([])); mount(<Event />); await waitFor(() => expect(screen.queryByText('Loading…')).not.toBeInTheDocument());
-  expect(fetch.mock.calls[0][0]).toMatch(/events\/public$/); expect(fetch.mock.calls[0][1].headers).toEqual({});
+  expect(fetch.mock.calls[0][0]).toMatch(/events\/public$/); expect([...fetch.mock.calls[0][1].headers]).toEqual([]);
 });
 test('profile edits omit unchanged password', async () => {
-  signIn(); fetch.mockImplementationOnce(() => reply({ user: { _id: account, name: 'Original', email: 'audit@example.com' } })).mockImplementationOnce(() => reply({}));
+  signIn(); fetch.mockImplementationOnce(() => reply({}));
   mount(<Profil user={{ _id: account }} />); await screen.findByDisplayValue('Original');
   fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Updated' } }); fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
-  expect(await screen.findByText('Profile saved.')).toBeInTheDocument(); expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({ name: 'Updated', email: 'audit@example.com' });
+  expect(await screen.findByText('Profile saved.')).toBeInTheDocument(); expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({ name: 'Updated', email: 'audit@example.com' });
 });
 test('profile failures retain edits', async () => {
-  signIn(); fetch.mockImplementationOnce(() => reply({ user: { _id: account, name: 'Original', email: 'audit@example.com' } })).mockRejectedValueOnce(new Error('offline'));
+  signIn(); fetch.mockRejectedValueOnce(new Error('offline'));
   mount(<Profil user={{ _id: account }} />); await screen.findByDisplayValue('Original'); fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Updated' } }); fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
   expect(await screen.findByRole('alert')).toHaveTextContent(/changes have been kept/); expect(screen.getByLabelText('Name')).toHaveValue('Updated');
 });
@@ -70,5 +72,5 @@ test('expired credentials are omitted from public listing', async () => {
   localStorage.setItem('token', `e30.${btoa(JSON.stringify({ _id: account, exp: 1 }))}.signature`);
   fetch.mockImplementation(() => reply([])); mount(<Event />);
   await waitFor(() => expect(screen.queryByText('Loading…')).not.toBeInTheDocument());
-  expect(fetch.mock.calls[0][0]).toMatch(/events\/public$/); expect(fetch.mock.calls[0][1].headers).toEqual({});
+  expect(fetch.mock.calls[0][0]).toMatch(/events\/public$/); expect([...fetch.mock.calls[0][1].headers]).toEqual([]);
 });

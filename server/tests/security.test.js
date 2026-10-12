@@ -1,5 +1,5 @@
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
+import { config, makeStore, seedSession, browserWrite } from './sessionFixture.js';
 import { createApp } from '../app.js';
 import { User } from '../models/userModel.js';
 import Event from '../models/eventModel.js';
@@ -8,38 +8,38 @@ import Comment from '../models/commentModel.js';
 const owner = '000000000000000000000001';
 const other = '000000000000000000000002';
 const eventId = '000000000000000000000003';
-const secret = 'synthetic-test-key-not-a-credential';
 let app;
-const token = (id = owner) => jwt.sign({ _id: id, role: 'admin' }, secret, { expiresIn: '5m' });
-const auth = (query) => query.set('Authorization', `Bearer ${token()}`);
-beforeEach(() => {
-  app = createApp({ jwtSecret: secret, jwtExpiration: '5m', origin: 'http://localhost:3000' });
+
+const auth = (query) => browserWrite(query);
+beforeEach(async () => {
+  const store = makeStore();
+  await seedSession(store, owner);
+  app = createApp(config, { store });
   jest.spyOn(User, 'findById').mockReturnValue({ select: async () => ({ _id: owner, role: 'user' }) });
 });
 afterEach(() => jest.restoreAllMocks());
 
 test('incorrect passwords cannot issue a token', async () => {
   jest.spyOn(User, 'findOne').mockReturnValue({ select: async () => ({ isValidPassword: async () => false }) });
-  const res = await request(app).post('/api/users/login').send({ email: 'audit@example.com', password: 'incorrect' });
+  const res = await browserWrite(request(app).post('/api/users/login')).send({ email: 'audit@example.com', password: 'incorrect' });
   expect(res.status).toBe(401); expect(res.body.token).toBeUndefined();
 });
-test('valid password issues a token without exposing the hash', async () => {
+test('valid password issues a session without exposing the hash', async () => {
   jest.spyOn(User, 'findOne').mockReturnValue({ select: async () => ({ _id: owner, role: 'user', password: 'hash', isValidPassword: async () => true }) });
-  const res = await request(app).post('/api/users/login').send({ email: 'audit@example.com', password: 'correct-password' });
-  expect(res.status).toBe(200); expect(jwt.verify(res.body.token, secret)._id).toBe(owner); expect(res.body.user.password).toBeUndefined();
+  const res = await browserWrite(request(app).post('/api/users/login')).send({ email: 'audit@example.com', password: 'correct-password' });
+  expect(res.status).toBe(200); expect(res.body.user._id).toBe(owner); expect(res.body.user.password).toBeUndefined();
 });
 test('signup rejects administrator privileges before database access', async () => {
   const spy = jest.spyOn(User, 'findOne');
-  const res = await request(app).post('/api/users/signup').send({ name: 'Audit', email: 'audit@example.com', password: 'password', role: 'admin' });
+  const res = await browserWrite(request(app).post('/api/users/signup')).send({ name: 'Audit', email: 'audit@example.com', password: 'password', role: 'admin' });
   expect(res.status).toBe(400); expect(spy).not.toHaveBeenCalled();
 });
 test.each([undefined, 'Bearer invalid', 'Basic abc'])('invalid credentials fail safely: %s', async (header) => {
   let query = request(app).get('/api/users/profile'); if (header) query = query.set('Authorization', header);
   expect((await query).status).toBe(401);
 });
-test('expired tokens are rejected', async () => {
-  const expired = jwt.sign({ _id: owner }, secret, { expiresIn: -1 });
-  expect((await request(app).get('/api/users/profile').set('Authorization', `Bearer ${expired}`)).status).toBe(401);
+test('legacy bearer credentials are rejected', async () => {
+  expect((await request(app).get('/api/users/profile').set('Authorization', 'Bearer legacy')).status).toBe(401);
 });
 test('private event cannot be read by another account', async () => {
   jest.spyOn(Event, 'findById').mockResolvedValue({ creator: other, isPrivate: true, status: 'approved' });
@@ -66,7 +66,7 @@ test('private comments are hidden before querying comments', async () => {
   expect(spy).not.toHaveBeenCalled();
 });
 test.each(['/api/events', '/api/comments/add'])('forged authorship rejected: %s', async (path) => {
-  const res = await auth(request(app).post(path)).send({ creator: other, user_id: other }); expect(res.status).toBe(403);
+  const res = await auth(browserWrite(request(app).post(path))).send({ creator: other, user_id: other }); expect(res.status).toBe(403);
 });
 test('profile mutations reject privilege changes', async () => {
   expect((await auth(request(app).put('/api/users/profile')).send({ role: 'admin' })).status).toBe(400);
@@ -80,24 +80,24 @@ test('database errors do not disclose internals', async () => {
   const res = await request(app).get('/api/events/public'); expect(res.status).toBe(500); expect(JSON.stringify(res.body)).not.toContain('sensitive');
 });
 test('malformed JSON returns a generic client error', async () => {
-  const res = await request(app).post('/api/users/login').set('Content-Type', 'application/json').send('{broken'); expect(res.status).toBe(400); expect(res.body).toEqual({ message: 'Invalid request' });
+  const res = await browserWrite(request(app).post('/api/users/login').set('Content-Type', 'application/json')).send('{broken'); expect(res.status).toBe(400); expect(res.body).toEqual({ message: 'Invalid request' });
 });
 test('event creation persists authenticated author and pending status', async () => {
   let saved;
   jest.spyOn(Event.prototype, 'save').mockImplementation(async function () { saved = this; return this; });
-  const res = await auth(request(app).post('/api/events')).send({ title: 'Event title', description: 'Event description', date: '2030-01-01', location: 'Paris' });
+  const res = await auth(browserWrite(request(app).post('/api/events'))).send({ title: 'Event title', description: 'Event description', date: '2030-01-01', location: 'Paris' });
   expect(res.status).toBe(201); expect(String(saved.creator)).toBe(owner); expect(saved.status).toBe('pending');
 });
 test('invalid image payload fails before persistence', async () => {
   const spy = jest.spyOn(Event.prototype, 'save');
-  const res = await auth(request(app).post('/api/events')).send({ title: 'Event title', description: 'Event description', date: '2030-01-01', location: 'Paris', image: 'data:image/png;base64,YWJjZA==' });
+  const res = await auth(browserWrite(request(app).post('/api/events'))).send({ title: 'Event title', description: 'Event description', date: '2030-01-01', location: 'Paris', image: 'data:image/png;base64,YWJjZA==' });
   expect(res.status).toBe(400); expect(spy).not.toHaveBeenCalled();
 });
 test('comment creation persists authenticated author', async () => {
   jest.spyOn(Event, 'findById').mockResolvedValue({ creator: owner, isPrivate: true });
   let saved;
   jest.spyOn(Comment.prototype, 'save').mockImplementation(async function () { saved = this; return this; });
-  const res = await auth(request(app).post('/api/comments/add')).send({ content: 'Hello', event_id: eventId });
+  const res = await auth(browserWrite(request(app).post('/api/comments/add'))).send({ content: 'Hello', event_id: eventId });
   expect(res.status).toBe(201); expect(String(saved.user_id)).toBe(owner);
 });
 test('participation uses authenticated account and atomic duplicate prevention', async () => {
@@ -117,7 +117,7 @@ test('ordinary signup saves only ordinary privileges and does not log passwords'
   let saved;
   jest.spyOn(User.prototype, 'save').mockImplementation(async function () { saved = this; return this; });
   const log = jest.spyOn(console, 'log').mockImplementation(() => {});
-  const res = await request(app).post('/api/users/signup').send({ name: 'Audit', email: 'audit@example.com', password: 'password' });
+  const res = await browserWrite(request(app).post('/api/users/signup')).send({ name: 'Audit', email: 'audit@example.com', password: 'password' });
   expect(res.status).toBe(201); expect(saved.role).toBe('user'); expect(log).not.toHaveBeenCalled();
 });
 test('validated profile mutation saves only allowed data', async () => {

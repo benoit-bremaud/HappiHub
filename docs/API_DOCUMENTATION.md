@@ -4,9 +4,13 @@ This documents the current local security branch, not a deployed release. The AP
 
 ## Authentication and visibility
 
-Protected endpoints require `Authorization: Bearer <access-token>`. Tokens use HS256, contain an account ID and role, and expire according to server configuration. Each protected request also reloads the account: deleted accounts are denied and stale token roles are not authoritative.
+Protected endpoints use server-managed MongoDB sessions and an HttpOnly cookie. Legacy bearer JWTs are no longer accepted. Each protected request reloads the account's current role and authentication version. Deleted accounts and revoked sessions cannot authenticate.
 
-Optional-authentication endpoints accept anonymous requests without that header. A supplied invalid or expired credential is rejected with 401 rather than treated as anonymous. `/events/public` is an anonymous read and does not process credentials.
+First call `GET /users/session` with the exact configured Origin (or a matching browser Referer). It returns `{ user, csrfToken }`, creating a short-lived anonymous session when needed. Send its cookie using browser credentials and the in-memory `X-CSRF-Token` on every POST/PUT/PATCH/DELETE, including signup, login and logout. Writes require JSON and exact Origin, with exact Referer-origin fallback. Responses under /api use `Cache-Control: no-store`.
+
+Login regenerates both the identifier and CSRF token. Logout destroys the stored session and clears the cookie. Authenticated sessions expire after 30 minutes of inactivity or eight hours total. Anonymous bootstrap sessions expire after 30 minutes without extending their absolute deadline. Mongo TTL cleanup is not the authority check. Optional reads treat expired visits as anonymous without granting owner access.
+
+Local HTTP cookies use `happihub.sid`. Production uses `__Host-happihub.sid`, Secure, HttpOnly, SameSite=Lax, Path=/ and no Domain, behind a verified HTTPS entry point.
 
 An event is public only when `isPrivate` is false and `status` is `approved`. Owners can read their own events in any current moderation state. Other private, pending or rejected event reads return 404. This rule also protects associated comments. There is no administrator visibility exception in the current event policy.
 
@@ -14,8 +18,10 @@ An event is public only when `isPrivate` is false and `status` is `approved`. Ow
 
 | Method | Path under /api | Authentication | Success |
 | --- | --- | --- | --- |
-| POST | /users/signup | None | 201 registration message |
-| POST | /users/login | None | 200 token and projected user |
+| GET | /users/session | Public bootstrap | 200 user and CSRF token |
+| POST | /users/logout | Session + CSRF | 204 revoked session |
+| POST | /users/signup | Anonymous session + CSRF | 201 registration message |
+| POST | /users/login | Anonymous session + CSRF | 200 projected user and new CSRF token |
 | GET | /users/profile | Required | 200 projected user wrapper |
 | PUT | /users/profile | Required | 200 projected user |
 | GET | /users/role | Required | 200 current role |
@@ -57,24 +63,18 @@ Send `email` and `password` only. The same email/password limits apply. Invalid 
 
 ```json
 {
-  "message": "Logged in successfully",
-  "token": "<ACCESS_TOKEN>",
-  "user": {
-    "_id": "000000000000000000000001",
-    "name": "Example organizer",
-    "email": "organizer@example.com",
-    "role": "user"
-  }
+  "user": { "_id": "000000000000000000000001", "name": "Example organizer", "email": "organizer@example.com", "role": "user" },
+  "csrfToken": "<SESSION_BOUND_CSRF_TOKEN>"
 }
 ```
 
-This is an illustrative response; the token placeholder is not a usable credential.
+The identifier is sent in Set-Cookie and is absent from JSON. Persistence failure returns 503.
 
 ### Profile and role
 
 `GET /users/profile` returns `{ "user": { "_id", "name", "email", "role" } }`. `PUT /users/profile` returns that projected user directly, without the wrapper. Password hashes and internal permissions are never part of those response contracts.
 
-Profile changes accept one or more of `name`, `email`, and `password`. Name and password limits match registration; email must be valid and at most 254 characters. Omit `password` when unchanged; an empty password is invalid. Role changes and other unknown fields are rejected. Password changes run the hashing hook. Database conflicts currently return a generic 500, not a dedicated conflict response.
+Profile changes accept one or more of `name`, `email`, and `password`. Name and password limits match registration; email must be valid and at most 254 characters. Omit `password` when unchanged; an empty password is invalid. Role changes and other unknown fields are rejected. Password changes explicitly hash the replacement before the atomic password/version update. Database conflicts currently return a generic 500, not a dedicated conflict response.
 
 `GET /users/role` returns `{ "role": "user" }` or the account's current stored role.
 
@@ -120,16 +120,23 @@ Created comment response fields: `_id`, `content`, `event_id`. Listing fields: `
 
 ## Errors and limits
 
-Errors use `{ "message": "..." }`, without stack traces or database internals. Principal statuses are 400 invalid input, 401 missing/invalid authentication, 403 forged identity, 404 missing/unreadable resource, 413 oversized request, 500 internal failure, and 503 unavailable authentication infrastructure.
+Errors use `{ "message": "..." }`, without stack traces or database internals. Principal statuses are 400 invalid input, 401 missing/invalid authentication, 403 rejected CSRF/origin or forged identity, 415 non-JSON write, 429 rate limit, 404 missing/unreadable resource, 413 oversized request, 500 internal failure, and 503 unavailable authentication infrastructure.
 
-JSON and URL-encoded request bodies have a 10 MiB limit. Image limits are narrower. The configured CORS origin is not an authorization mechanism. Rate limiting, session revocation, security headers and broader deployment hardening are outstanding.
+JSON request bodies have a 10 MiB limit. Write endpoints reject other content types with 415. Image limits are narrower. The configured CORS origin is not an authorization mechanism. Bootstrap is limited to 120 requests per IP per 15 minutes and login to 20 per IP per 15 minutes, with 429 and Retry-After. Counters are process-local and reset on restart; multiple replicas require a shared limiter before deployment. Security headers and broader deployment hardening remain outstanding.
 
 ## Absent capabilities
 
-There is no server logout or refresh route. Browser logout removes its local token; it does not revoke a copied token. Event editing, deletion, approval, comment editing/deletion, ticketing and booking are not implemented routes. Older examples describing these capabilities were inaccurate.
+Server logout and session bootstrap are implemented. There is no JWT refresh route. Event editing, deletion, approval, comment editing/deletion, ticketing and booking are not implemented routes. Older examples describing these capabilities were inaccurate.
 
 ## Verification commands
 
 From `server/`, run `npm test -- --runInBand` for fast tests and `npm run test:integration` for real database tests. The integration suite pins MongoDB 7.0.40, binds loopback, obtains its URI from its own disposable process, initializes indexes, resets synthetic collections, disconnects and stops the process. It never reads existing MongoDB URIs. First run may download the pinned binary and verify its archive checksum.
 
 A standalone test process does not validate production topology, database credentials, TLS, backups, replica-set transactions or browser E2E behavior. MongoDB is the current implementation and will be reassessed during the future conception study.
+
+## Password changes
+
+PUT /users/profile accepts name/email changes as before. When password is supplied,
+currentPassword is required and verified. The password hash and authentication version
+change atomically, all existing sessions lose authority, and the current cookie is cleared.
+The user signs in again. No session/device management UI is included.

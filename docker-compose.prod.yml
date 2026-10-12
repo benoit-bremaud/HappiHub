@@ -8,7 +8,9 @@ services:
         REACT_APP_API_URL: /api
     ports:
       - "127.0.0.1:${HAPPIHUB_PROD_WEB_PORT:-8080}:8080"
-    networks: [frontend]
+    networks:
+      frontend:
+        ipv4_address: "${HAPPIHUB_PROXY_IP:-10.254.240.2}"
     depends_on:
       server:
         condition: service_healthy
@@ -25,15 +27,18 @@ services:
       target: runtime
     environment:
       NODE_ENV: production
-      JWT_SECRET_PROD_FILE: /run/secrets/jwt_key
-      JWT_EXPIRATION_PROD: 15m
+      SESSION_SECRET_PROD_FILE: /run/secrets/session_key
+      TRUSTED_PROXY: "${HAPPIHUB_PROXY_IP:-10.254.240.2}"
       MONGO_URI_PROD_FILE: /run/secrets/mongo_uri
       APP_URL_PROD: "${HAPPIHUB_PROD_ORIGIN:?Supply the exact public origin}"
       PORT_PROD: "5000"
     secrets:
-      - jwt_key
+      - session_key
       - mongo_uri
-    networks: [frontend, database]
+    networks:
+      frontend:
+        ipv4_address: "${HAPPIHUB_API_IP:-10.254.240.3}"
+      database: {}
     depends_on:
       mongo:
         condition: service_healthy
@@ -68,8 +73,8 @@ services:
 volumes:
   prod_mongo_data:
 secrets:
-  jwt_key:
-    file: "${HAPPIHUB_SECRETS_DIR:?Supply the private secret directory}/jwt_key"
+  session_key:
+    file: "${HAPPIHUB_SECRETS_DIR:?Supply the private secret directory}/session_key"
   mongo_uri:
     file: "${HAPPIHUB_SECRETS_DIR}/mongo_uri"
   mongo_root_user:
@@ -83,5 +88,8 @@ secrets:
 
 networks:
   frontend:
+    ipam:
+      config:
+        - subnet: "${HAPPIHUB_FRONTEND_SUBNET:-10.254.240.0/28}"
   database:
     internal: true
