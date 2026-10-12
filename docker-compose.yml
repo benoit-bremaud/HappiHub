@@ -64,8 +64,8 @@ services:
     volumes:
       - mongo-data:/data/db
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=secureUsername
-      - MONGO_INITDB_ROOT_PASSWORD=securePassword
+      - MONGO_INITDB_ROOT_USERNAME=${HAPPIHUB_MONGO_ROOT_USERNAME:?Supply a private database username}
+      - MONGO_INITDB_ROOT_PASSWORD=${HAPPIHUB_MONGO_ROOT_PASSWORD:?Supply a private database password}
     profiles:
       - prod
 

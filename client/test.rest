@@ -1,10 +1,12 @@
+# Set accessToken from a fresh login response in your private REST client environment.
+# Do not save real credentials or tokens in this file.
 POST http://localhost:5000/api/users/signup
 Content-Type: application/json
 
 {
   "name": "John Doe",
   "email": "johndoe@example.com",
-  "password": "password123",
+  "password": "EXAMPLE_PASSWORD_ONLY",
   "role": "user"
 }
 
@@ -16,8 +18,8 @@ POST http://localhost:5000/api/users/login
 Content-Type: application/json
 
 {
-  "email": "toto@gmail.com",
-  "password": "123123"
+  "email": "organizer@example.com",
+  "password": "EXAMPLE_PASSWORD_ONLY"
 }
 
 
@@ -30,7 +32,7 @@ Content-Type: application/json
 {
   "name": "John Doe",
   "email": "yoyo@gmail.com",
-  "authentificateToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjkzYWJjYzc2ZWFmYWI4YTg1NTRiOWEiLCJuYW1lIjoieW95byIsImVtYWlsIjoieW95b0BnbWFpbC5jb20iLCJpYXQiOjE3MjEwMjQxNzgsImV4cCI6MTcyMTExMDU3OH0.Q87mQc99X9eN4cjyl4yL8i1t0hSmFFyMWrpCuQSuLwo"
+  "authentificateToken": "{{accessToken}}"
   
 }
 ####

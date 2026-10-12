@@ -34,62 +34,11 @@ Le projet est organisé en plusieurs répertoires :
    cd happihub
    ```
 
-## Configuration de l'Environnement
+## Environment configuration
 
-Avant de démarrer le projet, assurez-vous de configurer correctement les variables d'environnement pour le backend et le frontend.
+Follow [private configuration instructions](docs/CONFIGURATION.md). Only placeholder templates are tracked; local and deployed environment files are ignored. Existing local files were preserved during credential cleanup.
 
-### Backend
-
-1. Allez dans le répertoire `server/`.
-
-2. Copiez le fichier `.env.example` et créez les fichiers `.env` pour chaque environnement :
-   ```
-   cp server/.env.example server/.env.development
-   cp server/.env.example server/.env.production
-   cp server/.env.example server/.env.test
-   ```
-3. Ouvrez les fichiers `.env` correspondants et configurez les variables d'environnement selon vos besoins pour chaque environnement :
-
-   **Exemple pour `.env.development`** :
-   ```
-   NODE_ENV=development
-   MONGO_URI=mongodb://localhost:27017/happihub_dev
-   JWT_SECRET=your_jwt_secret
-   PORT=5000
-   ```
-
-   **Exemple pour `.env.production`** :
-   ```
-   NODE_ENV=production
-   MONGO_URI=mongodb://mongo:27017/happihub_prod
-   JWT_SECRET=your_jwt_secret
-   PORT=5000
-   ```
-
-   **Exemple pour `.env.test`** :
-   ```
-   NODE_ENV=test
-   MONGO_URI=mongodb://localhost:27017/happihub_test
-   JWT_SECRET=your_jwt_secret
-   PORT=5000
-   ```
-
-### Frontend
-
-1. Allez dans le répertoire `client/`.
-
-2. Copiez le fichier `.env.example` et créez le fichier `.env` :
-   ```
-   cp client/.env.example client/.env
-   ```
-3. Ouvrez le fichier `.env` et configurez les variables d'environnement selon vos besoins.
-   
-   Voici un exemple :
-   ```
-   REACT_APP_API_URL=http://localhost:5000/api
-   ```
-
-Assurez-vous que les valeurs des variables d'environnement correspondent à la configuration de votre environnement de développement.
+The client API base URL includes `/api`. Supply signing keys privately and do not reuse tutorial values. Compose requires private database credential variables during configuration parsing. Its production profile still requires a separate infrastructure review.
 
 ## Démarrage des Conteneurs Docker
 
