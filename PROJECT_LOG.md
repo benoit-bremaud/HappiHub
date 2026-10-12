@@ -55,6 +55,15 @@ Session scope: repository recovery, security remediation and product framing.
   [handover](docs/HANDOVER.md), root [agent entry point](AGENTS.md) and current unreleased
   changelog notes. No application code or remote backlog state changed in this documentation step.
 
+- **Roadmap backlog reconciliation and publication authorization** — owner requested issue/Project
+  updates, commit/push and a restoration PR with Clement review. Audited all 121 open issues:
+  retained 38, closed 83 superseded tasks as not_planned with replacement links and archived
+  cards, created [#242–#256](https://github.com/benoit-bremaud/HappiHub/issues/242) for the new
+  studies/delivery. Fresh verification: 53 open issues/cards, 38 Backlog and 15 In review,
+  priorities P0–P3 and no obsolete dates. No new application code, merge or deployment.
+  Evidence: [complete reconciliation](docs/architecture/roadmap-backlog-reconciliation-2026-10-12.md)
+  and [publication review](docs/architecture/recovery-publication-review-2026-10-12.md).
+
 ## Historical reconstruction through 2024-08-29
 
 Verified on 2026-10-12 using GitHub merged-PR metadata and local Git ancestry.

@@ -39,7 +39,8 @@ root package.json or root build command. Architecture documentation lives under
 `docs/architecture/`; accepted decisions are in decisions/, specifications in specs/,
 UML sources in diagrams/. Current plan/status lives in docs/WORK_PLAN.md and HANDOVER.md.
 
-Dedicated branches start from main. Existing unpublished recovery work is on
+Dedicated branches start from main. Follow root CONTRIBUTING.md for current setup and PR metadata.
+Existing recovery work is on
 `fix/security-boundaries`: do not discard it or create a new feature implementation
 before conception approval. Never commit directly to main. Use Conventional Commits.
 Run appropriate checks before pushing; the human triggers the actual push. PR creation,

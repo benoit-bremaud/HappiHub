@@ -1,4 +1,6 @@
-# Cleanup completed — 2026-10-12
+# Initial cleanup completed — 2026-10-12
+
+Historical snapshot of the first pass. The later [roadmap reconciliation](../roadmap-backlog-reconciliation-2026-10-12.md) supersedes the issue/card counts and current statuses below.
 
 Owner approved Option A. Closed 14 superseded issues as not planned, archived their existing cards and four merged PR cards, reopened #218–#220, reframed #58, created #235 and #236–#241, reconciled all open issues to Backlog, and cleared seven expired milestone deadlines.
 

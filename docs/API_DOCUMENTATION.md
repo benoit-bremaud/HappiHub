@@ -74,7 +74,7 @@ The identifier is sent in Set-Cookie and is absent from JSON. Persistence failur
 
 `GET /users/profile` returns `{ "user": { "_id", "name", "email", "role" } }`. `PUT /users/profile` returns that projected user directly, without the wrapper. Password hashes and internal permissions are never part of those response contracts.
 
-Profile changes accept one or more of `name`, `email`, and `password`. Name and password limits match registration; email must be valid and at most 254 characters. Omit `password` when unchanged; an empty password is invalid. Role changes and other unknown fields are rejected. Password changes explicitly hash the replacement before the atomic password/version update. Database conflicts currently return a generic 500, not a dedicated conflict response.
+Profile changes accept one or more of `name`, `email`, and `password`. Name and password limits match registration; email must be valid and at most 254 characters. Omit `password` when unchanged; an empty password is invalid. Role changes and other unknown fields are rejected. Password changes explicitly hash the replacement before the atomic password/version update. Email/index conflicts currently return a generic 500. A concurrent password change detected by the verified-hash condition returns 409 with `Account changed. Sign in again.`.
 
 `GET /users/role` returns `{ "role": "user" }` or the account's current stored role.
 

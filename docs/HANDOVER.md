@@ -1,6 +1,6 @@
 # HappiHub handover
 
-Updated: 2026-10-12. Current work is documentation, research and product framing.
+Updated: 2026-10-12. Current work is backlog reconciliation and publication of the existing recovery branch.
 No further application code is authorized without the owner's completed UML approval gate.
 
 ## Read in order
@@ -16,8 +16,9 @@ Repository: benoit-bremaud/HappiHub. On the current machine the working checkout
 At this check GitHub main and origin/main both resolve to
 `e3e90078920ee00c776c916ac7ede45e4e22cfc0`.
 Recovery branch: fix/security-boundaries. Latest implementation commit: c831c6b;
-accepted session-design commit: 45b5c15. Existing local repairs have not been pushed,
-submitted as a PR, merged or deployed. Documentation updates may appear as working-tree
+accepted session-design commit: 45b5c15. The owner has explicitly authorized backlog reconciliation, commit, push and a recovery
+PR with Clement as reviewer. Publication is being prepared; the PR URL will be recorded
+below after creation. Existing repairs have not been merged or deployed. Documentation updates may appear as working-tree
 changes or later documentation commits: inspect git status/log at resumption.
 
 Owner: Benoît (benoit-bremaud). Retained collaborator: Clément/Yazii
@@ -26,6 +27,16 @@ access before claiming it remains unchanged. Private GitHub Project membership w
 independently verified. The owning Project is
 [HappiHub Project #6](https://github.com/users/benoit-bremaud/projects/6), with
 [framing epic #58](https://github.com/benoit-bremaud/HappiHub/issues/58).
+
+## Backlog and publication status
+
+The authorized second cleanup audited all 121 previously open issues: 38 retained,
+83 closed as superseded/not_planned and archived, 15 new studies/delivery tasks (#242–#256).
+Fresh verification found 53 open issues/cards, 38 Backlog and 15 In review, all prioritized,
+with obsolete dates removed. See the [full reconciliation](architecture/roadmap-backlog-reconciliation-2026-10-12.md)
+and [publication review](architecture/recovery-publication-review-2026-10-12.md).
+Restoration #256 awaits PR acceptance; no feature code is authorized by these issue updates.
+Raw earlier audit exports remain untracked and must not be bulk-staged.
 
 ## Current accepted directions
 
@@ -54,7 +65,8 @@ logo and expanded demo dataset have not been implemented.
 
 Latest recorded verification: 86 fast server tests, 14 disposable real-Mongo tests,
 18 client tests, client build, local/HTTPS Docker browser flows and persistence across
-an API process restart. These are recorded results, not checks rerun during this handover.
+an API process restart. Fast server, Mongo integration, client tests and client build were rerun for publication
+and passed. Earlier container/browser/restart checks remain recorded evidence.
 The [session report](architecture/session-migration-2026-10-12.md) contains limits.
 
 Last recorded dependency audit: runtime server zero findings, full server tree 33 affected

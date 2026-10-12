@@ -175,6 +175,8 @@ Finish the feature-evidence synthesis, then propose the first-release boundary a
 ownership/publication decisions. Author the full conception only against that settled
 scope, review it, and obtain explicit approval before any further code implementation.
 
-After scope validation, map the plan to the owning GitHub Project and the framing epic
-#58 without treating unvalidated ideas as implementation-ready tasks. This documentation
-update does not change remote issue statuses or send external messages.
+The owner subsequently authorized mapping this plan into GitHub Project #6 and auditing
+the old backlog, then publishing the existing recovery branch with Clement as reviewer.
+Design studies remain Backlog and unvalidated ideas are not implementation-ready.
+See the [roadmap reconciliation](architecture/roadmap-backlog-reconciliation-2026-10-12.md)
+for issue-by-issue dispositions.
