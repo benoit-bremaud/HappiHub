@@ -71,3 +71,15 @@ staged secret scan were checked; no new Must Have was identified. No merge autho
 GitHub verified Clement is the requested reviewer. The optional automated reviewer request
 was rejected with HTTP 422 because that account is not a repository collaborator.
 This does not replace or block the requested human review.
+
+## Folder architecture follow-up review
+
+The owner then requested explicit folder/Clean/anti-pattern/duplication review and deferred
+SonarQube setup. The [folder audit](folder-architecture-audit-2026-10-12.md) records eight
+Should Have findings, their conception actions, source anchors and analysis limits.
+They remain assigned to #41/#25/#248 and relevant feature studies, with no new Must Have
+identified for this publication. Full origin/main...HEAD review coverage above remains
+applicable; the added audit/plan/handover/log text was checked against current source and
+remote issue updates. No application, dependency, runtime or pipeline changes occurred.
+Documentation links/whitespace and staged secret scan were rechecked before push; the
+existing 86/14/18 passing tests and client build remain the source verification baseline.

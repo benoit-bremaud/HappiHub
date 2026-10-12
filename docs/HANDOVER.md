@@ -108,6 +108,15 @@ usage. [Meetup's retrospective](https://www.meetup.com/blog/2025-meetup-progress
 reports communication confusion and discovery improvements without providing a universal
 feature-usage ranking. Keep sample, date, segment and confidence attached to conclusions.
 
+## Architecture follow-up requirement
+
+The owner reinforced folder organization, Clean/SOLID, anti-pattern checks and removal
+of unjustified duplication. A [read-only folder audit](architecture/folder-architecture-audit-2026-10-12.md)
+records verified CSS/request duplication, responsibility boundaries and stale configuration.
+#41 must include the responsibility/path map and dependency UML; #248/#25 cover the later
+quality-tooling study. SonarQube is deferred; no scanner/setup or structural code changes
+have occurred. Do not interpret candidate folders as an approved implementation plan.
+
 ## Next actions
 
 1. Continue framing: concrete organizer, participant and external-integrator scenarios.

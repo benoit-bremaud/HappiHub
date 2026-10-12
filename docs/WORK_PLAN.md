@@ -92,6 +92,20 @@ No delivery dates are committed before scope and effort are established.
 Each diagram must answer a design question. Completeness means the accepted behavior can
 be implemented without guessing; unrelated diagrams or speculative layers do not help.
 
+## Folder architecture and quality requirements
+
+The owner explicitly requests a folder-structure review inspired by Clean Architecture,
+SOLID and anti-pattern detection, with no unjustified duplication. The conception must
+define module responsibilities, permitted dependency direction and existing-to-target file
+placement. Preserve proportionality: no speculative layers or generic frameworks.
+See the [current folder audit](architecture/folder-architecture-audit-2026-10-12.md) for
+verified duplication/coupling/configuration findings and the planned design gate.
+
+SonarQube setup is deferred. Study quality scope, coverage reports, new-code baseline and
+privacy of credentials alongside #25/#248; assess complementary lint/dependency/clone checks
+only where useful. Architecture review remains semantic as well as automated. No tool
+installation, file moves, pipeline change or code refactoring is authorized by this request.
+
 ## Feature selection method
 
 Keep feature availability, self-reported need and observed usage separate. No reliable

@@ -70,6 +70,14 @@ Session scope: repository recovery, security remediation and product framing.
   as In review/P1. The PR consolidates existing approved recovery work and the revised
   backlog/continuity documentation. It is open, not merged or released.
 
+- **Architecture requirements reinforced** — owner requested folder architecture inspired
+  by Clean, explicit anti-pattern review and no unjustified duplicated knowledge; deferred
+  SonarQube configuration. Read-only audit found almost identical auth form CSS, repeated
+  read lifecycles and legacy configuration/responsibility gaps. Recorded the findings and
+  added responsibility/dependency/migration requirements to #41 and later quality-tooling
+  studies #25/#248. No source movement, tooling installation or pipeline change.
+  Evidence: [folder audit](docs/architecture/folder-architecture-audit-2026-10-12.md).
+
 ## Historical reconstruction through 2024-08-29
 
 Verified on 2026-10-12 using GitHub merged-PR metadata and local Git ancestry.
