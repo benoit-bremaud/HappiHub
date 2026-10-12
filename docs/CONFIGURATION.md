@@ -12,9 +12,7 @@ JWT expiration needs an explicit unit, such as 15m. Configure APP_URL with the e
 
 ## Compose
 
-Supply HAPPIHUB_MONGO_ROOT_USERNAME and HAPPIHUB_MONGO_ROOT_PASSWORD privately, either in an ignored root .env file or exported environment. They are required when Compose parses this multi-profile file, including local-only invocations. Missing values fail explicitly rather than falling back to embedded credentials. Run docker compose config --quiet before any startup.
-
-This cleanup does not repair shared volumes, exposed MongoDB ports, service topology or image pinning. Do not treat the existing prod profile as a validated production deployment. Changing initialization variables does not rotate credentials in an existing MongoDB data volume.
+Follow [Docker workflows](DOCKER.md). Local settings use ignored server/.env.docker.local. Production baseline uses a separate Compose file and private mounted secret files; credentials are never embedded in images or YAML. Existing database credentials are not rotated by changing initialization files.
 
 ## Examples
 

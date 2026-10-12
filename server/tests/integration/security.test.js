@@ -105,3 +105,7 @@ test('deleted accounts cannot continue using a signed token', async () => {
   await User.deleteOne({ _id: owner._id });
   expect((await authenticated(request(app).get('/api/users/profile'))).status).toBe(401);
 });
+
+test('readiness succeeds for an established database connection', async () => {
+  const res = await request(app).get('/ready'); expect(res.status).toBe(200); expect(res.body).toEqual({ ready: true });
+});

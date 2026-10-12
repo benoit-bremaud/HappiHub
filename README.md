@@ -38,31 +38,11 @@ Le projet est organisé en plusieurs répertoires :
 
 Follow [private configuration instructions](docs/CONFIGURATION.md). Only placeholder templates are tracked; local and deployed environment files are ignored. Existing local files were preserved during credential cleanup.
 
-The client API base URL includes `/api`. Supply signing keys privately and do not reuse tutorial values. Compose requires private database credential variables during configuration parsing. Its production profile still requires a separate infrastructure review.
+The client API base URL includes `/api`. Supply signing keys privately and do not reuse tutorial values. Production Compose requires private mounted secret files. Its deployment still requires a separate infrastructure review.
 
-## Démarrage des Conteneurs Docker
+## Docker workflows
 
-Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construire et démarrer les conteneurs Docker. Vous pouvez démarrer les conteneurs pour différents environnements à l'aide des profils.
-
-### Environnement de Développement (Défaut)
-
-```bash
-docker-compose up --build
-```
-
-### Environnement de Production
-
-```bash
-docker-compose --profile prod up --build
-```
-
-### Environnement de Test
-
-```bash
-docker-compose --profile test up --build
-```
-
-Ces commandes démarrent les services avec les configurations appropriées pour chaque environnement.
+Follow [Docker setup and verification](docs/DOCKER.md). The default Compose file is local-only; production uses a separate reviewed baseline. Do not reuse the former shared-volume profiles or interpret a passing local check as production approval.
 
 ## Vérification du Bon Fonctionnement
 

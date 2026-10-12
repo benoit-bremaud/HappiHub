@@ -27,7 +27,7 @@ An event is public only when `isPrivate` is false and `status` is `approved`. Ow
 | POST | /comments/add | Required | 201 projected created comment |
 | GET | /comments/events/:event_id/comments | Optional | 200 projected comment array |
 
-`GET /test`, outside `/api`, returns a text liveness message. It is not a database readiness check.
+`GET /test`, outside `/api`, returns a text liveness message. It is not a database readiness check. `GET /ready` returns `{ "ready": true }` with 200 for an established Mongoose connection, otherwise `{ "ready": false }` with 503. This reports connection state, not a transactional database probe.
 
 ## User contracts
 

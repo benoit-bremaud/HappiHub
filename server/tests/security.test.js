@@ -126,3 +126,7 @@ test('validated profile mutation saves only allowed data', async () => {
   const res = await auth(request(app).put('/api/users/profile')).send({ name: 'Updated' });
   expect(res.status).toBe(200); expect(user.name).toBe('Updated'); expect(user.save).toHaveBeenCalled(); expect(res.body.password).toBeUndefined();
 });
+
+test('readiness fails when database is disconnected', async () => {
+  const res = await request(app).get('/ready'); expect(res.status).toBe(503); expect(res.body).toEqual({ ready: false });
+});

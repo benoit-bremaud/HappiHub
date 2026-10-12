@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import { commentRoutes } from './routes/commentRoutes.js';
 import cors from 'cors';
@@ -18,6 +19,8 @@ export const createApp = (config) => {
   app.use(express.json());
 
   // Define the routes
+  app.get('/ready', (_req, res) => res.status(mongoose.connection.readyState === 1 ? 200 : 503).json({ ready: mongoose.connection.readyState === 1 }));
+
   app.use('/api/users', userRoutes);
   app.use('/api/events', eventRoutes);
   app.use('/api/comments', commentRoutes);
