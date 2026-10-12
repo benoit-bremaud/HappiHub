@@ -1,5 +1,9 @@
 # GUIDE - HappiHub
 
+> Legacy guidance: role/rank descriptions and JWT/setup examples below may describe
+> historical intentions rather than current behavior. Use [current API contracts](API_DOCUMENTATION.md),
+> [configuration](CONFIGURATION.md) and [handover](HANDOVER.md) for the verified baseline.
+
 ## Introduction
 
 Bienvenue dans le guide général du projet HappiHub. Ce document fournit des directives supplémentaires et des informations spécifiques pour vous aider à contribuer efficacement au projet et à utiliser ses fonctionnalités avancées.

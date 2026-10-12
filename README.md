@@ -2,6 +2,13 @@
 
 HappiHub est une application web de réseau social pour les événements culturels et communautaires. Notre objectif est de connecter les personnes partageant les mêmes intérêts et de faciliter l'organisation et la participation à des événements.
 
+## Project continuity
+
+Start with [project instructions](AGENTS.md), [handover](docs/HANDOVER.md),
+[prioritized work plan](docs/WORK_PLAN.md), and [operational history](PROJECT_LOG.md).
+Current implementation contracts are in [API documentation](docs/API_DOCUMENTATION.md).
+Further code requires completed UML conception and explicit owner validation.
+
 ## Table des Matières
 - [Structure du Projet](#structure-du-projet)
 - [Prérequis](#prérequis)
