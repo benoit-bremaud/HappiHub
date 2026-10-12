@@ -1,127 +1,60 @@
-import { loginValidation, signupValidation } from '../validation/userValidation.js';
-
-import User from '../models/userModel.js';
-import bcrypt from 'bcryptjs';
-import dotenv from 'dotenv';
+import { loginValidation, signupValidation, profileValidation } from '../validation/userValidation.js';
+import { User } from '../models/userModel.js';
 import { generateToken } from '../utils/jwt.js';
 
-// Load environment variables
-dotenv.config();
+const profile = (user) => ({ _id: user._id, name: user.name, email: user.email, role: user.role });
 
+/** Register an ordinary account after allowlist validation; hash on save. Returns 201, 400 for invalid/duplicate input, or generic 500. */
 export const signup = async (req, res) => {
-  // Validate the user input
-  const { error } = signupValidation(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
-
-  // Check if the user already exists
-  const emailExist = await User.findOne({ email: req.body.email });
-  if (emailExist) return res.status(400).json({ message: 'Email already exists' });
-
-  // Create a new user
-  const user = new User({
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
-    role: req.body.role,
-  });
-
+  const { error, value } = signupValidation(req.body);
+  if (error) return res.status(400).json({ message: 'Invalid registration data' });
   try {
-    // Save the user to the database
-    await user.save();
-    console.log(user);
-
-    // Send the user data in the response
-    res.status(201).json({ message: 'User registered successfully'});
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    if (await User.findOne({ email: value.email })) return res.status(400).json({ message: 'Unable to register' });
+    await new User({ name: value.name, email: value.email, password: value.password, role: 'user' }).save();
+    return res.status(201).json({ message: 'User registered successfully' });
+  } catch {
+    return res.status(500).json({ message: 'Unable to register' });
   }
 };
 
+/** Verify credentials and issue an expiring configured token with projected user data. Invalid credentials return 401; never returns a password hash. */
 export const login = async (req, res) => {
-
+  const { error, value } = loginValidation(req.body);
+  if (error) return res.status(400).json({ message: 'Invalid login data' });
   try {
-  // Validate the user input
-    const { error } = loginValidation(req.body);
-    if (error) return res.status(400).json({ message: error.details[0].message});
-
-    // Check if the user exists
-    const user = await User.findOne({ email: req.body.email });
-    if (!user) return res.status(400).json({ message: 'Email is not found ' });
-    
-    // Check if the password is correct
-    if (!user.isValidPassword(req.body.password)) {
-      return res.status(400).json({ message: 'Invalid password' });
-    }
-    
-    // Create and assign a token
-    const token = generateToken(user);
- 
-    // Send the user data in the response
-    res.status(200).json({ 
-      message: 'Logged in successfully', 
-      token: token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-    console.log(user);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const user = await User.findOne({ email: value.email }).select('+password');
+    if (!user || !(await user.isValidPassword(value.password))) return res.status(401).json({ message: 'Invalid credentials' });
+    return res.status(200).json({ message: 'Logged in successfully', token: generateToken(user, req.app.locals.config), user: profile(user) });
+  } catch {
+    return res.status(500).json({ message: 'Unable to log in' });
   }
-}; 
+};
 
+/** Read only the authenticated account and return its projected profile inside a user wrapper. */
 export const getUserProfile = async (req, res) => {
-  console.log('User in request:', req.user);
   try {
-    // check if the user exists
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Send the user data in the response
-    res.status(200).json({ user });
-  } catch (err) {
-    console.error('Error fetching user profile:', err);
-    res.status(500).json({ message: 'Server error', error: err.message});
+    return res.json({ user: profile(user) });
+  } catch {
+    return res.status(500).json({ message: 'Unable to retrieve profile' });
   }
 };
 
-// Update user profile
+/** Persist allowlisted changes for the authenticated account; omitted password is unchanged. Returns a projected profile without the wrapper. */
 export const updateUserProfile = async (req, res) => {
-  // Validate the new profile data
-
+  const { error, value } = profileValidation(req.body);
+  if (error) return res.status(400).json({ message: 'Invalid profile data' });
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Update user fields
-    if (req.body.name) user.name = req.body.name;
-    if (req.body.email) user.email = req.body.email;
-    if (req.body.password) {
-      user.password = await req.body.password;  
-    }
-
-    const updatedUser = await user.save();
-    res.status(200).json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    Object.assign(user, value);
+    await user.save();
+    return res.json(profile(user));
+  } catch {
+    return res.status(500).json({ message: 'Unable to update profile' });
   }
 };
 
-// Get User Role
-export const getUserRole = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    res.status(200).json({ role: user.role });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+/** Return the current account role established by authentication middleware. */
+export const getUserRole = async (req, res) => res.json({ role: req.user.role });

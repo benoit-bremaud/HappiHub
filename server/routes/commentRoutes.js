@@ -1,4 +1,4 @@
-import authenticateToken, { isAdmin } from "../middleware/auth.js";
+import { authenticateToken, optionalAuthentication } from "../middleware/auth.js";
 import { createComment,
         getEventComments } from "../controllers/commentController.js"; 
 
@@ -12,7 +12,7 @@ import express from "express";
 const router = express.Router();
 
 router.post("/add", authenticateToken, createComment);
-router.get('/events/:event_id/comments', getEventComments);
+router.get('/events/:event_id/comments', optionalAuthentication, getEventComments);
 
 // // Routes for comments
 // router.post("/", authenticateToken, createComment);
@@ -47,5 +47,5 @@ router.get('/events/:event_id/comments', getEventComments);
 // Delete all comments (for admin)
 // router.delete("/", authenticateToken, isAdmin, deleteAllComments);
 
-export default router;
+export { router as commentRoutes };
 

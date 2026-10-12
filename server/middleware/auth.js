@@ -1,44 +1,36 @@
-// middleware/authMiddleware.js
 import jwt from 'jsonwebtoken';
+import { User } from '../models/userModel.js';
 
-const getJwtSecret = () => {
-    switch (process.env.NODE_ENV) {
-        case 'production':
-            return process.env.JWT_SECRET_PROD;
-        case 'test':
-            return process.env.JWT_SECRET_TEST;
-        default:
-            return process.env.JWT_SECRET_DEV; // Par défaut, environnement de développement
-    }
-};
-
-// Authenticate the token
-const authenticateToken = (req, res, next) => {
-  const token = req.header('Authorization').replace('Bearer ', '');
-  if (!token) return res.status(401).json({ message: 'Access denied' });
-
+/** Verify the current account as well as the token, so stale roles are not trusted. */
+export const authenticateToken = async (req, res, next) => {
+  const match = /^Bearer ([^\s]+)$/.exec(req.get('Authorization') || '');
+  if (!match) return res.status(401).json({ message: 'Authentication required' });
+  const secret = req.app.locals.config.jwtSecret;
+  if (!secret) return res.status(503).json({ message: 'Authentication unavailable' });
+  let verified;
   try {
-    // Verify the token
-    const verified = jwt.verify(token, getJwtSecret());
-                
-    // Add the user to the request object
-    req.user = verified;
-    next();
-  } catch (err) {
-    res.status(400).json({ message: 'Invalid token' });
+    verified = jwt.verify(match[1], secret, { algorithms: ['HS256'] });
+    if (!verified || typeof verified !== 'object' || !/^[a-f0-9]{24}$/i.test(verified._id || '') || !Number.isInteger(verified.exp)) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+  } catch {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+  try {
+    const user = await User.findById(verified._id).select('_id role');
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    req.user = { _id: String(user._id), role: user.role };
+    return next();
+  } catch {
+    return res.status(503).json({ message: 'Authentication unavailable' });
   }
 };
 
-export default authenticateToken;
+/** Anonymous reads are allowed, but a supplied invalid credential still fails closed. */
+export const optionalAuthentication = (req, res, next) =>
+  req.get('Authorization') ? authenticateToken(req, res, next) : next();
 
-// Check if the user is an admin
 export const isAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Access denied' });
-  }
-  next();
+  if (req.user?.role !== 'admin') return res.status(403).json({ message: 'Access denied' });
+  return next();
 };
-
-// Check if the user is a moderator
-
-// Refresh the token

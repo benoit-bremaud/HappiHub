@@ -73,7 +73,7 @@ describe('signupValidation', () => {
     const { error } = signupValidation(data);
 
     expect(error).toBeDefined();
-    expect(error.details[0].message).toContain('"role" must be one of [user, admin]');
+    expect(error.details[0].message).toContain('"role" must be [user]');
   });
 
   test('should return an error if rank is invalid', () => {
@@ -91,7 +91,7 @@ describe('signupValidation', () => {
     expect(error.details[0].message).toContain('"rank" must be one of [Visitor, Friend, Companion, Organizer, Unifier, Ambassador, Guardian]');
   });
 
-  test('should allow valid roles and ranks', () => {
+  test('should reject administrator registration', () => {
     const data = {
       name: 'John Doe',
       email: 'johndoe@example.com',
@@ -102,8 +102,6 @@ describe('signupValidation', () => {
 
     const { error, value } = signupValidation(data);
 
-    expect(error).toBeUndefined();
-    expect(value.role).toBe('admin');
-    expect(value.rank).toBe('Guardian');
+    expect(error).toBeDefined();
   });
 });

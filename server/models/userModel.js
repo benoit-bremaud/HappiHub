@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
+    select: false,
     required: true,
   },
   role: {
@@ -58,4 +59,4 @@ userSchema.methods.isValidPassword = async function (password) {
 
 const User = mongoose.model('User', userSchema);
 
-export default User;
+export { User };
