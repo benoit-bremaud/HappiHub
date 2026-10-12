@@ -59,3 +59,15 @@ Must Have was identified in this publication review. This is not an exhaustive s
 Earlier container builds, browser workflows, rendered UML and actual API restart persistence
 checks are recorded in session-migration-2026-10-12.md; they were not repeated for this docs-only step.
 The implementation gate remains in force for all future product/demo/tooling code.
+
+## Publication and continuity follow-up
+
+[PR #257](https://github.com/benoit-bremaud/HappiHub/pull/257) is open on the pushed recovery branch.
+Before the follow-up push, the full origin/main...HEAD scope was reconsidered using the
+review above plus the publication-only handover/log/backlog additions. No source/configuration
+changed after the passing suites/build. The new links, reported metadata, whitespace and
+staged secret scan were checked; no new Must Have was identified. No merge authorized.
+
+GitHub verified Clement is the requested reviewer. The optional automated reviewer request
+was rejected with HTTP 422 because that account is not a repository collaborator.
+This does not replace or block the requested human review.

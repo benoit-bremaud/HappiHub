@@ -64,6 +64,12 @@ Session scope: repository recovery, security remediation and product framing.
   Evidence: [complete reconciliation](docs/architecture/roadmap-backlog-reconciliation-2026-10-12.md)
   and [publication review](docs/architecture/recovery-publication-review-2026-10-12.md).
 
+- **[Recovery PR #257 opened](https://github.com/benoit-bremaud/HappiHub/pull/257)** — published the authorized
+  fix/security-boundaries branch after full local review and fresh tests/build; requested
+  clement-machtelinckx as reviewer, assigned Benoit and attached to HappiHub Project #6
+  as In review/P1. The PR consolidates existing approved recovery work and the revised
+  backlog/continuity documentation. It is open, not merged or released.
+
 ## Historical reconstruction through 2024-08-29
 
 Verified on 2026-10-12 using GitHub merged-PR metadata and local Git ancestry.

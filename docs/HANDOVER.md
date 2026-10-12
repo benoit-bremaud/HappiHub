@@ -1,6 +1,6 @@
 # HappiHub handover
 
-Updated: 2026-10-12. Current work is backlog reconciliation and publication of the existing recovery branch.
+Updated: 2026-10-12. The backlog is reconciled and the recovery branch is published for review.
 No further application code is authorized without the owner's completed UML approval gate.
 
 ## Read in order
@@ -16,9 +16,10 @@ Repository: benoit-bremaud/HappiHub. On the current machine the working checkout
 At this check GitHub main and origin/main both resolve to
 `e3e90078920ee00c776c916ac7ede45e4e22cfc0`.
 Recovery branch: fix/security-boundaries. Latest implementation commit: c831c6b;
-accepted session-design commit: 45b5c15. The owner has explicitly authorized backlog reconciliation, commit, push and a recovery
-PR with Clement as reviewer. Publication is being prepared; the PR URL will be recorded
-below after creation. Existing repairs have not been merged or deployed. Documentation updates may appear as working-tree
+accepted session-design commit: 45b5c15. The authorized recovery work is pushed and submitted as
+[PR #257](https://github.com/benoit-bremaud/HappiHub/pull/257), with clement-machtelinckx requested as reviewer.
+The PR is attached to HappiHub Project #6 as In review/P1. Existing repairs have not been
+merged or deployed. Documentation updates may appear as working-tree
 changes or later documentation commits: inspect git status/log at resumption.
 
 Owner: Benoît (benoit-bremaud). Retained collaborator: Clément/Yazii
@@ -35,6 +36,7 @@ The authorized second cleanup audited all 121 previously open issues: 38 retaine
 Fresh verification found 53 open issues/cards, 38 Backlog and 15 In review, all prioritized,
 with obsolete dates removed. See the [full reconciliation](architecture/roadmap-backlog-reconciliation-2026-10-12.md)
 and [publication review](architecture/recovery-publication-review-2026-10-12.md).
+The Project additionally contains PR #257 (54 active cards: 53 issues plus the PR).
 Restoration #256 awaits PR acceptance; no feature code is authorized by these issue updates.
 Raw earlier audit exports remain untracked and must not be bulk-staged.
 

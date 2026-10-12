@@ -181,3 +181,9 @@ are removed from reframed design epics and preserved on restoration items where 
 - Obsolete start/end dates absent from active cards; no replacement dates invented.
 - Open issue assignees remain limited to Benoit and Clement.
 - None of the reviewed restoration issues is marked Done before the recovery PR is accepted.
+
+## Restoration publication
+
+[PR #257](https://github.com/benoit-bremaud/HappiHub/pull/257) publishes the existing restoration branch with
+clement-machtelinckx requested as reviewer. It adds one In review/P1 PR card to the
+Project: 54 active cards, comprising the 53 issues above and the PR. No merge or launch.
