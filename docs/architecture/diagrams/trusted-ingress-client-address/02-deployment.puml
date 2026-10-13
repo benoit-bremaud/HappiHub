@@ -1,0 +1,31 @@
+@startuml
+title dep — Trusted ingress boundary (accepted 2026-10-13)
+node "Visitor device" as Visitor
+node "Operator-controlled host" as Host {
+  node "TLS edge" as Edge
+  node "Private frontend network" as Front {
+    node "Nginx container\nfixed trusted API peer" as Nginx
+    node "Express API container\nno published port" as API
+  }
+  artifact "Read-only trusted-ingress.conf\nexact observed edge peer" as Config
+  node "Private database network" as Back {
+    database "MongoDB\nno published port" as DB
+  }
+}
+Visitor --> Edge : HTTPS\nPII: client IP\nSensitive: session / credentials
+Edge --> Nginx : Existing loopback ingress path\nPII: overwritten client-IP header
+Config ..> Nginx : required configuration mount
+Nginx --> API : canonical client IP\nexisting session / auth payload
+API --> DB : existing session / application IO
+note right of Nginx
+  No automatic broad network trust.
+  Untrusted or unusable identity -> 403.
+  Health check remains on root path.
+end note
+note bottom of Host
+  Host administrator remains trusted.
+  NAT may change the observed peer address.
+  This correction grants no transport-policy exception
+  and does not authorize production deployment.
+end note
+@enduml
