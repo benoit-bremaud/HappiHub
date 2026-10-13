@@ -1,6 +1,11 @@
 # Cookie sessions — proposed security migration
 
 Status: validated by the owner on 2026-10-12; implemented and locally verified. See the session migration report for evidence and limits.
+Ingress correction validated on 2026-10-13: Nginx normalizes a controlled gateway's
+client address before Express applies its existing per-IP limits. The detailed
+trusted-ingress-client-address specification and ADR-0002 are maintained in the separate
+codex/quality-followup-conception documentation branch pending publication/integration.
+This refines D2/D10 without changing their session, CSRF or quota contracts.
 Work item: this specification records the locally approved design investigation.
 Scope: replace browser bearer JWT authentication without redesigning event creation.
 

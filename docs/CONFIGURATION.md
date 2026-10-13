@@ -12,6 +12,12 @@ are no longer used by the application authentication flow.
 APP_URL is the exact browser origin. Production requires HTTPS. TRUSTED_PROXY, if set,
 is an explicit IP address or CIDR of the controlled reverse proxy, never a blanket boolean
 or unrestricted hop count. Compose trusts only the fixed runtime Nginx address.
+The production Compose baseline also requires HAPPIHUB_TRUSTED_INGRESS_FILE, an absolute
+path to an operator-controlled file containing the exact TLS gateway peer as observed
+by Nginx. It is mounted read-only at /etc/nginx/happihub/trusted-ingress.conf; there is no
+permissive fallback. See docs/DOCKER.md for the gateway overwrite contract, NAT caveat,
+configuration validation and disposable regression command. This file contains an IP
+allowlist, not application credentials. It does not broaden Express's TRUSTED_PROXY.
 Client REACT_APP_API_URL includes /api and is public configuration, never a secret.
 
 Use the existing Mongo database for accounts and the sessions collection. The application

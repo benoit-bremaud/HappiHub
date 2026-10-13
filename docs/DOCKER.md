@@ -38,15 +38,68 @@ Secret files must be readable by their container users. With file-backed Compose
 export HAPPIHUB_SECRETS_DIR=/absolute/private/path
 export HAPPIHUB_PROD_ORIGIN=https://your-validated-domain.example
 export HAPPIHUB_PROD_WEB_PORT=8080
+export HAPPIHUB_TRUSTED_INGRESS_FILE=/absolute/operator/config/trusted-ingress.conf
 docker compose -f docker-compose.prod.yml -p happihub-prod build
 docker compose -f docker-compose.prod.yml -p happihub-prod config --quiet
 ```
 
 Startup resolves mounted signing/database files at the server boundary. The API receives readWrite access only to happihub, not Mongo root credentials. Application-user bootstrap runs on first initialization only. Changing files does not rotate existing database users; use an explicit coordinated rotation procedure. No existing volume is migrated automatically.
 
-Only the static web service publishes a loopback port. API and database are internal. Database is on a separate internal network; client cannot directly reach it. Production requires an external HTTPS gateway in front of the loopback web port. Runtime Nginx overwrites X-Forwarded-Proto with https and the API trusts only Nginx's explicit IP. This is an ingress contract: never publish the HTTP web port directly. Secure cookies cannot authenticate an HTTP browser visit. Nginx discards caller-supplied scheme values.
+Only the static web service publishes a loopback port. API and database are internal. Database is on a separate internal network; client cannot directly reach it. Production requires an external HTTPS gateway in front of the loopback web port. Runtime Nginx overwrites X-Forwarded-Proto with https and the API trusts only Nginx's explicit IP. This is an ingress contract: never publish the HTTP web port directly. Secure cookies cannot authenticate an HTTP browser visit.
+
+### Trusted client address
+
+Before starting the production baseline, create an operator-owned configuration file outside
+the checkout, using docker/nginx/trusted-ingress.conf.example as the syntax reference.
+Replace its documentation address with the **exact controlled TLS gateway peer observed
+by Nginx**. The file must contain one set_real_ip_from directive with an exact IPv4 or IPv6
+address. Do not add unrelated directives, broad private ranges, wildcard trust or hop counts.
+Docker NAT may make this peer the host bridge address; verify the actual topology with
+synthetic traffic before deployment instead of assuming a public gateway address applies.
+An exact host address still trusts processes on that host, not just the gateway program.
+
+HAPPIHUB_TRUSTED_INGRESS_FILE must be an absolute path to that existing file, readable by
+the unprivileged Nginx user. Compose mounts it read-only and will not create a missing host
+path. The included image has no permissive default. Missing configuration prevents startup;
+an empty trust file rejects API forwarding; invalid syntax/address fails nginx -t.
+
+The controlled TLS gateway must overwrite X-Forwarded-For with its transport client's
+literal IP (no port), set the approved Host and HTTPS scheme, and strip or overwrite
+visitor-supplied forwarding headers. This baseline supports one outer gateway. A CDN,
+additional proxy hop or alternative network route requires a separate trust review.
+
+Nginx normalizes the client address with its real-IP module, then forwards exactly that
+address to Express. It also overwrites X-Forwarded-Host and clears X-Real-IP and Forwarded.
+Untrusted peers, missing/unparseable forwarded addresses, and a forwarded address equal to
+the gateway itself receive 403 before the API. The root health check remains available.
+Distinct client IPs receive distinct authentication quotas; people sharing a genuine NAT
+IP still share a quota. No raw-IP debug endpoint is installed by this correction.
+
+Validate nginx -t, independent quotas for two client IPs and spoofed-header rejection in
+the intended topology before promotion. On failure stop promotion or restore a previously
+verified safe ingress; never disable rate limits or enable blanket proxy trust as a workaround.
+This correction does not authorize production deployment or a new transport-policy exception.
 
 The production frontend network defaults to 10.254.240.0/28 and Nginx to 10.254.240.2. The API uses 10.254.240.3 to avoid an automatic allocation taking the gateway address. Override HAPPIHUB_FRONTEND_SUBNET, HAPPIHUB_PROXY_IP and HAPPIHUB_API_IP together if the subnet conflicts. The API TRUSTED_PROXY tracks that same address. The local stack trusts no forwarded scheme headers.
+
+### Opt-in ingress regression
+
+After building the production runtime images, run the disposable network test with their
+actual image names (the command below uses the happihub-prod Compose project name):
+
+```sh
+python3 tools/ingress/test_ingress.py \
+  --server-image happihub-prod-server \
+  --nginx-image happihub-prod-client
+```
+
+Docker and OpenSSL are required. The test resolves image IDs once, mounts the current
+application modules and production nginx.conf read-only, and uses an internal dual-stack
+network without published ports. It creates an ephemeral TLS certificate, synthetic
+sessions and an injected in-memory session store; no MongoDB or real credentials are used.
+Only its labelled fixture resources are removed during cleanup. The fixture checks both
+proxy hops, IPv4/IPv6 provenance, quota isolation, forged headers, Secure cookies and trust
+file failures. It is separate from ordinary Jest/collector tests and is not a deployment test.
 
 Backups/restores, resource limits, image scanning and deployment operations remain to be validated before real use. The old HTTP-only production smoke test does not validate cookie authentication. Cookie-session validation uses a disposable HTTPS gateway and isolated browser context.
 

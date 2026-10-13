@@ -1,6 +1,10 @@
 # ADR-0001 — Server-managed cookie sessions
 
 Status: accepted by the owner on 2026-10-12.
+Ingress realization refined with owner approval on 2026-10-13: ADR-0002 and the
+trusted-ingress-client-address specification, in the separate
+codex/quality-followup-conception documentation branch pending integration, define
+Nginx address normalization for the existing narrow Express proxy trust boundary.
 
 ## Context
 
