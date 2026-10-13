@@ -1,0 +1,28 @@
+@startuml
+ title sd — Collect a successful main revision
+ actor Contributor
+ participant "GitHub hosted tests" as CI
+ participant "Fixed local collector" as Collector
+ participant "Disposable scanner" as Scanner
+ participant SonarQube
+ Contributor -> CI: Push main revision
+ CI -> CI: Test and produce SHA-bound reports
+ Collector -> CI: Poll eligible completed runs
+ CI --> Collector: Run and artifact metadata
+ Collector -> Collector: Verify repository, event, branch, workflow and SHA
+ alt Provenance invalid or reports missing
+ Collector -> CI: Exact-SHA error status
+ else Provenance valid
+ Collector -> CI: Fetch exact source and reports
+ Collector -> Collector: Validate bounded archive and LCOV paths
+ Collector -> Scanner: Trusted configuration and read-only data
+ Scanner -> SonarQube: Submit exact revision and await gate
+ SonarQube --> Scanner: Result or explicit failure
+ Scanner --> Collector: Analysis and gate outcome
+ Collector -> CI: Exact-SHA status
+ end
+ note over Collector
+No GitHub runner registration
+No downloaded repository code execution
+end note
+@enduml

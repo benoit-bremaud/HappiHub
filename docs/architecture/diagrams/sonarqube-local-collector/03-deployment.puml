@@ -1,0 +1,25 @@
+@startuml
+ title dep — Outbound local collector
+ node "GitHub" {
+ artifact "HappiHub repository" as Repo
+ node "Disposable hosted test runners" as Tests
+ artifact "Exact-SHA coverage" as Reports
+ }
+ node "Owner local machine" {
+ artifact "Fixed collector and local queue" as Collector
+ node "Disposable non-root scanner" as Scanner
+ node "Existing SonarQube" as Sonar
+ database "Existing PostgreSQL" as DB
+ }
+ Repo --> Tests
+ Tests --> Reports
+ Collector --> Repo : outbound HTTPS metadata and source
+ Collector --> Reports : outbound HTTPS artifact retrieval
+ Collector --> Scanner : validated data and trusted configuration
+ Scanner --> Sonar : dedicated internal same-host network
+ Sonar --> DB
+ note bottom of Scanner
+No host home or Docker socket mount
+Narrow local HTTP exception owner-approved
+end note
+@enduml

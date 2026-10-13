@@ -1,0 +1,30 @@
+@startuml
+ title sd — Validate a main push
+ actor Contributor
+ participant GitHub
+ participant "Hosted test jobs" as Tests
+ participant "Isolated local scan runner" as Runner
+ participant SonarQube
+ Contributor -> GitHub: Push exact main SHA
+ GitHub -> Tests: Test and collect coverage for SHA
+ alt Tests fail
+ Tests --> GitHub: Failed checks
+ else Tests pass
+ Tests --> GitHub: SHA-bound coverage artifacts
+ GitHub -> Runner: Schedule trusted main scan
+ Runner -> GitHub: Fetch same SHA and coverage
+ Runner -> Runner: Validate report paths and identity
+ Runner -> SonarQube: Submit analysis using project token
+ Runner -> SonarQube: Await gate with bounded timeout
+ alt Gate computed
+ SonarQube --> Runner: Gate status
+ Runner --> GitHub: Pass or fail matching gate
+ else Authentication, connectivity or timeout failure
+ Runner --> GitHub: Failed or inconclusive check
+ end
+ end
+ note over Runner
+No fork or PR execution
+No workstation mounts or Docker socket
+end note
+@enduml

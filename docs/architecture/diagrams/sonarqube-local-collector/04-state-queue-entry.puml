@@ -1,0 +1,19 @@
+@startuml
+ title stm — Collector queue entry
+ [*] --> New : eligible run discovered
+ New --> Scanning : pending status acknowledged and scan intent persisted
+ New --> Result : failed tests or provenance validation error
+ Scanning --> Result : definitive gate or explicit scan error
+ Scanning --> Result : restart reconciliation without resubmission
+ Result --> Result : GitHub status publication fails
+ Result --> Done : exact-SHA status acknowledged and state persisted
+ Done --> [*]
+ note right of Scanning
+Persist task identity and working directory
+before invoking external scanner
+end note
+ note right of Result
+Unknown submission is an error requiring
+operator reconciliation, never a blind retry
+end note
+@enduml
