@@ -1,0 +1,11 @@
+[Unit]
+Description=Check for completed HappiHub main quality runs
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=60s
+AccuracySec=10s
+Unit=happihub-sonar.service
+
+[Install]
+WantedBy=timers.target

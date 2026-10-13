@@ -1,0 +1,80 @@
+name: HappiHub quality tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22.23.3'
+          cache: npm
+          cache-dependency-path: |
+            client/package-lock.json
+            server/package-lock.json
+      - name: Collector boundary tests
+        run: python3 -m unittest discover -s tools/quality/tests -v
+      - name: Server dependencies
+        working-directory: server
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Server tests and complete coverage
+        working-directory: server
+        run: >-
+          npx --no-install jest --config jest.config.cjs --runInBand --coverage
+          --collectCoverageFrom='app.js'
+          --collectCoverageFrom='server.js'
+          --collectCoverageFrom='{config,controllers,middleware,models,queries,routes,utils,validation}/**/*.{js,ts}'
+      - name: Client dependencies
+        working-directory: client
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Client tests and complete coverage
+        working-directory: client
+        env:
+          CI: 'true'
+        run: >-
+          npm test -- --watchAll=false --runInBand --coverage
+          --collectCoverageFrom='src/**/*.{js,jsx}'
+          --collectCoverageFrom='!src/**/*.test.{js,jsx}'
+          --collectCoverageFrom='!src/setupTests.js'
+      - name: Client build
+        working-directory: client
+        env:
+          # Preserve the documented legacy warning policy while failing build errors.
+          CI: 'false'
+        run: npm run build
+      - name: Coverage provenance
+        env:
+          REPOSITORY_ID: ${{ github.repository_id }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          fields = {'repository_id': int(os.environ['REPOSITORY_ID']),
+                    'head_sha': os.environ['SOURCE_SHA'],
+                    'run_id': int(os.environ['RUN_ID']),
+                    'run_attempt': int(os.environ['RUN_ATTEMPT'])}
+          Path('manifest.json').write_text(json.dumps(fields))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: happihub-coverage-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            manifest.json
+            server/coverage/lcov.info
+            client/coverage/lcov.info

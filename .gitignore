@@ -130,3 +130,6 @@ dist
 .pnp.*
 node_modules
 
+# Local quality tooling intermediates.
+__pycache__/
+.scannerwork/

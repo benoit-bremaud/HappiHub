@@ -1,0 +1,8 @@
+{
+  "workflow_id": 0,
+  "activation": "REPLACE_WITH_ACTIVATION_UTC_TIMESTAMP",
+  "state_directory": "/absolute/private/path/happihub-quality/state",
+  "properties_file": "/absolute/approved/code/sonar-project.properties",
+  "github_token_file": "/absolute/private/path/github-token",
+  "sonar_token_file": "/absolute/private/path/sonar-token"
+}
