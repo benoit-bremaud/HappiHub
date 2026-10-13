@@ -1,18 +1,10 @@
-import { addAttendee, createEvent, getEvents, getEventsId, getPublicEvents } from '../controllers/eventController.js';
-
-import authenticateToken from '../middleware/auth.js';
 import express from 'express';
-
-// Create an express router
+import { authenticateSession, optionalAuthentication } from '../middleware/auth.js';
+import { createEvent, getEvents, getEventsId, getPublicEvents, addAttendee } from '../controllers/eventController.js';
 const router = express.Router();
-
-// Routes for events
-router.post('/', authenticateToken, createEvent);
-router.get('/', authenticateToken, getEvents);
-router.get('/:id', authenticateToken, getEventsId);
-router.get('/public', authenticateToken, getPublicEvents);
-
-// Add user id into event attendees array
-router.patch('/:id', authenticateToken, addAttendee);
-
-export default router;
+router.get('/public', getPublicEvents);
+router.post('/', authenticateSession, createEvent);
+router.get('/', authenticateSession, getEvents);
+router.get('/:id', optionalAuthentication, getEventsId);
+router.patch('/:id', authenticateSession, addAttendee);
+export { router as eventRoutes };

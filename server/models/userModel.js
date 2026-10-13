@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
+  authVersion: { type: Number, default: 0 },
   name: {
     type: String,
     required: true,
@@ -13,6 +14,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
+    select: false,
     required: true,
   },
   role: {
@@ -58,4 +60,4 @@ userSchema.methods.isValidPassword = async function (password) {
 
 const User = mongoose.model('User', userSchema);
 
-export default User;
+export { User };

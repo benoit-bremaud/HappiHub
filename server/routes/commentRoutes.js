@@ -1,4 +1,4 @@
-import authenticateToken, { isAdmin } from "../middleware/auth.js";
+import { authenticateSession, optionalAuthentication } from "../middleware/auth.js";
 import { createComment,
         getEventComments } from "../controllers/commentController.js"; 
 
@@ -11,41 +11,41 @@ import express from "express";
  */
 const router = express.Router();
 
-router.post("/add", authenticateToken, createComment);
-router.get('/events/:event_id/comments', getEventComments);
+router.post("/add", authenticateSession, createComment);
+router.get('/events/:event_id/comments', optionalAuthentication, getEventComments);
 
 // // Routes for comments
-// router.post("/", authenticateToken, createComment);
+// router.post("/", authenticateSession, createComment);
 
 // // Get comment by id
-// router.get("/:id", authenticateToken, getCommentById);
+// router.get("/:id", authenticateSession, getCommentById);
 
 // // Get all comments by user id
-// router.get("/user/:event_id", authenticateToken, getCommentsByUserId);
+// router.get("/user/:event_id", authenticateSession, getCommentsByUserId);
 
 // // Get comments by event id
-// router.get("/event/:id", authenticateToken, getCommentsByEventId);
+// router.get("/event/:id", authenticateSession, getCommentsByEventId);
 
 // // Get all comments (for admin)
-// router.get("/", authenticateToken, isAdmin, getAllComments);
+// router.get("/", authenticateSession, isAdmin, getAllComments);
 
 // // Update comment by id
-// router.put("/:id", authenticateToken, updateCommentById);
+// router.put("/:id", authenticateSession, updateCommentById);
 
 // // Update comment by id (partial update)
-// router.patch("/:id", authenticateToken, patchCommentById);
+// router.patch("/:id", authenticateSession, patchCommentById);
 
 // // Delete comment by id
-// router.delete("/:id", authenticateToken, deleteCommentById);
+// router.delete("/:id", authenticateSession, deleteCommentById);
 
 // // Delete all comments by user id
-// router.delete("/user/:id", authenticateToken, deleteCommentsByUserId);
+// router.delete("/user/:id", authenticateSession, deleteCommentsByUserId);
 
 // // Delete all comments by event id
-// router.delete("/event/:id", authenticateToken, deleteCommentsByEventId);
+// router.delete("/event/:id", authenticateSession, deleteCommentsByEventId);
 
 // Delete all comments (for admin)
-// router.delete("/", authenticateToken, isAdmin, deleteAllComments);
+// router.delete("/", authenticateSession, isAdmin, deleteAllComments);
 
-export default router;
+export { router as commentRoutes };
 

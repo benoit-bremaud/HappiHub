@@ -1,0 +1,12 @@
+node_modules
+coverage
+build
+.git
+.env
+.env.*
+tests
+*.test.js
+*.test.jsx
+*.test.ts
+*.test.rest
+npm-debug.log*

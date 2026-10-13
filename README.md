@@ -2,6 +2,13 @@
 
 HappiHub est une application web de réseau social pour les événements culturels et communautaires. Notre objectif est de connecter les personnes partageant les mêmes intérêts et de faciliter l'organisation et la participation à des événements.
 
+## Project continuity
+
+Start with [project instructions](AGENTS.md), [handover](docs/HANDOVER.md),
+[prioritized work plan](docs/WORK_PLAN.md), and [operational history](PROJECT_LOG.md).
+Current implementation contracts are in [API documentation](docs/API_DOCUMENTATION.md).
+Further code requires completed UML conception and explicit owner validation.
+
 ## Table des Matières
 - [Structure du Projet](#structure-du-projet)
 - [Prérequis](#prérequis)
@@ -34,86 +41,15 @@ Le projet est organisé en plusieurs répertoires :
    cd happihub
    ```
 
-## Configuration de l'Environnement
+## Environment configuration
 
-Avant de démarrer le projet, assurez-vous de configurer correctement les variables d'environnement pour le backend et le frontend.
+Follow [private configuration instructions](docs/CONFIGURATION.md). Only placeholder templates are tracked; local and deployed environment files are ignored. Existing local files were preserved during credential cleanup.
 
-### Backend
+The client API base URL includes `/api`. Supply signing keys privately and do not reuse tutorial values. Production Compose requires private mounted secret files. Its deployment still requires a separate infrastructure review.
 
-1. Allez dans le répertoire `server/`.
+## Docker workflows
 
-2. Copiez le fichier `.env.example` et créez les fichiers `.env` pour chaque environnement :
-   ```
-   cp server/.env.example server/.env.development
-   cp server/.env.example server/.env.production
-   cp server/.env.example server/.env.test
-   ```
-3. Ouvrez les fichiers `.env` correspondants et configurez les variables d'environnement selon vos besoins pour chaque environnement :
-
-   **Exemple pour `.env.development`** :
-   ```
-   NODE_ENV=development
-   MONGO_URI=mongodb://localhost:27017/happihub_dev
-   JWT_SECRET=your_jwt_secret
-   PORT=5000
-   ```
-
-   **Exemple pour `.env.production`** :
-   ```
-   NODE_ENV=production
-   MONGO_URI=mongodb://mongo:27017/happihub_prod
-   JWT_SECRET=your_jwt_secret
-   PORT=5000
-   ```
-
-   **Exemple pour `.env.test`** :
-   ```
-   NODE_ENV=test
-   MONGO_URI=mongodb://localhost:27017/happihub_test
-   JWT_SECRET=your_jwt_secret
-   PORT=5000
-   ```
-
-### Frontend
-
-1. Allez dans le répertoire `client/`.
-
-2. Copiez le fichier `.env.example` et créez le fichier `.env` :
-   ```
-   cp client/.env.example client/.env
-   ```
-3. Ouvrez le fichier `.env` et configurez les variables d'environnement selon vos besoins.
-   
-   Voici un exemple :
-   ```
-   REACT_APP_API_URL=http://localhost:5000/api
-   ```
-
-Assurez-vous que les valeurs des variables d'environnement correspondent à la configuration de votre environnement de développement.
-
-## Démarrage des Conteneurs Docker
-
-Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construire et démarrer les conteneurs Docker. Vous pouvez démarrer les conteneurs pour différents environnements à l'aide des profils.
-
-### Environnement de Développement (Défaut)
-
-```bash
-docker-compose up --build
-```
-
-### Environnement de Production
-
-```bash
-docker-compose --profile prod up --build
-```
-
-### Environnement de Test
-
-```bash
-docker-compose --profile test up --build
-```
-
-Ces commandes démarrent les services avec les configurations appropriées pour chaque environnement.
+Follow [Docker setup and verification](docs/DOCKER.md). The default Compose file is local-only; production uses a separate reviewed baseline. Do not reuse the former shared-volume profiles or interpret a passing local check as production approval.
 
 ## Vérification du Bon Fonctionnement
 
@@ -264,17 +200,13 @@ Pour des instructions détaillées sur comment, quand et pourquoi mettre à jour
 
 Pour une documentation détaillée de l'API de HappiHub, veuillez consulter le fichier [API_DOCUMENTATION](docs/API_DOCUMENTATION.md). Ce document inclut des descriptions des endpoints, des paramètres, et des exemples de requêtes et de réponses.
 
-## Documentation de la Gestion des Tokens JWT
+## Authentication
 
-Nous avons ajouté une documentation complète pour la gestion des tokens JWT dans le projet HappiHub. Cette documentation couvre les aspects suivants :
+HappiHub now uses server-managed MongoDB sessions and HttpOnly cookies. Browser bearer
+JWT authentication and JWT refresh examples are historical. See the current
+[API contract](docs/API_DOCUMENTATION.md), [configuration](docs/CONFIGURATION.md), and
+[cookie-session specification](docs/architecture/specs/cookie-sessions.md).
 
-- Introduction à JWT et son utilisation dans HappiHub
-- Étapes détaillées pour générer des tokens JWT avec des exemples de codes
-- Méthodes pour valider des tokens JWT avec des exemples de code
-- Procédures pour rafraîchir des tokens JWT avec des exemples de code
-- Bonnes pratiques de sécurité pour la gestion des tokens JWT
-
-Pour consulter la documentation complète, veuillez suivre ce [JWT_DOCUMENTATION](docs/jwt/JWT_DOCUMENTATION.md).
 
 ## Guide Général
 

@@ -1,63 +1,38 @@
-import "./event.css";
-
-import React, { useEffect, useState } from "react";
-
-import Card from "../Card/Card";
-import { useNavigate } from 'react-router-dom';
-
-const Event = ({isLoggedIn}) => {
-  const navigate = useNavigate();
-
-  // useEffect(() => {
-  //   if (!isLoggedIn) {
-  //     navigate("/");
-  //   }
-  // }, [isLoggedIn]);
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/");
-    }
-  
-    const options = {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      }
+import { apiFetch } from '../../api';
+import './event.css';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import Card from '../Card/Card';
+import { useSession } from '../../session';
+/** Render public events, plus owned events for a signed-in user. */
+export const Event = () => {
+  const { id } = useParams();
+  const { user: session, status } = useSession();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (status === 'loading') return;
+    const controller = new AbortController();
+    setData([]); setError(''); setLoading(true);
+    const load = async () => {
+      try {
+        const authenticated = Boolean(session);
+        const response = await apiFetch(authenticated ? '/events' : '/events/public', {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('Request failed');
+        const result = await response.json();
+        if (!controller.signal.aborted) setData(result);
+      } catch {
+        if (!controller.signal.aborted) setError('Unable to load events. Please try again.');
+      } finally { if (!controller.signal.aborted) setLoading(false); }
     };
-  
-    const [events, setEvents] = useState([]);
-  
-    useEffect(() => {
-      const fetchEvents = async () => {
-        const response = await fetch("http://localhost:5000/api/events", options);
-        const json = await response.json();
-        if (response.ok) {
-          setEvents(json);
-        }else if(!token){
-          navigate("/");
-        }
-
-      };
-  
-      fetchEvents();
-      console.log(events);
-    }, []);
-  
-    return (
-        <div className="event-container">
-          <h1>Event</h1>
-          <div className="event-list">
-            {events.map((event) => (
-              <div className="event-item" key={event._id}>
-                <Card event={event} />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-  };
-  
-
-export default Event;
+    load(); return () => controller.abort();
+  }, [id, session, status]);
+  return <div className="event-container">
+    {loading && <p role="status">Loading…</p>}
+    {error && <p role="alert">{error}</p>}
+    <h1>Events</h1><div className="event-list">{data.map((event) => <Card key={event._id} event={event} />)}</div>
+  </div>;
+};

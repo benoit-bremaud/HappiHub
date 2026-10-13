@@ -8,7 +8,7 @@ describe('eventValidation', () => {
       description: 'This is a description of the event.',
       date: new Date().toISOString(),
       location: 'Event Location',
-      image: 'http://example.com/image.jpg',
+      image: 'https://example.com/image.jpg',
       creator: 'user123',
       attendees: ['user1', 'user2'],
       comments: [
