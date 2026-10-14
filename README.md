@@ -13,12 +13,11 @@ Further code requires completed UML conception and explicit owner validation.
 - [Structure du Projet](#structure-du-projet)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
-- [Configuration de l'Environnement](#configuration-de-lenvironnement)
-- [Démarrage des Conteneurs Docker](#démarrage-des-conteneurs-docker)
+- [Environment configuration](#environment-configuration)
+- [Docker workflows](#docker-workflows)
 - [Vérification du Bon Fonctionnement](#vérification-du-bon-fonctionnement)
 - [Contribution](#contribution)
 - [Licence](#licence)
-- [Correction des Erreurs Courantes](#correction-des-erreurs-courantes)
 
 ## Structure du Projet
 
@@ -53,122 +52,13 @@ Follow [Docker setup and verification](docs/DOCKER.md). The default Compose file
 
 ## Vérification du Bon Fonctionnement
 
-### Backend
+With the default local Compose file, services listen on loopback only:
 
-Vérifiez que le backend fonctionne en accédant à `http://localhost:5000`.
+- Frontend: `http://localhost:3200` (override with `HAPPIHUB_LOCAL_WEB_PORT`)
+- Backend readiness: `http://localhost:5200/ready` (override with `HAPPIHUB_LOCAL_API_PORT`)
 
-1. **Utiliser un Navigateur Web** :
-   - Ouvrez votre navigateur web.
-   - Accédez à `http://localhost:5000/test`.
-   - Vous devriez voir la réponse "Hello HappiHub Server!".
+MongoDB is not published on the host. For full checks and troubleshooting, see [Docker setup and verification](docs/DOCKER.md).
 
-2. **Utiliser `curl` (ligne de commande)** :
-   - Ouvrez votre terminal.
-   - Exécutez la commande suivante :
-     ```
-     curl http://localhost:5000/test
-     ```
-   - Vous devriez voir la réponse "Hello HappiHub Server!".
-
-### Frontend
-
-Vérifiez que le frontend fonctionne en accédant à `http://localhost:3000`.
-
-1. **Utiliser un Navigateur Web** :
-   - Ouvrez votre navigateur web.
-   - Accédez à `http://localhost:3000`.
-   - Vous devriez voir la page d'accueil par défaut de l'application React.
-
-2. **Utiliser `curl` (ligne de commande)** :
-   - Ouvrez votre terminal.
-   - Exécutez la commande suivante :
-     ```
-     curl http://localhost:3000
-     ```
-   - Vous devriez voir le code HTML de la page d'accueil par défaut de l'application React.
-
-## Correction des Erreurs Courantes
-
-### Erreur : Ports are not available
-
-Si vous rencontrez l'erreur suivante lors du démarrage des conteneurs Docker :
-
-```
-Starting happihub_mongo_1 ... error
-
-ERROR: for happihub_mongo_1  Cannot start service mongo: Ports are not available: exposing port TCP 0.0.0.0:27017 -> 0.0.0.0:0: listen tcp 0.0.0.0:27017: bind: address already in use
-
-ERROR: for happihub_app_1  'ContainerConfig'
-
-ERROR: for mongo  Cannot start service mongo: Ports are not available: exposing port TCP 0.0.0.0:27017 -> 0.0.0.0:0: listen tcp 0.0.0.0:27017: bind: address already in use
-```
-
-Cela signifie que le port 27017 est déjà utilisé par un autre processus. Pour résoudre ce problème, vous pouvez suivre les étapes suivantes :
-
-### Linux
-
-1. **Trouver le processus utilisant le port 27017** :
-   ```
-   sudo lsof -i :27017
-   ```
-
-   Exemple de sortie :
-   ```
-   COMMAND  PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
-   mongod  2100 mongodb   11u  IPv4  24553      0t0  TCP localhost:27017 (LISTEN)
-   ```
-
-2. **Tuer le processus utilisant le port 27017** :
-   ```
-   sudo kill -9 2100
-   ```
-
-   Remplacez `2100` par le PID trouvé dans la sortie de la commande précédente.
-
-### Windows
-
-1. **Trouver le processus utilisant le port 27017** :
-   ```powershell
-   Get-NetTCPConnection -LocalPort 27017 | Select-Object -Property State, LocalAddress, LocalPort, RemoteAddress, RemotePort, OwningProcess
-   Get-Process -Id (Get-NetTCPConnection -LocalPort 27017).OwningProcess
-   ```
-
-   Exemple de sortie :
-   ```plaintext
-   State        : Listen
-   LocalAddress : 0.0.0.0
-   LocalPort    : 27017
-   RemoteAddress: 0.0.0.0
-   RemotePort   : 0
-   OwningProcess: 2100
-   ```
-
-2. **Tuer le processus utilisant le port 27017** :
-   ```powershell
-   Stop-Process -Id 2100 -Force
-   ```
-
-   Remplacez `2100` par le PID trouvé dans la sortie de la commande précédente.
-
-### Mac
-
-1. **Trouver le processus utilisant le port 27017** :
-   ```sh
-   lsof -i :27017
-   ```
-
-   Exemple de sortie :
-   ```plaintext
-   COMMAND  PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
-   mongod  2100 mongodb   11u  IPv4  24553      0t0  TCP localhost:27017 (LISTEN)
-   ```
-
-2. **Tuer le processus utilisant le port 27017** :
-   ```sh
-   kill -9 2100
-   ```
-
-   Remplacez `2100` par le PID trouvé dans la sortie de la commande précédente.
 
 ## Contribution
 
