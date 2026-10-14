@@ -28,7 +28,9 @@ export { signupValidation };
 const loginValidation = (data) => {
   const schema = Joi.object({
     email: Joi.string().min(6).max(254).required().email(),
-    password: passwordSchema.required(),
+    // Login keeps the legacy rule: accounts created before the 72-byte creation
+    // policy must still sign in. The upper bound only caps hashing cost.
+    password: Joi.string().min(6).max(1024).required(),
   });
 
   return schema.validate(data);

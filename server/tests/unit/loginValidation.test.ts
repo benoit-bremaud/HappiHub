@@ -59,4 +59,26 @@ describe('loginValidation', () => {
     expect(error).toBeDefined();
     expect(error.details[0].message).toContain('"password" length must be at least 6 characters long');
   });
+
+  test('should accept a legacy password longer than the 72-byte creation limit', () => {
+    const data = {
+      email: 'johndoe@example.com',
+      password: 'a'.repeat(100),
+    };
+
+    const { error } = loginValidation(data);
+
+    expect(error).toBeUndefined();
+  });
+
+  test('should reject an oversized password', () => {
+    const data = {
+      email: 'johndoe@example.com',
+      password: 'a'.repeat(1025),
+    };
+
+    const { error } = loginValidation(data);
+
+    expect(error).toBeDefined();
+  });
 });
