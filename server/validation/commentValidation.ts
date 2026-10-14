@@ -1,19 +1,7 @@
-import joi, { ValidationResult } from "joi";
-
-interface CommentData {
-    content: string;
-    user_id: string;
-    event_id: string;
+/** Compatibility types for callers of the shared runtime validator. */
+export interface CommentData {
+  content: string;
+  event_id: string;
+  user_id?: string;
 }
-
-const commentValidation = (data: CommentData): ValidationResult<CommentData> => {
-    const schema = joi.object({
-        content: joi.string().required(),
-        user_id: joi.string().required(),
-        event_id: joi.string().required(),
-    });
-    
-    return schema.validate(data);
-    }
-
-export { commentValidation, CommentData };
+export { commentValidation } from './commentValidation.js';

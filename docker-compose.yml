@@ -1,99 +1,69 @@
-version: '3.8'
-
+# Local development only. Use a distinct Compose project name per workspace.
 services:
   client:
     build:
       context: ./client
-      dockerfile: Dockerfile
+      target: local
     ports:
-      - '3000:3000'
-    env_file:
-      - ./client/.env
+      - "127.0.0.1:${HAPPIHUB_LOCAL_WEB_PORT:-3200}:3000"
+    environment:
+      REACT_APP_API_URL: "http://localhost:${HAPPIHUB_LOCAL_API_PORT:-5200}/api"
+      CHOKIDAR_USEPOLLING: "true"
     volumes:
-      - ./client:/app
-      - /app/node_modules
+      - ./client/src:/app/src:ro
+      - ./client/public:/app/public:ro
+    networks: [frontend]
     depends_on:
-      - server
-
+      server:
+        condition: service_healthy
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 12
   server:
     build:
       context: ./server
-      dockerfile: Dockerfile
-    ports:
-      - '5000:5000'
+      target: local
     env_file:
-      - ./server/.env.development  # Par défaut, environnement de développement
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-    depends_on:
-      - mongo
+      - ./server/.env.docker.local
     environment:
-      - NODE_ENV=development
-
+      NODE_ENV: development
+      MONGO_URI_DEV: mongodb://mongo:27017/happihub_local
+      PORT_DEV: "5000"
+      APP_URL_DEV: "http://localhost:${HAPPIHUB_LOCAL_WEB_PORT:-3200}"
+    ports:
+      - "127.0.0.1:${HAPPIHUB_LOCAL_API_PORT:-5200}:5000"
+    networks: [frontend, database]
+    depends_on:
+      mongo:
+        condition: service_healthy
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
   mongo:
-    image: mongo
-    ports:
-      - '27017:27017'
+    networks: [database]
+    image: mongo:7.0.40@sha256:b6421fd6d1c5ded6377b397d8983e2f82e2100dc5123332dcfda2065a472be5b
     volumes:
-      - mongo-data:/data/db
-    # Pas d'authentification pour développement et test par défaut
-
-  server_production:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    ports:
-      - '5000:5000'
-    env_file:
-      - ./server/.env.production
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-    depends_on:
-      - mongo
-    environment:
-      - NODE_ENV=production
-    profiles:
-      - prod
-
-  mongo_production:
-    image: mongo
-    ports:
-      - '27017:27017'
-    volumes:
-      - mongo-data:/data/db
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=secureUsername
-      - MONGO_INITDB_ROOT_PASSWORD=securePassword
-    profiles:
-      - prod
-
-  server_test:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    command: npm test
-    env_file:
-      - ./server/.env.test
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-    depends_on:
-      - mongo
-    environment:
-      - NODE_ENV=test
-    profiles:
-      - test
-  
-  mongo_test:
-    image: mongo
-    ports:
-      - '27017:27017'
-    volumes:
-      - mongo-data:/data/db
-    profiles:
-      - test
-
+      - local_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.adminCommand({ping:1}).ok ? 0 : 1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 volumes:
-  mongo-data:
+  local_mongo_data:
+
+networks:
+  frontend:
+  database:
+    internal: true

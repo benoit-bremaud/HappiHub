@@ -1,139 +1,63 @@
+import { publicEventFilter, readableEventFilter } from '../queries/eventAccess.js';
 import Event from '../models/eventModel.js';
-import User from '../models/userModel.js';
-import { eventValidation } from '../validation/eventValidation.js';
+import { eventValidation, isValidEventId } from '../validation/eventValidation.js';
+import { canReadEvent, eventSummary } from '../utils/access.js';
 
+/** Persist a pending event owned by the authenticated account; never accepts another creator. Returns a projected event without relationship IDs. */
 export const createEvent = async (req, res) => {
-    // Validate the event data
-    const { error } = eventValidation(req.body);
-    if (error) return res.status(400).json({ message: error.details[0].message });
-
-    // Create a new event
-    const newEvent = new Event({
-        title: req.body.title,
-        description: req.body.description,
-        date: req.body.date,
-        location: req.body.location,
-        isPrivate: req.body.isPrivate,
-        image: req.body.image,
-        creator: req.body.creator, // req.user._id
-    });
-
-    try {
-        const savedEvent = await newEvent.save();
-        // Send the event data in the response
-        res.status(201).json(savedEvent);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  if (req.body.creator && req.body.creator !== req.user._id) return res.status(403).json({ message: 'Invalid author' });
+  const { error, value } = eventValidation({ ...req.body, creator: req.user._id });
+  if (error) return res.status(400).json({ message: 'Invalid event data' });
+  try {
+    const event = await new Event({ title: value.title, description: value.description, date: value.date,
+      location: value.location, image: value.image, isPrivate: value.isPrivate, creator: req.user._id }).save();
+    return res.status(201).json(eventSummary(event));
+  } catch {
+    return res.status(500).json({ message: 'Unable to create event' });
+  }
 };
 
-
-// Get all events (admin only)
-export const getEvents = async (_req, res) => {
-    try {
-        const events = await Event.find();
-        res.status(200).json(events);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+/** List owned events and approved public events; exclude relationship identifiers from responses. */
+export const getEvents = async (req, res) => {
+  try {
+    const events = await Event.find(readableEventFilter(req.user._id));
+    return res.json(events.map(eventSummary));
+  } catch {
+    return res.status(500).json({ message: 'Unable to retrieve events' });
+  }
 };
 
-// Get all public events
+/** List approved non-private events anonymously; no implicit approval or migration. */
 export const getPublicEvents = async (_req, res) => {
-    try {
-        const events = await Event.find({ isPrivate: false });
-        res.status(200).json(events);
-    } catch (err) {
-        res.status(500).json({ message: 'Server error' });
-    }
+  try {
+    const events = await Event.find(publicEventFilter());
+    return res.json(events.map(eventSummary));
+  } catch {
+    return res.status(500).json({ message: 'Unable to retrieve events' });
+  }
 };
 
-// Get a single event by ID
+/** Read a permitted event by hexadecimal ID; missing and forbidden resources share a 404 response. */
 export const getEventsId = async (req, res) => {
-    try {
-      const event = await Event.findById(req.params.id);
-      if (!event) {
-        return res.status(404).json({ message: 'Event not found' });
-      }
-      res.json(event);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Server error' });
-    }
+  if (!isValidEventId(req.params.id)) return res.status(400).json({ message: 'Invalid event ID' });
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!canReadEvent(event, req.user)) return res.status(404).json({ message: 'Event not found' });
+    return res.json(eventSummary(event));
+  } catch {
+    return res.status(500).json({ message: 'Unable to retrieve event' });
+  }
 };
 
-// Patch a user id into event attendees array
+/** Join the authenticated account to a readable event atomically and idempotently; does not edit event content. */
 export const addAttendee = async (req, res) => {
-    try {
-        // check if the event exists
-        const event = await Event.findById(req.params.id);
-        if (!event) {
-            return res.status(404).json({ message: 'Event not found' });
-        }
-        // check if the user exists
-        const user = await User.findById(req.body.userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        // check if the user is already an attendee
-        if (event.attendees.includes(req.body.userId)) {
-            return res.status(400).json({ message: 'User already an attendee' });
-        }
-        // add the user id to the attendees array
-        event.attendees.push(req.body.userId);
-
-        // add the event id to the user's events array
-        user.events.push(req.params.id);
-
-        // check if the event.attendess.push has been successful
-        if (event.attendees.includes(req.body.userId) && user.events.includes(req.params.id)) {
-            await event.save();
-            await user.save();
-            res.status(200).json({ message: 'User added to event successfully' });
-        } else {
-            res.status(500).json({ message: 'Failed to add user to event' });
-        }
-    }
-    catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
-    }
+  if (!isValidEventId(req.params.id)) return res.status(400).json({ message: 'Invalid event ID' });
+  if (req.body.userId && req.body.userId !== req.user._id) return res.status(403).json({ message: 'Invalid attendee' });
+  try {
+    const event = await Event.findOneAndUpdate({ _id: req.params.id, ...readableEventFilter(req.user._id) }, { $addToSet: { attendees: req.user._id } }, { new: true });
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+    return res.json({ message: 'Participation saved' });
+  } catch {
+    return res.status(500).json({ message: 'Unable to save participation' });
+  }
 };
-
-// Patch a user id out of event attendees array
-export const removeAttendee = async (req, res) => {
-    try {
-        // check if the event exists
-        const event = await Event.findById(req.params.id);
-        if (!event) {
-            return res.status(404).json({ message: 'Event not found' });
-        }
-        // check if the user exists
-        const user = await User.findById(req.body.userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        // check if the user is already out of attendees
-        if (!event.attendees.includes(req.body.userId)) {
-            return res.status(400).json({ message: 'User already out of attendees' });
-        }
-        // remove the user id from the attendees array
-        event.attendees.pull(req.body.userId);
-
-        // remove the event id from the user's events array
-        user.events.pull(req.params.id);
-
-        // check if the event.attendess.pull has been successful
-        if (!event.attendees.includes(req.body.userId) && !user.events.includes(req.params.id)) {
-            await event.save();
-            await user.save();
-            res.status(200).json({ message: 'User removed from event' });
-        } else {
-            res.status(500).json({ message: 'Failed to remove user from event' });
-        }
-    }
-    catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
-    }
-}

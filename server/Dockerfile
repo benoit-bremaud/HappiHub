@@ -1,20 +1,27 @@
-# Utiliser une image node officielle comme image de base
-FROM node:18
-
-# Définir le répertoire de travail dans le conteneur
+FROM node:22.23.3-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS base
 WORKDIR /app
+RUN chown node:node /app
+USER node
 
-# Copier les fichiers package.json et package-lock.json
-COPY package*.json ./
-
-# Installer les dépendances
-RUN npm install
-
-# Copier le reste des fichiers de l'application
-COPY . .
-
-# Exposer le port sur lequel l'application s'exécute
+FROM base AS local
+COPY --chown=node:node package.json package-lock.json ./
+RUN npm ci --ignore-scripts --no-audit --no-fund
+COPY --chown=node:node . .
 EXPOSE 5000
+CMD ["node", "--watch", "server.js"]
 
-# Commande pour démarrer l'application
-CMD ["npm", "run", "dev"]
+FROM base AS runtime
+ENV NODE_ENV=production
+COPY --chown=node:node package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+COPY --chown=node:node app.js server.js ./
+COPY --chown=node:node config ./config
+COPY --chown=node:node controllers ./controllers
+COPY --chown=node:node middleware ./middleware
+COPY --chown=node:node models ./models
+COPY --chown=node:node queries ./queries
+COPY --chown=node:node routes ./routes
+COPY --chown=node:node utils ./utils
+COPY --chown=node:node validation ./validation
+EXPOSE 5000
+CMD ["node", "server.js"]

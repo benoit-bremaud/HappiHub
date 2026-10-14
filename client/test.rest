@@ -1,36 +1,28 @@
-POST http://localhost:5000/api/users/signup
-Content-Type: application/json
+# Use a private REST client cookie jar. Never save credentials, cookies or CSRF values here.
+# Set csrfToken privately from the bootstrap response; update it after login regeneration.
+GET http://localhost:5000/api/users/session
+Origin: http://localhost:3000
 
-{
-  "name": "John Doe",
-  "email": "johndoe@example.com",
-  "password": "password123",
-  "role": "user"
-}
-
-
-#####
-
+###
 POST http://localhost:5000/api/users/login
-
+Origin: http://localhost:3000
+X-CSRF-Token: {{csrfToken}}
 Content-Type: application/json
 
-{
-  "email": "toto@gmail.com",
-  "password": "123123"
-}
+{"email":"organizer@example.com","password":"EXAMPLE_PASSWORD_ONLY"}
 
-
-#####
-
-Put http://localhost:5000/api/users/profile
-
+###
+PUT http://localhost:5000/api/users/profile
+Origin: http://localhost:3000
+X-CSRF-Token: {{csrfToken}}
 Content-Type: application/json
 
-{
-  "name": "John Doe",
-  "email": "yoyo@gmail.com",
-  "authentificateToken": "<jwt>"
-  
-}
-####
+{"name":"Example organizer"}
+
+###
+POST http://localhost:5000/api/users/logout
+Origin: http://localhost:3000
+X-CSRF-Token: {{csrfToken}}
+Content-Type: application/json
+
+{}

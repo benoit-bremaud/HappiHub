@@ -1,3 +1,7 @@
+> Historical JWT tutorial. The current API contract is [API_DOCUMENTATION.md](../API_DOCUMENTATION.md).
+> Tokens below are nonfunctional placeholders. Supply signing keys through private runtime configuration.
+> Do not copy legacy token-lifecycle examples into production; revocation and refresh are not implemented.
+
 # Gestion des Tokens JWT dans HappiHub
 
 ## Table des Matières
@@ -50,7 +54,7 @@ JSON Web Token (JWT) est un standard ouvert (RFC 7519) qui permet l'échange sé
 
 Un JWT ressemble à ceci :
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+<ACCESS_TOKEN>
 ```
 
 ### Pourquoi utiliser JWT dans HappiHub ?
@@ -316,7 +320,7 @@ function validateToken(token) {
 ### Exemple de Code
 
 ```javascript
-const token = '<jwt>'; // Remplacer par un token réel
+const token = process.env.ACCESS_TOKEN; // Remplacer par un token réel
 const decodedToken = validateToken(token);
 if (decodedToken) {
     console.log('Token is valid:', decodedToken);
@@ -350,7 +354,7 @@ function validateTokenWithExpiration(token, maxAge) {
 }
 
 const maxAge = 3600; // 1 heure en secondes
-const token = '<jwt>'; // Remplacer par un token réel
+const token = process.env.ACCESS_TOKEN; // Remplacer par un token réel
 const decodedToken = validateTokenWithExpiration(token, maxAge);
 if (decodedToken) {
     console.log('Token is valid with custom expiration:', decodedToken);
@@ -380,7 +384,7 @@ function validateTokenWithRole(token, requiredRole) {
 }
 
 const requiredRole = 'admin';
-const token = '<jwt>'; // Remplacer par un token réel
+const token = process.env.ACCESS_TOKEN; // Remplacer par un token réel
 const decodedToken = validateTokenWithRole(token, requiredRole);
 if (decodedToken) {
     console.log('Token is valid with role:', decodedToken);
@@ -412,7 +416,7 @@ function validateTokenWithClaims(token, claims) {
 }
 
 const claims = { role: 'admin', permissions: ['read', 'write'] };
-const token = '<jwt>'; // Remplacer par un token réel
+const token = process.env.ACCESS_TOKEN; // Remplacer par un token réel
 const decodedToken = validateTokenWithClaims(token, claims);
 if (decodedToken) {
     console.log('Token is valid with claims:', decodedToken);
@@ -472,7 +476,7 @@ function refreshToken(token) {
 ### Exemple de Code
 
 ```javascript
-const oldToken = '<jwt>'; // Remplacer par un token réel
+const oldToken = process.env.ACCESS_TOKEN; // Remplacer par un token réel
 const newToken = refreshToken(oldToken);
 if (newToken) {
     console.log('Token refreshed:', newToken);
@@ -504,7 +508,7 @@ function refreshTokenWithCheck(token) {
     return null;
 }
 
-const oldToken = '<jwt>'; // Remplacer par un token réel
+const oldToken = process.env.ACCESS_TOKEN; // Remplacer par un token réel
 const newToken = refreshTokenWithCheck(oldToken);
 if (newToken) {
     console.log('Token refreshed or still valid:', newToken);
@@ -528,7 +532,7 @@ function refreshTokenWithUpdatedInfo(token, updatedUser) {
     return null;
 }
 
-const oldToken = '<jwt>'; // Remplacer par un token réel
+const oldToken = process.env.ACCESS_TOKEN; // Remplacer par un token réel
 const updatedUser = { email: 'newemail@example.com', role: 'admin' };
 const newToken = refreshTokenWithUpdatedInfo(oldToken, updatedUser);
 if (newToken) {
@@ -553,7 +557,7 @@ function refreshTokenWithNotification(token) {
     return null;
 }
 
-const oldToken = '<jwt>'; // Remplacer par un token réel
+const oldToken = process.env.ACCESS_TOKEN; // Remplacer par un token réel
 const newToken = refreshTokenWithNotification(oldToken);
 if (newToken) {
     console.log('Token refreshed:', newToken);

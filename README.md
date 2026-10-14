@@ -2,16 +2,22 @@
 
 HappiHub est une application web de réseau social pour les événements culturels et communautaires. Notre objectif est de connecter les personnes partageant les mêmes intérêts et de faciliter l'organisation et la participation à des événements.
 
+## Project continuity
+
+Start with [project instructions](AGENTS.md), [handover](docs/HANDOVER.md),
+[prioritized work plan](docs/WORK_PLAN.md), and [operational history](PROJECT_LOG.md).
+Current implementation contracts are in [API documentation](docs/API_DOCUMENTATION.md).
+Further code requires completed UML conception and explicit owner validation.
+
 ## Table des Matières
 - [Structure du Projet](#structure-du-projet)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
-- [Configuration de l'Environnement](#configuration-de-lenvironnement)
-- [Démarrage des Conteneurs Docker](#démarrage-des-conteneurs-docker)
+- [Environment configuration](#environment-configuration)
+- [Docker workflows](#docker-workflows)
 - [Vérification du Bon Fonctionnement](#vérification-du-bon-fonctionnement)
 - [Contribution](#contribution)
 - [Licence](#licence)
-- [Correction des Erreurs Courantes](#correction-des-erreurs-courantes)
 
 ## Structure du Projet
 
@@ -34,205 +40,25 @@ Le projet est organisé en plusieurs répertoires :
    cd happihub
    ```
 
-## Configuration de l'Environnement
+## Environment configuration
 
-Avant de démarrer le projet, assurez-vous de configurer correctement les variables d'environnement pour le backend et le frontend.
+Follow [private configuration instructions](docs/CONFIGURATION.md). Only placeholder templates are tracked; local and deployed environment files are ignored. Existing local files were preserved during credential cleanup.
 
-### Backend
+The client API base URL includes `/api`. Supply signing keys privately and do not reuse tutorial values. Production Compose requires private mounted secret files. Its deployment still requires a separate infrastructure review.
 
-1. Allez dans le répertoire `server/`.
+## Docker workflows
 
-2. Copiez le fichier `.env.example` et créez les fichiers `.env` pour chaque environnement :
-   ```
-   cp server/.env.example server/.env.development
-   cp server/.env.example server/.env.production
-   cp server/.env.example server/.env.test
-   ```
-3. Ouvrez les fichiers `.env` correspondants et configurez les variables d'environnement selon vos besoins pour chaque environnement :
-
-   **Exemple pour `.env.development`** :
-   ```
-   NODE_ENV=development
-   MONGO_URI=mongodb://localhost:27017/happihub_dev
-   JWT_SECRET=your_jwt_secret
-   PORT=5000
-   ```
-
-   **Exemple pour `.env.production`** :
-   ```
-   NODE_ENV=production
-   MONGO_URI=mongodb://mongo:27017/happihub_prod
-   JWT_SECRET=your_jwt_secret
-   PORT=5000
-   ```
-
-   **Exemple pour `.env.test`** :
-   ```
-   NODE_ENV=test
-   MONGO_URI=mongodb://localhost:27017/happihub_test
-   JWT_SECRET=your_jwt_secret
-   PORT=5000
-   ```
-
-### Frontend
-
-1. Allez dans le répertoire `client/`.
-
-2. Copiez le fichier `.env.example` et créez le fichier `.env` :
-   ```
-   cp client/.env.example client/.env
-   ```
-3. Ouvrez le fichier `.env` et configurez les variables d'environnement selon vos besoins.
-   
-   Voici un exemple :
-   ```
-   REACT_APP_API_URL=http://localhost:5000/api
-   ```
-
-Assurez-vous que les valeurs des variables d'environnement correspondent à la configuration de votre environnement de développement.
-
-## Démarrage des Conteneurs Docker
-
-Utilisez les fichiers `Dockerfile` et `docker-compose.yml` fournis pour construire et démarrer les conteneurs Docker. Vous pouvez démarrer les conteneurs pour différents environnements à l'aide des profils.
-
-### Environnement de Développement (Défaut)
-
-```bash
-docker-compose up --build
-```
-
-### Environnement de Production
-
-```bash
-docker-compose --profile prod up --build
-```
-
-### Environnement de Test
-
-```bash
-docker-compose --profile test up --build
-```
-
-Ces commandes démarrent les services avec les configurations appropriées pour chaque environnement.
+Follow [Docker setup and verification](docs/DOCKER.md). The default Compose file is local-only; production uses a separate reviewed baseline. Do not reuse the former shared-volume profiles or interpret a passing local check as production approval.
 
 ## Vérification du Bon Fonctionnement
 
-### Backend
+With the default local Compose file, services listen on loopback only:
 
-Vérifiez que le backend fonctionne en accédant à `http://localhost:5000`.
+- Frontend: `http://localhost:3200` (override with `HAPPIHUB_LOCAL_WEB_PORT`)
+- Backend readiness: `http://localhost:5200/ready` (override with `HAPPIHUB_LOCAL_API_PORT`)
 
-1. **Utiliser un Navigateur Web** :
-   - Ouvrez votre navigateur web.
-   - Accédez à `http://localhost:5000/test`.
-   - Vous devriez voir la réponse "Hello HappiHub Server!".
+MongoDB is not published on the host. For full checks and troubleshooting, see [Docker setup and verification](docs/DOCKER.md).
 
-2. **Utiliser `curl` (ligne de commande)** :
-   - Ouvrez votre terminal.
-   - Exécutez la commande suivante :
-     ```
-     curl http://localhost:5000/test
-     ```
-   - Vous devriez voir la réponse "Hello HappiHub Server!".
-
-### Frontend
-
-Vérifiez que le frontend fonctionne en accédant à `http://localhost:3000`.
-
-1. **Utiliser un Navigateur Web** :
-   - Ouvrez votre navigateur web.
-   - Accédez à `http://localhost:3000`.
-   - Vous devriez voir la page d'accueil par défaut de l'application React.
-
-2. **Utiliser `curl` (ligne de commande)** :
-   - Ouvrez votre terminal.
-   - Exécutez la commande suivante :
-     ```
-     curl http://localhost:3000
-     ```
-   - Vous devriez voir le code HTML de la page d'accueil par défaut de l'application React.
-
-## Correction des Erreurs Courantes
-
-### Erreur : Ports are not available
-
-Si vous rencontrez l'erreur suivante lors du démarrage des conteneurs Docker :
-
-```
-Starting happihub_mongo_1 ... error
-
-ERROR: for happihub_mongo_1  Cannot start service mongo: Ports are not available: exposing port TCP 0.0.0.0:27017 -> 0.0.0.0:0: listen tcp 0.0.0.0:27017: bind: address already in use
-
-ERROR: for happihub_app_1  'ContainerConfig'
-
-ERROR: for mongo  Cannot start service mongo: Ports are not available: exposing port TCP 0.0.0.0:27017 -> 0.0.0.0:0: listen tcp 0.0.0.0:27017: bind: address already in use
-```
-
-Cela signifie que le port 27017 est déjà utilisé par un autre processus. Pour résoudre ce problème, vous pouvez suivre les étapes suivantes :
-
-### Linux
-
-1. **Trouver le processus utilisant le port 27017** :
-   ```
-   sudo lsof -i :27017
-   ```
-
-   Exemple de sortie :
-   ```
-   COMMAND  PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
-   mongod  2100 mongodb   11u  IPv4  24553      0t0  TCP localhost:27017 (LISTEN)
-   ```
-
-2. **Tuer le processus utilisant le port 27017** :
-   ```
-   sudo kill -9 2100
-   ```
-
-   Remplacez `2100` par le PID trouvé dans la sortie de la commande précédente.
-
-### Windows
-
-1. **Trouver le processus utilisant le port 27017** :
-   ```powershell
-   Get-NetTCPConnection -LocalPort 27017 | Select-Object -Property State, LocalAddress, LocalPort, RemoteAddress, RemotePort, OwningProcess
-   Get-Process -Id (Get-NetTCPConnection -LocalPort 27017).OwningProcess
-   ```
-
-   Exemple de sortie :
-   ```plaintext
-   State        : Listen
-   LocalAddress : 0.0.0.0
-   LocalPort    : 27017
-   RemoteAddress: 0.0.0.0
-   RemotePort   : 0
-   OwningProcess: 2100
-   ```
-
-2. **Tuer le processus utilisant le port 27017** :
-   ```powershell
-   Stop-Process -Id 2100 -Force
-   ```
-
-   Remplacez `2100` par le PID trouvé dans la sortie de la commande précédente.
-
-### Mac
-
-1. **Trouver le processus utilisant le port 27017** :
-   ```sh
-   lsof -i :27017
-   ```
-
-   Exemple de sortie :
-   ```plaintext
-   COMMAND  PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
-   mongod  2100 mongodb   11u  IPv4  24553      0t0  TCP localhost:27017 (LISTEN)
-   ```
-
-2. **Tuer le processus utilisant le port 27017** :
-   ```sh
-   kill -9 2100
-   ```
-
-   Remplacez `2100` par le PID trouvé dans la sortie de la commande précédente.
 
 ## Contribution
 
@@ -264,17 +90,13 @@ Pour des instructions détaillées sur comment, quand et pourquoi mettre à jour
 
 Pour une documentation détaillée de l'API de HappiHub, veuillez consulter le fichier [API_DOCUMENTATION](docs/API_DOCUMENTATION.md). Ce document inclut des descriptions des endpoints, des paramètres, et des exemples de requêtes et de réponses.
 
-## Documentation de la Gestion des Tokens JWT
+## Authentication
 
-Nous avons ajouté une documentation complète pour la gestion des tokens JWT dans le projet HappiHub. Cette documentation couvre les aspects suivants :
+HappiHub now uses server-managed MongoDB sessions and HttpOnly cookies. Browser bearer
+JWT authentication and JWT refresh examples are historical. See the current
+[API contract](docs/API_DOCUMENTATION.md), [configuration](docs/CONFIGURATION.md), and
+[cookie-session specification](docs/architecture/specs/cookie-sessions.md).
 
-- Introduction à JWT et son utilisation dans HappiHub
-- Étapes détaillées pour générer des tokens JWT avec des exemples de codes
-- Méthodes pour valider des tokens JWT avec des exemples de code
-- Procédures pour rafraîchir des tokens JWT avec des exemples de code
-- Bonnes pratiques de sécurité pour la gestion des tokens JWT
-
-Pour consulter la documentation complète, veuillez suivre ce [JWT_DOCUMENTATION](docs/jwt/JWT_DOCUMENTATION.md).
 
 ## Guide Général
 

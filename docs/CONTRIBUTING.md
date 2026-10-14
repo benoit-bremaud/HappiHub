@@ -1,3 +1,6 @@
+> Historical guide: use the current [root contribution guide](../CONTRIBUTING.md).
+> Environment, JWT and npm instructions below are legacy and are not the current runtime contract.
+
 # Contribuer à HappiHub
 
 Merci de votre intérêt pour contribuer à HappiHub ! Ce document vous guidera à travers les étapes nécessaires pour contribuer efficacement à notre projet.
