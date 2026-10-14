@@ -28,7 +28,9 @@ configuration or proof the older built image is identical to the current source.
 UC1 — Sign in without consuming another network client's quota (extends the existing
 session sign-in goal, not a new feature). Actor: visitor. Precondition: controlled TLS
 ingress, valid deployment configuration, single API instance. Success: visitor A's
-failed attempts cannot exhaust visitor B's quota when their network client IPs differ.
+failed attempts cannot exhaust visitor B's quota when their rate-limit keys differ
+(distinct IPv4 addresses, or IPv6 addresses outside the same configured subnet group;
+see R7 for the NAT and IPv6 grouping exceptions).
 Minimal guarantee: ambiguous/untrusted forwarding does not select an arbitrary identity.
 
 UC2 — Configure the trusted ingress boundary. Actor: operator. Supply the exact trusted
@@ -82,7 +84,8 @@ Do not generate configuration by unsafe string interpolation or add a runtime te
 
 R7. Limit values stay 20 login and 120 bootstrap requests per 15 minutes, including the
 existing 429/Retry-After behavior. IPv6 grouping remains express-rate-limit's configured
-behavior. Separate persons sharing a NAT IP still share quotas. One API instance remains
+behavior: distinct IPv6 addresses inside one configured subnet group share a single
+limiter key, exactly like separate persons sharing a NAT IP. One API instance remains
 required; this design introduces no distributed store or account lockout.
 
 ## Data, errors and operational boundary
@@ -90,7 +93,13 @@ required; this design introduces no distributed store or account lockout.
 Client IPs are personal data and used transiently for trusted forwarding and existing
 in-memory rate-limit keys. No database migration, additional retention, analytics or
 raw-IP debug logging is introduced. Synthetic test results may record documentation IPs.
-Do not claim the existing deployment-wide access/error logging policy has been audited.
+
+R8. Nginx access logging. With the real-IP rewrite, the default `$remote_addr` access log
+would record visitor addresses instead of the gateway peer and retain them in container
+logs. The ingress configuration must set `access_log off;` (error logging stays enabled
+at its default level). Re-enabling access logs requires a separate privacy decision with
+an explicit retention period. Implementation is tracked as a follow-up; the wider
+deployment-wide logging policy has still not been audited.
 
 403 means forwarding could not establish the required boundary. 429 means the resolved
 client quota is exhausted. Authentication, CSRF and session-store failures retain their
@@ -126,7 +135,8 @@ must not be included inadvertently in the non-Docker collector unit-test discove
 | R4 bad provenance | Untrusted Nginx peer, missing XFF, malformed final address, or peer-as-client receives 403 and never reaches API |
 | R5 isolation | API/database have no published port; root health check works; existing local mode still ignores spoofed scheme |
 | R6 configuration | Missing path/file and invalid config fail validation/startup; empty trust file rejects API; exact IPv4 and IPv6 peers supported |
-| R7 quota independence | 20 failed A logins then 21st A -> 429; B's first attempt remains normal; repeat bootstrap at 120/121; rotating spoof headers cannot bypass A's limit |
+| R7 quota independence | 20 failed A logins then 21st A -> 429; B's first attempt remains normal; repeat bootstrap at 120/121; rotating spoof headers cannot bypass A's limit; two IPv6 addresses in one subnet group share a quota |
+| R8 access logging | Rendered ingress configuration contains `access_log off;`; a request through the chain adds no access-log line containing the client address |
 | Session compatibility | Existing server/security/session/integration tests pass; trusted HTTPS path still issues Secure HttpOnly SameSite cookie |
 | Supply-chain/runtime | nginx -t using the pinned image, Compose config validation, targeted Docker fixture, diff/secret review |
 
@@ -149,7 +159,7 @@ No database/session migration or credential rotation is inherently required.
   peers, file and network boundaries. No new class model or state machine is justified.
   Textual UC1/UC2 reuse the session epic; no duplicate use-case diagram is needed.
 
-Requirements/traceability: R1-R7 map to the tests above; the original two-client gap is
+Requirements/traceability: R1-R8 map to the tests above; the original two-client gap is
 explicit. Clean/SOLID: transport normalization stays at Nginx; application quota policy
 stays in Express. KISS/YAGNI/DRY: use the existing real-IP module, one operator trust file,
 no proxy service, IP parser, abstraction layer or copied limiter. Patterns/security:
