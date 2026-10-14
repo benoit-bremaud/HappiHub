@@ -82,7 +82,7 @@ Cette documentation fournit des informations détaillées sur l'API de HappiHub,
 ```json
 {
   "message": "Connexion réussie",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "token": "<jwt>"
 }
 ```
 
