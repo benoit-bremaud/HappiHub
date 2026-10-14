@@ -57,8 +57,8 @@ Integration Mongo is synthetic loopback-only 7.0.40; no real connection configur
 Client build retains the current documented warnings policy; unrelated warning cleanup excluded.
 
 Expected reports: server/coverage/lcov.info and client/coverage/lcov.info. Artifact
-happihub-coverage contains only these two reports and manifest.json with repository ID,
-head SHA and run ID. Keep for 30 days. No environment files, credentials or raw user data.
+happihub-coverage-<run attempt> contains only these two reports and manifest.json with
+repository ID, head SHA, run ID and run attempt. Keep for 30 days. No environment files, credentials or raw user data.
 Manifest is corroborating data, never the authority; verify against GitHub API metadata.
 Source/test classifications are disjoint; include untested source in denominators. Source
 prefix resolution must be verified in the first scan; do not concatenate LCOV blindly.
@@ -78,10 +78,11 @@ and head repository IDs, event push, head_branch main, exact deployed workflow I
 completed success. Exclude PRs/forks/manual dispatch and runs older than activation.
 3. Record every discovered main push run and test failure; enqueue eligible runs in ascending
 creation order/run ID. Use (run ID, attempt, SHA) identity; re-runs do not replace source SHA.
-4. Publish pending context happihub/sonarqube to that exact SHA. One scan at a time; no
-cancel-on-new-push policy or latest-main substitution. This controls local ordering, not
-GitHub job start ordering. Reconcile later completed older runs and warn if analysis would
-regress the canonical timeline rather than silently accepting older source as newest.
+4. Ordering barrier: walk runs in ascending creation order and stop at the first trusted
+main run that is not yet completed; later runs wait until it reaches a terminal success or
+failure. A run older than the last scanned run is never scanned; it is reported as an error
+requiring baseline reconciliation. Publish pending context happihub/sonarqube to that exact
+SHA. One scan at a time; no cancel-on-new-push policy or latest-main substitution.
 5. Download artifacts belonging to the same run. Verify repository/head IDs/SHA, run attempt
 where available, expiry, expected name, artifact digest when available and manifest. Missing
 or ambiguous provenance fails closed. Never choose an artifact by name across all runs.
