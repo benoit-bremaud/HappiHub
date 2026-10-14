@@ -134,3 +134,6 @@ node_modules
 # Local and deployed credentials stay outside version control.
 .env.*
 !.env.example
+# Local quality tooling intermediates.
+__pycache__/
+.scannerwork/

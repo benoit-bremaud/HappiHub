@@ -1,0 +1,13 @@
+[Unit]
+Description=Collect trusted HappiHub main revisions for local SonarQube
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 %h/.local/share/happihub-quality/code/tools/quality/sonar-collector.py --config %h/.config/happihub-quality/config.json
+LoadCredential=github-token:%h/.config/happihub-quality/github-token
+LoadCredential=sonar-token:%h/.config/happihub-quality/sonar-token
+Environment=PYTHONDONTWRITEBYTECODE=1
+TimeoutStartSec=25min
+NoNewPrivileges=true
