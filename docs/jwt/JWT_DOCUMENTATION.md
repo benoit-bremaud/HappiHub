@@ -316,7 +316,7 @@ function validateToken(token) {
 ### Exemple de Code
 
 ```javascript
-const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Remplacer par un token réel
+const token = '<jwt>'; // Remplacer par un token réel
 const decodedToken = validateToken(token);
 if (decodedToken) {
     console.log('Token is valid:', decodedToken);
@@ -350,7 +350,7 @@ function validateTokenWithExpiration(token, maxAge) {
 }
 
 const maxAge = 3600; // 1 heure en secondes
-const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Remplacer par un token réel
+const token = '<jwt>'; // Remplacer par un token réel
 const decodedToken = validateTokenWithExpiration(token, maxAge);
 if (decodedToken) {
     console.log('Token is valid with custom expiration:', decodedToken);
@@ -380,7 +380,7 @@ function validateTokenWithRole(token, requiredRole) {
 }
 
 const requiredRole = 'admin';
-const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Remplacer par un token réel
+const token = '<jwt>'; // Remplacer par un token réel
 const decodedToken = validateTokenWithRole(token, requiredRole);
 if (decodedToken) {
     console.log('Token is valid with role:', decodedToken);
@@ -412,7 +412,7 @@ function validateTokenWithClaims(token, claims) {
 }
 
 const claims = { role: 'admin', permissions: ['read', 'write'] };
-const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Remplacer par un token réel
+const token = '<jwt>'; // Remplacer par un token réel
 const decodedToken = validateTokenWithClaims(token, claims);
 if (decodedToken) {
     console.log('Token is valid with claims:', decodedToken);
@@ -472,7 +472,7 @@ function refreshToken(token) {
 ### Exemple de Code
 
 ```javascript
-const oldToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Remplacer par un token réel
+const oldToken = '<jwt>'; // Remplacer par un token réel
 const newToken = refreshToken(oldToken);
 if (newToken) {
     console.log('Token refreshed:', newToken);
@@ -504,7 +504,7 @@ function refreshTokenWithCheck(token) {
     return null;
 }
 
-const oldToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Remplacer par un token réel
+const oldToken = '<jwt>'; // Remplacer par un token réel
 const newToken = refreshTokenWithCheck(oldToken);
 if (newToken) {
     console.log('Token refreshed or still valid:', newToken);
@@ -528,7 +528,7 @@ function refreshTokenWithUpdatedInfo(token, updatedUser) {
     return null;
 }
 
-const oldToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Remplacer par un token réel
+const oldToken = '<jwt>'; // Remplacer par un token réel
 const updatedUser = { email: 'newemail@example.com', role: 'admin' };
 const newToken = refreshTokenWithUpdatedInfo(oldToken, updatedUser);
 if (newToken) {
@@ -553,7 +553,7 @@ function refreshTokenWithNotification(token) {
     return null;
 }
 
-const oldToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Remplacer par un token réel
+const oldToken = '<jwt>'; // Remplacer par un token réel
 const newToken = refreshTokenWithNotification(oldToken);
 if (newToken) {
     console.log('Token refreshed:', newToken);
