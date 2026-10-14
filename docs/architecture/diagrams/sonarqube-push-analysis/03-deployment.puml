@@ -1,0 +1,25 @@
+@startuml
+ title dep — Local SonarQube quality control
+ node "GitHub infrastructure" {
+ artifact "HappiHub repository" as Repo
+ node "Disposable hosted runners" as Hosted
+ artifact "SHA-bound LCOV artifacts" as Coverage
+ }
+ node "Disposable dedicated VM\nprivate network" as VM {
+ artifact "Trusted main scan job" as Scan
+ }
+ node "Existing local SonarQube host" {
+ node "SonarQube Community Build" as Sonar
+ database "Existing PostgreSQL" as DB
+ }
+ Repo --> Hosted : source SHA\nno Sonar credential
+ Hosted --> Coverage : tests and reports
+ Repo --> Scan : same trusted main SHA
+ Coverage --> Scan : verified reports
+ Scan --> Sonar : private connection\nproject-scoped token
+ Sonar --> DB : existing persistence
+ note bottom of VM
+Provisioning and routing unresolved
+No shared host data or Docker socket
+end note
+@enduml
