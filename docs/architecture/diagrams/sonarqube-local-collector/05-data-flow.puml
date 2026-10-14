@@ -1,0 +1,19 @@
+@startuml
+ title Data flow — Quality credentials and source identity
+ rectangle "GitHub HTTPS API and public source" as GitHub
+ rectangle "Owner-only local credential files" as Credentials
+ rectangle "Fixed collector" as Collector
+ rectangle "Disposable scanner" as Scanner
+ rectangle "Local SonarQube" as Sonar
+ database "Private collector state" as State
+ GitHub --> Collector : source and LCOV\nPII: Git author names/emails and actor metadata
+ Credentials --> Collector : sensitive: repository-scoped token\nand project analysis token
+ Collector --> Scanner : read-only source and validated LCOV\nPII: Git author names/emails\nsensitive: project token in environment
+ Scanner --> Sonar : source findings and SCM identity\nPII: Git author names/emails\nsensitive: project token on approved local HTTP segment
+ Collector --> GitHub : HTTPS exact-SHA status\nsensitive: scoped GitHub authentication
+ Collector --> State : run/attempt/SHA and gate identity\nno actor profile or credential values
+ note bottom of State
+Private directory and redacted diagnostics
+Credentials outside checkout and artifacts
+end note
+@enduml

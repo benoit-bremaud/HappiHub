@@ -1,0 +1,14 @@
+# Reviewed 2026-10-14: historical findings that are not live secrets.
+# Truncated doc placeholders, the public jwt.io sample token, and one dev-only test JWT that expired in July 2024.
+d9aefd9dac64dc463475cb86180f776f64147123:client/test.rest:jwt:33
+700bae01889c21ae20870aa8d6e796dfae82299e:docs/jwt/JWT_DOCUMENTATION.md:jwt:53
+700bae01889c21ae20870aa8d6e796dfae82299e:docs/jwt/JWT_DOCUMENTATION.md:generic-api-key:319
+700bae01889c21ae20870aa8d6e796dfae82299e:docs/jwt/JWT_DOCUMENTATION.md:generic-api-key:353
+700bae01889c21ae20870aa8d6e796dfae82299e:docs/jwt/JWT_DOCUMENTATION.md:generic-api-key:383
+700bae01889c21ae20870aa8d6e796dfae82299e:docs/jwt/JWT_DOCUMENTATION.md:generic-api-key:415
+700bae01889c21ae20870aa8d6e796dfae82299e:docs/jwt/JWT_DOCUMENTATION.md:generic-api-key:475
+700bae01889c21ae20870aa8d6e796dfae82299e:docs/jwt/JWT_DOCUMENTATION.md:generic-api-key:507
+700bae01889c21ae20870aa8d6e796dfae82299e:docs/jwt/JWT_DOCUMENTATION.md:generic-api-key:531
+700bae01889c21ae20870aa8d6e796dfae82299e:docs/jwt/JWT_DOCUMENTATION.md:generic-api-key:556
+4355d4b635195e53fe66015e33377ee1667124e4:docs/API_DOCUMENTATION.md:generic-api-key:77
+docs/jwt/JWT_DOCUMENTATION.md:jwt:53

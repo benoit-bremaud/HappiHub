@@ -1,0 +1,32 @@
+@startuml
+title sd — Trusted ingress address and independent quotas (accepted 2026-10-13)
+actor Visitor
+participant "Controlled TLS edge" as Edge
+participant "Nginx real-IP boundary" as Nginx
+participant "Express + existing limiter" as API
+Visitor -> Edge: HTTPS request\nPII: transport client IP\nSensitive: cookie / login payload
+Edge -> Edge: Overwrite forwarded identity with\ntransport IP and controlled scheme / host
+Edge -> Nginx: Forward request from exact configured peer\nPII: canonical client IP
+Nginx -> Nginx: Apply real-IP module\nretain original peer address
+alt Untrusted peer or no usable replacement
+  Nginx --> Edge: 403; do not reach API
+  Edge --> Visitor: Generic rejection
+else Trusted peer and normalized address
+  Nginx -> API: One X-Forwarded-For address\nPII: normalized client IP\nSensitive: existing cookie / payload
+  API -> API: Existing session middleware
+  API -> API: Trust Nginx socket; select client IP\napply existing per-IP quota
+  alt Quota exhausted
+    API --> Nginx: 429 + Retry-After
+  else Quota available
+    API -> API: Existing CSRF / authentication flow
+    API --> Nginx: Existing response contract
+  end
+  Nginx --> Edge: Response
+  Edge --> Visitor: HTTPS response
+end
+note over Visitor, API
+  Two different network client IPs -> separate quotas.
+  Genuine shared NAT IPs still share a quota.
+  Internal transport approval remains a deployment concern.
+end note
+@enduml

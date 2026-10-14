@@ -1,0 +1,13 @@
+@startuml
+ title uc — Local quality control
+ actor Contributor
+ actor Maintainer
+ rectangle "HappiHub quality control" {
+ usecase "UC1 Validate a pushed revision" as UC1
+ usecase "UC2 Inspect quality findings" as UC2
+ usecase "UC3 Renew credentials" as UC3
+ }
+ Contributor --> UC1
+ Maintainer --> UC2
+ Maintainer --> UC3
+@enduml
