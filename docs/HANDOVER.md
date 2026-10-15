@@ -1,6 +1,6 @@
 # HappiHub handover
 
-Updated: 2026-10-15. The backlog is reconciled and the recovery branch is published for review.
+Updated: 2026-10-16. The backlog is reconciled and the recovery branch is published for review.
 No further application code is authorized without the owner's completed UML approval gate.
 
 ## Read in order
@@ -128,7 +128,9 @@ have occurred. Do not interpret candidate folders as an approved implementation 
    V1 package status (2026-10-15): framing, journeys, use cases, class, state, sequences and
    component and personal-data flow (06, DF1–DF5) diagrams validated; traceability matrix
    and final review #247 validated ([v1-traceability](architecture/specs/v1-traceability.md),
-   T1–T9 resolved, T10–T11 open). Next: the implementation-approval gate and the first brick, as Benoît decides.
+   T1–T9 resolved, T10–T11 open). Implementation gate approved 2026-10-16 for `798b323`
+   ([gate](architecture/specs/v1-implementation-gate.md)); first brick: #246 data/migration study,
+   then accounts/associations, event lifecycle backend, partner API.
    Open preconditions: legacy migration (#246, T10); email provider, hosting/backups and
    Géoplateforme quota (T11). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.

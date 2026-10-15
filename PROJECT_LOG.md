@@ -5,6 +5,14 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-10-16
+
+- **V1 implementation-approval gate** — owner explicitly approved the V1 conception at
+  `main` @ `798b323` ([gate](docs/architecture/specs/v1-implementation-gate.md)). First
+  brick by MCDA top score: #246 data/migration study (425/500; runner-up event lifecycle
+  backend 290). Sequence A → D → B → C. T10, T11 remain preconditions; no code yet.
+  Branch `docs/v1-implementation-gate`.
+
 ## 2026-10-15
 
 - **V1 traceability and final conception review (#247)** — new
