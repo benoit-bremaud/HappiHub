@@ -1,38 +1,23 @@
-# Local review — HappiHub (docs/v1-traceability)
+# Local review — HappiHub (branch docs/v1-implementation-gate vs main)
 
-- Date: 2026-10-15
-- Commit: e641b4d + staged changes
-- Scope: branch diff main...docs/v1-traceability (documentation and UML only)
-- Checks run: design · docs · security (tests and correctness: not applicable, no code)
-- Verdict: ship after fixes · Must 2 (resolved) · Should 6 (applied) · Nice 3 (applied)
+- Date: 2026-10-16
+- Commit: 798b323 + uncommitted docs diff
+- Scope: gate document, PROJECT_LOG.md, docs/HANDOVER.md (documentation only)
+- Checks run: docs · correctness (MCDA arithmetic, links, references); design, tests, security not applicable to a docs-only diff
+- Verdict: ship after fixes · Must 1 (fixed) · Should 2 (fixed) · Nice 1 (fixed)
 
 ## 🔴 Must Have
-- `docs/architecture/specs/v1-use-cases.md` UC31 `[security]` · a suspended account could not
-  sign in, so it lost GDPR export and erasure for the whole suspension · resolved by owner
-  MCDA (B 410/500): restricted sign-in to "My account" (UC5, UC6, UC9).
-- `docs/architecture/specs/v1-use-cases.md` § Quotas `[security]` · per-account failure limit
-  enabled targeted lockout · resolved by owner MCDA (A 465/500): per (account, IP) plus per IP,
-  neutral 429.
+- `docs/architecture/specs/v1-implementation-gate.md:33` `[docs|correctness]` · Partner API cited UC27 only; event retrieval is UC28 · fixed to UC27–UC28
 
 ## 🟡 Should Have
-- `v1-use-cases.md` § Quotas `[docs]` · sign-in limit wrongly attributed to ADR-0001 · source
-  reworded (new in T2).
-- `v1-traceability.md` §1–3 `[docs]` · gap markers read as open · legend states they are
-  resolved in section 5.
-- `04-class.md` T1 `[design]` · `decidedBy` absence ambiguous; role kinds' target untyped ·
-  note added.
-- `06-data-flow.md` sessions row `[security]` · membership re-check invariant made explicit.
-- `v1-use-cases.md` public browsing `[security]` · public event ids opaque, non-sequential.
-- `HANDOVER.md` `[docs]` · T10–T11 are open, not resolved · reworded.
+- `docs/architecture/specs/v1-implementation-gate.md:23` `[docs]` · Invitations also need UC10 · fixed
+- `docs/architecture/specs/v1-implementation-gate.md:32` `[docs]` · Brick B lacked use-case references · added UC15–UC20
 
 ## 🔵 Nice to Have
-- `v1-traceability.md:7` `[docs]` · baseline wording includes this branch's edits.
-- `v1-use-cases.md` UC28 2b `[docs]` · per-IP then per-key limit stated.
-- `v1-use-cases.md` § Quotas `[design]` · counters process-local (single instance).
+- `docs/architecture/specs/v1-implementation-gate.md:49` `[docs]` · Unjustified reversibility scores for C, D · justified
 
 ## ⚪ Disagree / Intentional
-- `v1-traceability.md` section 5 `[design]` · 05c account state diagram deferred · T4 MCDA.
+_None._
 
 ## Per-dimension summary
-- Design: no over-engineering; DecisionKind extension acceptable · Docs: stale markers fixed ·
-  Tests: n/a · Security: two Must resolved by owner decision · Correctness: n/a
+- Design: n/a · Docs: references corrected, links resolve · Tests: n/a · Security: no secrets, n/a · Correctness: MCDA totals and sensitivity verified
