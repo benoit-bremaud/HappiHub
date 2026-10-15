@@ -14,7 +14,7 @@ main success scenario, extensions, source. "The system" is HappiHub.
 | Account and association | UC1–UC9 | **Validated 2026-10-15** |
 | Membership | UC10–UC14 | **Validated 2026-10-15** |
 | Public browsing | UC21–UC26 | **Validated 2026-10-15** |
-| Website integration | UC27–UC28 | To do |
+| Website integration | UC27–UC28 | **Validated 2026-10-15** |
 | Administration | UC29–UC33 | To do |
 
 ## Event management
@@ -556,3 +556,59 @@ server-rendered or prerendered enough to carry Open Graph metadata.
   "Near me" geolocation is excluded from V1 (permission prompt, location data).
   Effect on UC15: at step 2 a normalized city is required; when the address is typed freely,
   Claire picks the city from a list.
+
+## Website integration
+
+Read-only, server-to-server, scoped to one association (J6). Key-authenticated routes send no
+CORS headers, so browsers cannot call them from another origin.
+
+### UC27 — Manage API keys
+
+- **Level**: user goal. **Primary actor**: association member (Malik).
+- **Preconditions**: authenticated member; association not suspended.
+- **Minimal guarantee**: a secret is displayed only once and stored only as a hash; a revoked
+  key stops working at once.
+- **Success guarantee**: a named key exists (or is revoked), with ready-to-paste snippets;
+  creation and revocation are logged.
+- **Main success scenario**:
+  1. Malik opens "Website integration" and chooses "Create a key", naming it "WordPress site".
+  2. The system generates a secret with a recognizable prefix (e.g. `hh_live_`, so secret
+     scanners can detect leaks), stores its hash and shows it once with copy buttons and
+     snippets (WordPress/PHP, Node, curl) pre-filled.
+  3. The system lists keys with name, creation date and `lastUsedAt`, never the secret.
+- **Extensions**:
+  - 1a. Key limit reached (5 per association): the system asks to revoke one first.
+  - 3a. Malik revokes a key after confirmation: requests with it are refused from now on.
+  - 3b. Rotation: Malik creates a new key, updates the site, then revokes the old one; both
+    work in between.
+  - 3c. A key unused for 180 days is revoked automatically; members are emailed 14 days
+    before and the revocation is logged (I1). A never-used key counts from its creation.
+- **Source**: J6 D1, D2.
+
+### UC28 — Retrieve association events
+
+- **Level**: user goal. **Primary actor**: partner website (system actor).
+- **Preconditions**: a valid, non-revoked key; association not suspended or closed.
+- **Minimal guarantee**: the response only ever contains the key's own association events
+  in published, cancelled or archived state, with the J5 public fields.
+- **Success guarantee**: the site receives the requested events and can show them; the key's
+  `lastUsedAt` is updated.
+- **Main success scenario**:
+  1. The site server calls `GET /api/v1/events` with the key.
+  2. The system authenticates the key and returns upcoming published and cancelled events
+     (with `status`, `updatedAt`), soonest first, paginated.
+  3. Optionally the site calls `GET /api/v1/events/{id}` for one event.
+- **Extensions**:
+  - 1a. `?include=past` adds archived events; `?updatedSince=` returns only changes.
+  - 2a. Missing, invalid or revoked key: 401 without detail.
+  - 2b. Rate limit exceeded (per key): 429 with `Retry-After`.
+  - 2c. Association suspended or closed: 403 with a stable error code.
+  - 3a. Event of another association, draft or unknown: 404 (no existence leak).
+- **Source**: J6 D3, S2.
+
+### Decisions — Website integration (validated 2026-10-15)
+
+- **I1** Automatic revocation of keys unused for 180 days, with an email to members 14 days
+  before, logged; reuses the scheduled job already needed for archiving and closures (4.3).
+  Rejected: no expiry with a UI warning only (4.1, dormant keys stay valid), mandatory
+  12-month expiry (2.9, breaks active sites when renewal is forgotten).
