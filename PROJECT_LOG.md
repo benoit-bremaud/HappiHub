@@ -17,6 +17,13 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   review tables (`docs/architecture/diagrams/v1-events/`). After the PR #266 review, only a
   verified email can become a member (UC11) and moderator conflicts include former members
   and the disputing party. Branch `docs/v1-use-cases`.
+- **V1 component diagram** — owner validated
+  [03-component](docs/architecture/diagrams/v1-events/03-component.md) with scored decisions
+  CP1–CP5: in-process `runOnce` jobs, server-proxied address suggestions, neutral `FileStore`
+  port, domain ports only at real boundaries, `EmailSender` inside the email delivery
+  package. The local review aligned the scheduled job sequence (02d: internal timer, images
+  deleted before data). Database (#246) and hosting stay undecided. Branch
+  `docs/v1-component`, stacked on `docs/v1-use-cases`.
 
 ## 2026-10-12
 
