@@ -12,7 +12,7 @@ main success scenario, extensions, source. "The system" is HappiHub.
 | --- | --- | --- |
 | Event management | UC15–UC20 | **Validated 2026-10-15** |
 | Account and association | UC1–UC9 | **Validated 2026-10-15** |
-| Membership | UC10–UC14 | To do |
+| Membership | UC10–UC14 | **Validated 2026-10-15** |
 | Public browsing | UC21–UC26 | To do |
 | Website integration | UC27–UC28 | To do |
 | Administration | UC29–UC33 | To do |
@@ -196,7 +196,9 @@ and never reveal whether an address has an account.
     be on HappiHub — ask a member for an invitation" and lets Claire continue; the slug gets
     a distinguishing suffix.
   - 3b. Rate limit reached: the system asks to retry later.
-- **Source**: J1 D1, D2, D3.
+  - 1b. Claire is already signed in: only the association name is asked; refused beyond 5
+    associations created by the account (M1).
+- **Source**: J1 D1, D2, D3, M1.
 
 ### UC2 — Verify email address
 
@@ -276,8 +278,8 @@ and never reveal whether an address has an account.
   3. The user confirms.
   4. The system deletes the account immediately (A5), revokes every session and signs the user out.
 - **Extensions**:
-  - 2a. The user is the last member of an association: the system warns explicitly that the
-    association will be closed with the account and lists the effects (UC8); confirmation
+  - 2a. The user is the last member of one or more associations: the system lists them and
+    warns explicitly that each will be closed with the account and lists the effects (UC8); confirmation
     covers both (review F8).
   - 2b. Wrong password: refused, rate-limited.
 - **Source**: framing (GDPR), review F1, F8.
@@ -337,3 +339,114 @@ and never reveal whether an address has an account.
 - **A5** Immediate deletion after current password and explicit confirmation (4.4). Rejected:
   14-day deactivation grace (3.8, extra state everywhere), deactivation without deletion (2.4,
   not GDPR erasure).
+
+## Membership
+
+All members of an association have the same rights (framing). Membership changes are logged
+(UC14).
+
+### UC10 — Manage invitations
+
+- **Level**: user goal. **Primary actor**: association member (Claire).
+- **Preconditions**: authenticated member with a verified email; association not suspended.
+- **Minimal guarantee**: an invitation can only ever admit the invited email address.
+- **Success guarantee**: a pending invitation exists for the email, sent by mail and shown as
+  a copyable link; or a pending invitation is revoked.
+- **Main success scenario**:
+  1. Claire enters Malik's email and chooses "Invite".
+  2. The system creates a single-use invitation bound to that email, valid 7 days, sends it
+     and shows the link to copy (e.g. for WhatsApp).
+  3. The system lists it under "Pending invitations" and logs it.
+- **Extensions**:
+  - 1a. The email is already a member: the system says so; nothing is sent.
+  - 1b. A pending invitation exists for the email: the system offers to resend it.
+  - 2a. Daily invitation quota reached (10 per association): the system explains.
+  - 3a. Claire revokes a pending invitation: the link stops working at once; logged.
+- **Source**: J4 D1.
+
+### UC11 — Join an association from an invitation
+
+- **Level**: user goal. **Primary actor**: visitor holding an invitation (Malik).
+- **Preconditions**: a valid invitation link.
+- **Minimal guarantee**: an expired, revoked, used or foreign invitation admits nobody.
+- **Success guarantee**: Malik is a member with the same rights as the others; the invitation
+  is consumed; members can see it in the log.
+- **Main success scenario**:
+  1. Malik opens the link.
+  2. The system shows the association and asks him to sign in or create an account with the
+     invited email pre-filled (no association name asked).
+  3. Malik signs in or signs up.
+  4. The system checks that the account email matches the invitation, adds the membership
+     and opens the association dashboard.
+- **Extensions**:
+  - 4a. The account email differs: refused with a masked hint ("This invitation is for
+    m•••@gmail.com, ask Claire to invite your address").
+  - 2a. Invitation expired, revoked or used: the system explains and suggests asking again.
+  - 3a. New account: created with the invited email, unverified. The same link may have been
+    copied into a chat, so following it proves nothing about mailbox ownership; the email
+    still goes through UC2 before inviting or publishing.
+  - 4b. Malik already belongs to another association: the membership is added; the
+    association switcher lists both (M1).
+- **Source**: J4 D1.
+
+### UC12 — Remove a member or leave the association
+
+- **Level**: user goal. **Primary actor**: association member.
+- **Preconditions**: authenticated member; the association has at least two members.
+- **Minimal guarantee**: the association never ends up without a member.
+- **Success guarantee**: the person is no longer a member, their sessions lose access to the
+  association at once, content stays with the association, the action is logged and a
+  removed person is emailed with an "I dispute this" link (UC13).
+- **Main success scenario**:
+  1. The member chooses "Remove" on another member, or "Leave the association".
+  2. The system asks for confirmation.
+  3. The member confirms; the system applies the change.
+- **Extensions**:
+  - 1a. The actor is the last member: leaving is refused; the system points to UC8 (close)
+    or UC6 (delete account).
+  - 3a. The removed member was editing: their next save is refused with an explanation.
+- **Source**: J4 D3.
+
+### UC13 — Dispute a removal
+
+- **Level**: user goal. **Primary actor**: registered user (removed former member).
+- **Preconditions**: the user was removed from an association less than 30 days ago; no open
+  dispute exists for that removal.
+- **Success guarantee**: the dispute and its explanation are queued for a moderator (UC30);
+  the user is told it was received.
+- **Main success scenario**:
+  1. The user follows "I dispute this" from the removal email.
+  2. The user writes an explanation.
+  3. The system records the dispute, notifies moderators and confirms.
+- **Extensions**:
+  - 1a. More than 30 days passed or a dispute is open: the system explains.
+- **Source**: J4 D3.
+
+### UC14 — Consult the activity log
+
+- **Level**: user goal. **Primary actor**: association member.
+- **Preconditions**: authenticated member.
+- **Minimal guarantee**: only members of this association see its log; no IP address is ever
+  stored or shown.
+- **Success guarantee**: the member sees, newest first, who did what and when over the last
+  12 months (create, publish, cancel event; invite, join, remove, leave member; API key
+  created or revoked; profile changed).
+- **Main success scenario**:
+  1. The member opens "Activity".
+  2. The system lists entries with pagination.
+- **Extensions**:
+  - 2a. Entries older than 12 months: already purged.
+  - 2b. An author deleted their account: shown as "former member".
+- **Source**: J4 D4, J6 D2.
+
+### Decisions — Membership (validated 2026-10-15)
+
+- **M1** One account may belong to several associations (4.5): joining by invitation is
+  unlimited, creating is capped at 5 associations per account to keep per-association quotas
+  meaningful. The association is part of every URL (`/assos/<slug>/…`) with a switcher in the
+  header; no "current association" is kept in the session. Rejected: unlimited creation (4.1,
+  quota bypass), one association per account (3.4, V2 rework and migration), one account per
+  association (2.0).
+  Effects on other fiches: UC1 extension 1b (a signed-in user creates another association);
+  UC6 extension 2a applies to every association where the user is the last member; UC31
+  suspends one association or, for an account, all its memberships.
