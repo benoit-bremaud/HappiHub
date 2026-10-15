@@ -208,7 +208,7 @@ and never reveal whether an address has an account.
 - **Preconditions**: the account exists and its email is not verified.
 - **Minimal guarantee**: an expired, reused or foreign link verifies nothing.
 - **Success guarantee**: the email is marked verified; publishing (UC18) and inviting (UC10)
-  become possible.
+  become possible; pending valid invitations to that email are accepted (UC11 3a/4c).
 - **Main success scenario**:
   1. The user opens the link received by email.
   2. The system checks the token (single use, 24 h) and marks the email verified.
@@ -379,15 +379,18 @@ All members of an association have the same rights (framing). Membership changes
   2. The system shows the association and asks him to sign in or create an account with the
      invited email pre-filled (no association name asked).
   3. Malik signs in or signs up.
-  4. The system checks that the account email matches the invitation, adds the membership
-     and opens the association dashboard.
+  4. The system checks that the account email matches the invitation and is verified, adds
+     the membership and opens the association dashboard. Only a verified email can become a
+     member (Codex review on PR #266, scored 450/500).
 - **Extensions**:
   - 4a. The account email differs: refused with a masked hint ("This invitation is for
     m•••@gmail.com, ask Claire to invite your address").
   - 2a. Invitation expired, revoked or used: the system explains and suggests asking again.
-  - 3a. New account: created with the invited email, unverified. The same link may have been
-    copied into a chat, so following it proves nothing about mailbox ownership; the email
-    still goes through UC2 before inviting or publishing.
+  - 3a/4c. New account, or existing account whose email is not verified: the same link may
+    have been copied into a chat, so following it proves nothing about mailbox ownership.
+    The system asks to verify the email (UC2) and adds no membership yet; on verification,
+    the account joins the associations whose invitations to that email are still pending
+    and valid. If the invitation expired meanwhile, the system suggests asking for a new one.
   - 4b. Malik already belongs to another association: the membership is added; the
     association switcher lists both (M1).
 - **Source**: J4 D1.
@@ -620,8 +623,10 @@ CORS headers, so browsers cannot call them from another origin.
 Moderation applies after publication (no prior moderation). Every moderation action records
 its author, reason and time in a platform moderation log (kept 12 months, no IP address) and
 notifies the affected association members or account by email with an "I dispute this" link
-(UC9). Conflict of interest: a moderator never handles a report or dispute concerning an
-association they belong to; it is escalated to the super administrator.
+(UC9). Conflict of interest: a moderator never handles a report or dispute in which they are the
+disputing party, the author of the contested decision, a current or former member of the
+association concerned, or otherwise directly involved; it is escalated to the super
+administrator.
 
 ### UC29 — Handle a report
 

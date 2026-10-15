@@ -12,6 +12,11 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   J1–J6 ([framing](docs/architecture/specs/v1-product-framing.md),
   [journeys](docs/architecture/specs/v1-user-journeys.md)). Partner keys follow J6 D2:
   several named keys per association. Branch `docs/v1-product-framing`.
+- **V1 use cases and domain model** — owner validated the use case diagram, 33 Cockburn
+  fiches, class diagram, event/association state diagrams and four sequences with scored
+  review tables (`docs/architecture/diagrams/v1-events/`). After the PR #266 review, only a
+  verified email can become a member (UC11) and moderator conflicts include former members
+  and the disputing party. Branch `docs/v1-use-cases`.
 
 ## 2026-10-12
 

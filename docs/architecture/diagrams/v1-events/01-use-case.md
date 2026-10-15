@@ -6,7 +6,7 @@
 > [V1 use cases](../../specs/v1-use-cases.md) (Cockburn fiches)
 > **Related ADRs**: ADR-0001 (cookie sessions)
 
-Status: proposed, pending owner validation (conception workshop 3).
+Status: validated by the owner on 2026-10-15 (conception workshop 3).
 
 ## Context
 
