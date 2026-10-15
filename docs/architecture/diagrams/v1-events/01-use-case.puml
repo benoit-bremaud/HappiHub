@@ -21,74 +21,86 @@ rectangle "HappiHub V1" {
     usecase "UC1 Sign up an association" as UC1
     usecase "UC2 Verify email address" as UC2
     usecase "UC3 Reset a forgotten password" as UC3
-    usecase "UC4 Edit the association profile" as UC4
-    usecase "UC27 Dispute a suspension" as UC27
+    usecase "UC4 Update my account" as UC4
+    usecase "UC5 Export my data" as UC5
+    usecase "UC6 Delete my account" as UC6
+    usecase "UC7 Edit the association profile" as UC7
+    usecase "UC8 Close the association" as UC8
+    usecase "UC9 Dispute a\nmoderation decision" as UC9
   }
   package "Membership" {
-    usecase "UC5 Invite a member" as UC5
-    usecase "UC6 Join an association\nfrom an invitation" as UC6
-    usecase "UC7 Remove a member\nor leave the association" as UC7
-    usecase "UC8 Dispute a removal" as UC8
-    usecase "UC9 Consult the activity log" as UC9
+    usecase "UC10 Manage invitations" as UC10
+    usecase "UC11 Join an association\nfrom an invitation" as UC11
+    usecase "UC12 Remove a member\nor leave the association" as UC12
+    usecase "UC13 Dispute a removal" as UC13
+    usecase "UC14 Consult the activity log" as UC14
   }
   package "Event management" {
-    usecase "UC10 Create an event" as UC10
-    usecase "UC11 Edit an event" as UC11
-    usecase "UC12 Resolve an edit conflict" as UC12
-    usecase "UC13 Publish an event" as UC13
-    usecase "UC14 Cancel an event" as UC14
-    usecase "UC15 Delete a draft" as UC15
+    usecase "UC15 Create an event" as UC15
+    usecase "UC16 Edit an event" as UC16
+    usecase "UC17 Resolve an edit conflict" as UC17
+    usecase "UC18 Publish an event" as UC18
+    usecase "UC19 Cancel an event" as UC19
+    usecase "UC20 Delete a draft" as UC20
   }
   package "Public browsing" {
-    usecase "UC16 View an event page" as UC16
-    usecase "UC17 Share an event" as UC17
-    usecase "UC18 Add an event to a calendar" as UC18
-    usecase "UC19 View an association page" as UC19
-    usecase "UC20 Report an event" as UC20
+    usecase "UC21 Browse upcoming events" as UC21
+    usecase "UC22 View an event page" as UC22
+    usecase "UC23 Share an event" as UC23
+    usecase "UC24 Add an event to a calendar" as UC24
+    usecase "UC25 View an association page" as UC25
+    usecase "UC26 Report an event\nor an association" as UC26
   }
   package "Website integration" {
-    usecase "UC21 Manage API keys" as UC21
-    usecase "UC22 Retrieve association events" as UC22
+    usecase "UC27 Manage API keys" as UC27
+    usecase "UC28 Retrieve association events" as UC28
   }
   package "Administration" {
-    usecase "UC23 Handle a report" as UC23
-    usecase "UC24 Resolve a removal dispute" as UC24
-    usecase "UC25 Suspend an account\nor an association" as UC25
-    usecase "UC26 Grant or revoke\nthe moderator role" as UC26
+    usecase "UC29 Handle a report" as UC29
+    usecase "UC30 Resolve a removal dispute" as UC30
+    usecase "UC31 Suspend an account\nor an association" as UC31
+    usecase "UC32 Resolve a\nmoderation dispute" as UC32
+    usecase "UC33 Grant or revoke\nthe moderator role" as UC33
   }
 }
 
 Visitor --> UC1
-Visitor --> UC6
-Visitor --> UC16
-Visitor --> UC17
-Visitor --> UC18
-Visitor --> UC19
-Visitor --> UC20
+Visitor --> UC11
+Visitor --> UC21
+Visitor --> UC22
+Visitor --> UC23
+Visitor --> UC24
+Visitor --> UC25
+Visitor --> UC26
 
 Registered --> UC2
 Registered --> UC3
-Registered --> UC8
-Registered --> UC27
+Registered --> UC13
+Registered --> UC9
+Registered --> UC6
+Registered --> UC4
+Registered --> UC5
 
-Member --> UC4
-Member --> UC5
 Member --> UC7
-Member --> UC9
 Member --> UC10
-Member --> UC11
-Member --> UC13
+Member --> UC12
 Member --> UC14
 Member --> UC15
-Member --> UC21
+Member --> UC16
+Member --> UC18
+Member --> UC19
+Member --> UC20
+Member --> UC27
+Member --> UC8
 
-Partner --> UC22
+Partner --> UC28
 
-Moderator --> UC23
-Moderator --> UC24
-Moderator --> UC25
+Moderator --> UC29
+Moderator --> UC30
+Moderator --> UC31
 
-SuperAdmin --> UC26
+SuperAdmin --> UC33
+SuperAdmin --> UC32
 
-UC12 .> UC11 : <<extend>>\n(same field changed)
+UC17 .> UC16 : <<extend>>\n(same field changed)
 @enduml
