@@ -158,7 +158,8 @@ J4 D2).
   3. The member confirms; the system deletes the draft and its image.
 - **Extensions**:
   - 3a. The member gives up: nothing changes.
-- **Source**: J3 ("only drafts can be deleted").
+- **Source**: J3 ("only drafts can be deleted"); a draft untouched for 12 months is also
+  deleted automatically after a 14-day notice (S2).
 
 ### Decisions — Event management (validated 2026-10-15)
 
@@ -301,7 +302,8 @@ and never reveal whether an address has an account.
 ### UC8 — Close the association
 
 - **Level**: user goal. **Primary actor**: association member (last member).
-- **Preconditions**: authenticated; the actor is the only member.
+- **Preconditions**: authenticated; the actor is the only member; the association is not
+  suspended (S1).
 - **Minimal guarantee**: no closure while other members remain; explicit confirmation.
 - **Success guarantee**: upcoming events are cancelled ("Association closed"), API keys are
   revoked, the page shows "Association closed" for 30 days with its slug reserved, then all
