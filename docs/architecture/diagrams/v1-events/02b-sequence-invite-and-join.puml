@@ -42,7 +42,12 @@ else valid
   alt different email
     A --> B : 403 masked hint
   else same email, not verified
-    A --> B : 202 "verify your email to join" (UC2)\nno membership; joined on verification
+    A --> B : 202 "verify your email to join" (UC2), no membership
+    note right of A
+      After UC2, the user is offered the invitations
+      to that email still PENDING and not expired;
+      choosing "Join" replays this accept request.
+    end note
   else same email, verified
     A -> D : in one write: membership + invitation ACCEPTED\n+ activity entry
     A --> B : 200 → association dashboard
