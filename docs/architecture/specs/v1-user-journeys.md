@@ -8,7 +8,7 @@ Journeys drive the use-case diagrams, then wireframes (#249).
 | --- | --- | --- | --- |
 | J1 | Discover HappiHub and sign up the association | Claire | To do |
 | J2 | Create an event | Claire | **Validated 2026-10-15** |
-| J3 | Preview, publish, then cancel or archive | Claire | To do |
+| J3 | Preview, publish, then cancel or archive | Claire | **Validated 2026-10-15** |
 | J4 | Invite a member and edit together | Claire, Malik | To do |
 | J5 | Browse a public event page on mobile | Inès | To do |
 | J6 | Connect the association website (API key) | Malik | To do |
@@ -39,3 +39,31 @@ Success measures served: S3 (create and publish in < 5 minutes), S4, S5, S7.
 
 Open points for the conception: address suggestion provider (must respect zero budget and
 EU/GDPR), image limits and EXIF stripping (#62), poster style catalogue.
+
+## J3 — Preview, publish, then cancel or archive (Claire)
+
+Preview is J2 step 4. Three lifecycle decisions, each chosen against the alternatives:
+
+| Decision | Choice (score) | Rejected and why |
+| --- | --- | --- |
+| D1 Edit a published event | Direct live edit on save (4.5): banner "visible immediately"; public "Updated on…" when date or venue changes; API exposes `updatedAt` | Draft of changes (3.5): two versions, risk Claire believes a fix is live. Edit forbidden (2.9): unpublishing empties partner sites |
+| D2 Cancel | Page kept with a "Cancelled" banner and optional reason (4.8); explicit confirmation; final; API exposes `cancelled` | Delete page (3.4): shared links 404, visitors travel for nothing. Reversible cancel (4.1): rare, confusing public state; recreate instead |
+| D3 Archive | Automatic after end date, or end of start day without end (4.8); page stays reachable as "Past event"; removed from agenda and the API "upcoming" listing | Manual (3.4): forgotten, cluttered agenda. Auto-delete (4.0): loses troupe history and links |
+
+Only drafts can be deleted.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Draft: create (J2)
+  Draft --> Draft: autosave / edit
+  Draft --> Published: publish
+  Draft --> [*]: delete draft
+  Published --> Published: edit (live, "updated on")
+  Published --> Cancelled: cancel (confirm, optional reason)
+  Published --> Archived: end date passed (automatic)
+  Cancelled --> Archived: end date passed (automatic)
+  Archived --> [*]
+```
+
+This replaces the current pending/approved/rejected moderation for V1 (no prior moderation;
+reporting remains). Migration of existing events is a conception item.
