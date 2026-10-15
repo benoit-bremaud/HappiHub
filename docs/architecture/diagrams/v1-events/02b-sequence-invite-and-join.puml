@@ -1,0 +1,49 @@
+@startuml
+title sd — UC10/UC11 Invite a member and join from the invitation
+skinparam shadowing false
+autonumber
+actor "Member (Claire)" as C
+actor "Invitee (Malik)" as K
+participant "Browser" as B
+participant "API server" as A
+database "Data store" as D
+participant "Outbox worker" as W
+participant "Email provider" as E
+
+C -> B : invite malik@…
+B -> A : POST /assos/{slug}/invitations {email} + CSRF
+A -> D : check membership, verified email,\ndaily quota, not already member
+alt refused (quota, unverified, already member)
+  A --> B : 4xx with reason
+else accepted
+  A -> A : token = 32 random bytes
+  A -> D : in one write: invitation {email, hash(token), expires +7 d}\n+ activity entry + outbox email
+  A --> B : 201 {copyable link with token}
+  B --> C : link to copy (WhatsApp) + "email queued"
+end
+...within a minute...
+W -> D : take pending outbox emails
+W -> E : send invitation email
+alt provider error
+  W -> D : schedule retry with backoff
+else sent
+  W -> D : mark sent
+end
+K -> B : open invitation link
+B -> A : GET /invitations/{token}
+A -> D : find by hash(token)
+alt unknown, expired, revoked or used
+  A --> B : 410 "ask again"
+else valid
+  A --> B : association name, masked email
+  K -> B : sign in or sign up (email pre-filled)
+  B -> A : POST /invitations/{token}/accept + CSRF
+  A -> A : account email == invitation email?
+  alt different email
+    A --> B : 403 masked hint
+  else same email
+    A -> D : in one write: membership + invitation ACCEPTED\n+ activity entry
+    A --> B : 200 → association dashboard
+  end
+end
+@enduml

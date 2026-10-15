@@ -1,0 +1,43 @@
+@startuml
+title sd — UC16/UC17 Save an event edit with concurrent changes
+skinparam shadowing false
+autonumber
+actor "Member (Claire)" as M
+participant "Browser" as B
+participant "API server" as A
+database "Data store" as D
+
+M -> B : edit fields (autosave tick)
+B -> A : PATCH /assos/{slug}/events/{id}\n{changes, originalValues, baseVersion} + CSRF
+A -> A : authenticate session (ADR-0001)
+A -> D : load membership(account, association)
+alt not a member or association suspended
+  A --> B : 403
+else member
+  A -> D : load event
+  alt status CANCELLED or ARCHIVED (E1)
+    A --> B : 409 read-only
+  else draft or published
+    A -> A : validate changes\n(published keeps required fields)
+    A -> D : update where version = baseVersion\nset changes, version+1, lastEditedBy,\nscheduleChangedAt if published and start, end or venue changed
+    alt matched (no concurrent change)
+      A --> B : 200 {version}
+      B --> M : "Saved ✓"
+    else version changed meanwhile
+      A -> D : reload current event
+      A -> A : per changed field:\ncurrent == original → no conflict
+      alt no real conflict (different fields)
+        A -> D : update where version = currentVersion
+        note right : retried a bounded number of times if it races again
+        A --> B : 200 {version, merged: true}
+        B --> M : "Saved ✓ (merged with Malik's changes)"
+      else same field changed
+        A --> B : 409 {conflicts: [field, yours, theirs, changedBy]}
+        B --> M : UC17 choose per field
+        M -> B : choices
+        B -> A : PATCH with choices, baseVersion = currentVersion
+      end
+    end
+  end
+end
+@enduml
