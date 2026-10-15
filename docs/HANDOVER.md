@@ -1,7 +1,8 @@
 # HappiHub handover
 
-Updated: 2026-10-12. The backlog is reconciled and the recovery branch is published for review.
-No further application code is authorized without the owner's completed UML approval gate.
+Updated: 2026-10-14. The recovery batch (#257, #260, #258, #259) and fixes #261/#262 are merged
+into main; hosted CI is green and required. No further application code is authorized without
+the owner's completed UML approval gate.
 
 ## Read in order
 
@@ -13,14 +14,13 @@ for current behavior, not historical tutorials or old issue titles.
 
 Repository: benoit-bremaud/HappiHub. On the current machine the working checkout is
 `/home/vev/Documents/02_personal/HappiHub`; the chat's default directory may differ.
-At this check GitHub main and origin/main both resolve to
-`e3e90078920ee00c776c916ac7ede45e4e22cfc0`.
-Recovery branch: fix/security-boundaries. Latest implementation commit: c831c6b;
-accepted session-design commit: 45b5c15. The authorized recovery work is pushed and submitted as
-[PR #257](https://github.com/benoit-bremaud/HappiHub/pull/257), with clement-machtelinckx requested as reviewer.
-The PR is attached to HappiHub Project #6 as In review/P1. Existing repairs have not been
-merged or deployed. Documentation updates may appear as working-tree
-changes or later documentation commits: inspect git status/log at resumption.
+At the 2026-10-14 check origin/main resolves to `7e67d2c` (merge of #259). The recovery
+branches were merged and deleted; unmerged 2024 branches are preserved as `archive/*` tags.
+The owner chose to merge the recovery without waiting for an external review; the safety net
+was hosted CI plus a local review gate (see PROJECT_LOG.md). Nothing has been deployed.
+`main` is protected: pull request required (0 approvals, admin bypass kept), required
+`test` check, resolved conversations, no force-push or deletion. The repository stays public
+by owner decision (#65). Inspect git status/log at resumption.
 
 Owner: Benoît (benoit-bremaud). Retained collaborator: Clément/Yazii
 (clement-machtelinckx). See the dated cleanup evidence for permission changes; verify live
@@ -65,7 +65,8 @@ A complete event editor, event-content update route, draft/publication lifecycle
 external integration authentication, organization collaboration, booking/payment system,
 logo and expanded demo dataset have not been implemented.
 
-Latest recorded verification: 86 fast server tests, 14 disposable real-Mongo tests,
+Hosted CI (`HappiHub quality tests`) runs server and client tests with coverage and the
+client build on every push and PR. Earlier recorded verification: 86 fast server tests, 14 disposable real-Mongo tests,
 18 client tests, client build, local/HTTPS Docker browser flows and persistence across
 an API process restart. Fast server, Mongo integration, client tests and client build were rerun for publication
 and passed. Earlier container/browser/restart checks remain recorded evidence.
@@ -114,11 +115,14 @@ The owner reinforced folder organization, Clean/SOLID, anti-pattern checks and r
 of unjustified duplication. A [read-only folder audit](architecture/folder-architecture-audit-2026-10-12.md)
 records verified CSS/request duplication, responsibility boundaries and stale configuration.
 #41 must include the responsibility/path map and dependency UML; #248/#25 cover the later
-quality-tooling study. SonarQube is deferred; no scanner/setup or structural code changes
-have occurred. Do not interpret candidate folders as an approved implementation plan.
+quality-tooling study. The local SonarQube collector (#258/#259) is merged but its workstation
+service is not yet activated; no structural code changes have occurred. Do not interpret candidate folders as an approved implementation plan.
 
 ## Next actions
 
+0. Remaining Should Have findings from the recovery review are tracked in #263; each needs
+   its own accepted conception before code. #262 (legacy password length at login) was a
+   behavioral fix merged before a conception record: owner retro-validation is pending.
 1. Continue framing: concrete organizer, participant and external-integrator scenarios.
 2. Finish research synthesis and prioritize candidate outcomes with explicit confidence.
 3. Propose and validate audience, first-release scope, ownership and publication choices.

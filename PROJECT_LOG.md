@@ -5,6 +5,34 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-10-14
+
+Session scope: audit, secret hygiene, governance and recovery merge.
+
+- **Audit and secret scan** — full-history gitleaks (148 commits, all branches): 11 findings,
+  none live (doc placeholders, the public jwt.io sample, one dev JWT expired July 2024).
+  [PR #261](https://github.com/benoit-bremaud/HappiHub/pull/261) merged (`24a0b7f`): tokens
+  redacted, reviewed findings recorded in `.gitleaksignore`. No history rewrite.
+- **Governance** — `main` branch protection enabled; `test` added as required check after #259.
+  Repository kept public (three public forks already hold history). Decisions recorded on
+  [#65](https://github.com/benoit-bremaud/HappiHub/issues/65).
+- **Branch cleanup** — nine stale 2024 remote branches deleted; five unmerged ones archived as
+  `archive/*` tags (`sex_branch` archived as `archive/nav-logo`).
+- **Recovery merged without external review (owner decision)** — Clément's review was no longer
+  awaited. Local review gate on #257: 0 code Must Have; README ports fixed (`4d94e8b`).
+  [PR #257](https://github.com/benoit-bremaud/HappiHub/pull/257) merged (`aa48ce1`).
+- **[PR #262](https://github.com/benoit-bremaud/HappiHub/pull/262) merged** (`f03da2c`) — login
+  accepts legacy passwords longer than 72 bytes (Codex P1). Merged before a conception record;
+  owner retro-validation pending.
+- **Conception PRs** — [#260](https://github.com/benoit-bremaud/HappiHub/pull/260) (`e611c21`):
+  IPv6 quota grouping qualified, new R8 disables Nginx access logs (not yet implemented).
+  [#258](https://github.com/benoit-bremaud/HappiHub/pull/258) (`5854647`): unfinished main runs
+  are an ordering barrier; coverage artifact named per run attempt.
+- **[PR #259](https://github.com/benoit-bremaud/HappiHub/pull/259) merged** (`7e67d2c`) — hosted
+  CI and local SonarQube collector; first push run on main green.
+- **Follow-up** — Should Have findings and Codex P2 tracked in
+  [#263](https://github.com/benoit-bremaud/HappiHub/issues/263).
+
 ## 2026-10-12
 
 Session scope: repository recovery, security remediation and product framing.
