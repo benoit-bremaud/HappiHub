@@ -9,7 +9,7 @@ participant "FileStore" as F
 
 S -> J : runOnce (at startup, then hourly), single instance lock
 J -> D : archive PUBLISHED and CANCELLED events whose end passed (J3 D3)
-J -> D : lift suspensions whose endsAt passed (AD2)\n+ moderation log + outbox notice
+J -> D : lift suspensions whose endsAt passed (AD2):\nLIFT_SUSPENSION decision (no decidedBy),\nset liftedAt and liftedBy + outbox notice
 J -> D : drafts untouched 50 weeks without notice:\noutbox notice "deleted in 14 days" (S2)
 loop each draft untouched 12 months and notified
   J -> D : re-check it is still untouched (skip if edited)

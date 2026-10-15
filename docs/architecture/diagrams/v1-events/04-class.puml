@@ -154,6 +154,14 @@ package "Administration" {
     DISMISS
     HIDE_EVENT
     SUSPEND
+    RESTORE_EVENT
+    LIFT_SUSPENSION
+    CONFIRM_DECISION
+    REINSTATE_MEMBER
+    REJECT_REMOVAL_DISPUTE
+    GRANT_MODERATOR
+    REVOKE_MODERATOR
+    GRANT_SUPER_ADMIN
   }
   class Suspension {
     target : ModerationTarget
@@ -210,7 +218,8 @@ Association "1" *-- "0..*" ActivityEntry
 ActivityEntry "0..*" --> "0..1" Account : actor
 Report "0..*" --> "0..1" ModerationDecision : closedBy
 ModerationDecision "0..*" --> "0..1" Account : decidedBy
-ModerationDecision "1" -- "0..1" Suspension
+Suspension "0..1" --> "1" ModerationDecision : issuedBy (SUSPEND)
+Suspension "0..1" --> "0..1" ModerationDecision : liftedBy (LIFT_SUSPENSION)
 RemovalDispute "0..*" --> "1" Account : disputant
 RemovalDispute "0..*" --> "1" Association : removedFrom
 RemovalDispute "0..*" --> "0..1" Account : resolvedBy (moderator or super admin)

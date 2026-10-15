@@ -7,6 +7,17 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-15
 
+- **V1 traceability and final conception review (#247)** — new
+  [traceability matrix](docs/architecture/specs/v1-traceability.md): 33 use cases and every
+  decision traced to class, state, sequence, component and data-flow elements; no orphan.
+  Owner validated the MCDA top scores: T1 extend `DecisionKind` for dispute outcomes,
+  automatic lifts and role changes (430/500); T2 quota and rate-limit table with validated
+  defaults (455); T4 suspended accounts refused on association requests (460), amended by local review M1 so
+  they can still sign in to "My account" for export, deletion and disputes (410); review M2
+  counts sign-in failures per (account, IP) plus per IP (465); plus T3 use case ↔ module
+  table, T5 operator bootstrap of the first super administrator, T6 removal keeps sessions,
+  T8 public event ids allowed, T9 suspension derived at read. Open preconditions: #246
+  migration, email provider, hosting/backups. Branch `docs/v1-traceability`.
 - **V1 product framing** — owner validated the V1 framing (cultural associations, create,
   present and publish everywhere through a read-only partner API), personas and journeys
   J1–J6 ([framing](docs/architecture/specs/v1-product-framing.md),

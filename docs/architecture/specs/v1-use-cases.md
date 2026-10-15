@@ -169,6 +169,27 @@ J4 D2).
   Rejected: publish with confirmation and archive at once (3.3, second path into "past",
   hides year typos); publish silently (2.9).
 
+### Quotas and rate limits (T2, #247)
+
+Configurable constants, owner-validated defaults. Counters are process-local, valid for the
+single API instance (ADR-0001 consequences). Limits apply per normalized client IP
+(ADR-0002) unless stated; exceeding one answers 429 with `Retry-After` and a neutral message.
+
+| Rule | Default | Use cases |
+| --- | --- | --- |
+| Events created per association | 20 per day | UC15 1a |
+| Associations created per account | 5 in total (M1) | UC1 1b |
+| Sign-up | 5 per hour per IP | UC1 3b |
+| Sign-in failures | 5 per 15 min per (account, IP) pair, plus 20 per 15 min per IP; same neutral 429 whether the account exists or not (no targeted lockout) | sign-in (ADR-0001), new in T2 (review M2) |
+| Wrong current password | 5 per 15 min per account | UC4 2a, UC6 2b |
+| Verification / reset emails | 5 per hour per IP before any lookup; at most 10 per hour per recipient, extra requests silently send nothing (same neutral answer), so nobody can block another person's recovery (PR #269 C3) | UC2 1a/2a, UC3 2a |
+| Invitations | 10 per day per association | UC10 2a |
+| Reports | 10 per hour per IP | UC26 3a |
+| Data export | 3 per day per account | UC5 2a |
+| API keys | 5 per association | UC27 1a |
+| Partner API | 60 per minute per IP before lookup, 600 per hour per key | UC28 2b, SQ3 |
+| Address suggestions | 30 per minute per account | CP2 |
+
 ## Account and association
 
 Account emails (verification, reset, notifications) go through the transactional email
@@ -238,7 +259,8 @@ and never reveal whether an address has an account.
   4. The system replaces the password, revokes all sessions and signs the user in.
 - **Extensions**:
   - 3a. Link expired or used: the system offers to start again.
-  - 2a. Rate limit reached: neutral message, retry later.
+  - 2a. Per-IP limit reached: neutral message, retry later; the per-recipient cap answers with
+    the normal neutral confirmation and sends nothing (§ Quotas).
 - **Source**: J1 edge case "forgotten password".
 
 ### UC4 — Update my account
@@ -291,6 +313,8 @@ and never reveal whether an address has an account.
     warns explicitly that each will be closed with the account and lists the effects (UC8); confirmation
     covers both (review F8).
   - 2b. Wrong password: refused, rate-limited.
+  - 2c. The account is the last super administrator: deletion is refused; the owner first
+    bootstraps another super administrator (operator command, T5) (PR #269 C1).
 - **Source**: framing (GDPR), review F1, F8.
 
 ### UC7 — Edit the association profile
@@ -470,7 +494,9 @@ All members of an association have the same rights (framing). Membership changes
 
 No account, no cookie beyond what is strictly necessary, no third-party script. Public pages
 only ever show published, cancelled or archived events of non-suspended associations, with the
-J5 public fields: never drafts, member names, emails or internal identifiers. Pages are
+J5 public fields: never drafts, member names, emails, or account, member or owner identifiers;
+a public event identifier is allowed (UC22, UC24, UC28); it is opaque and non-sequential so
+events cannot be enumerated (T8, #247). Pages are
 server-rendered or prerendered enough to carry Open Graph metadata.
 
 ### UC21 — Browse upcoming events
@@ -615,7 +641,8 @@ CORS headers, so browsers cannot call them from another origin.
 - **Extensions**:
   - 1a. `?include=past` adds archived events; `?updatedSince=` returns only changes.
   - 2a. Missing, invalid or revoked key: 401 without detail.
-  - 2b. Rate limit exceeded (per key): 429 with `Retry-After`.
+  - 2b. Rate limit exceeded (per IP before key lookup, then per key, see § Quotas): 429 with
+    `Retry-After`.
   - 2c. Association suspended or closed: 403 with a stable error code.
   - 3a. Event of another association, draft or unknown: 404 (no existence leak).
 - **Source**: J6 D3, S2.
@@ -680,7 +707,9 @@ administrator.
 - **Level**: user goal. **Primary actor**: moderator.
 - **Preconditions**: authenticated moderator; the target is not the super administrator.
 - **Minimal guarantee**: no suspension without a written reason; the target is notified with
-  a dispute link.
+  a dispute link. A suspended account may only sign in to "My account" to export its data (UC5),
+  delete itself (UC6) or dispute (UC9); every association-scoped request is refused until the
+  suspension ends (T4, review M1, #247).
 - **Success guarantee**: a suspended association's public pages answer 410, its events leave
   agenda and API, its members cannot write for it; a suspended account loses its sessions and
   every membership's write access, for the chosen duration (AD2).

@@ -24,6 +24,7 @@ Source: [05a-state-event.puml](05a-state-event.puml).
   archived are read-only (E1). Only drafts are deleted.
 - Hiding (UC29) and restoring (UC32) never change the lifecycle state; an association
   suspension hides its events the same way.
+- T9 (#247): the suspension effect is derived at read time from the active `Suspension`; it never sets `hiddenByModeration`, so lifting it cannot reveal an event hidden by a report.
 - S2 (validated, 4.2 vs keep forever 3.8): a draft untouched for 12 months is deleted after a
   14-day email notice to members, same mechanism as API keys (I1).
 - Replaces the legacy pending/approved/rejected moderation; migrating existing events is a

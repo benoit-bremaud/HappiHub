@@ -10,8 +10,8 @@ state Suspended : public 410\nno member writes\ndisputable (UC9)
 state Closed : "Association closed" page\nslug reserved, keys revoked
 
 Active --> Suspended : suspend (UC31)\n[reason, 7 d / 30 d / no limit]
-Suspended --> Active : duration ends (scheduled job)
-Suspended --> Active : lifted on dispute (UC32)
+Suspended --> Active : duration ends (scheduled job)\n[records LIFT_SUSPENSION]
+Suspended --> Active : lifted on dispute (UC32)\n[records LIFT_SUSPENSION]
 Active --> Closed : close (UC8)\n[actor is last member]
 Active --> Closed : last member deletes account (UC6)
 Suspended --> Closed : last member deletes account (UC6)\n[GDPR right; close (UC8) is blocked (S1)]

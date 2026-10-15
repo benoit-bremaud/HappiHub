@@ -1,44 +1,38 @@
-# Local review — HappiHub (docs/v1-data-flow)
+# Local review — HappiHub (docs/v1-traceability)
 
 - Date: 2026-10-15
-- Commit: 95d8743 (base) + working tree
-- Scope: branch diff main...docs/v1-data-flow (documentation only)
-- Checks run: docs · security/GDPR · correctness (consistency). Design and tests: not
-  applicable (no code).
-- Verdict: fix Must Have first — all fixed before push · Must 3 · Should 6 · Nice 3 · Disagree 2
+- Commit: e641b4d + staged changes
+- Scope: branch diff main...docs/v1-traceability (documentation and UML only)
+- Checks run: design · docs · security (tests and correctness: not applicable, no code)
+- Verdict: ship after fixes · Must 2 (resolved) · Should 6 (applied) · Nice 3 (applied)
 
 ## 🔴 Must Have
-
-- `docs/architecture/diagrams/v1-events/06-data-flow.md` DF2 `[docs|correctness]` · "their
-  drafts go with them" contradicted UC6/A5 · fixed: association content follows UC8.
-- `04-class.puml` Account `[docs]` · day-23 reminder untraceable (K9 precedent) · fixed:
-  `Account.verificationReminderAt [0..1]`, owner revalidated.
-- `06-data-flow.md` inventory `[security]` · invitee email (third party) missing, retention
-  undecided · fixed: DF4 (owner decision, 395/500).
+- `docs/architecture/specs/v1-use-cases.md` UC31 `[security]` · a suspended account could not
+  sign in, so it lost GDPR export and erasure for the whole suspension · resolved by owner
+  MCDA (B 410/500): restricted sign-in to "My account" (UC5, UC6, UC9).
+- `docs/architecture/specs/v1-use-cases.md` § Quotas `[security]` · per-account failure limit
+  enabled targeted lockout · resolved by owner MCDA (A 465/500): per (account, IP) plus per IP,
+  neutral 429.
 
 ## 🟡 Should Have
-
-- `06-data-flow.md` `[security]` · moderation record retention undecided · fixed: DF5 (400/500).
-- `06-data-flow.md` deletion section `[security|correctness]` · cascade incomplete · fixed:
-  every 0..1 reference listed with its outcome.
-- `06-data-flow.md` API keys `[security]` · wrong legal basis, `name`/`createdBy` missing · fixed.
-- `06-data-flow.md` outbox `[security]` · basis ignored non-member recipients · fixed.
-- `06-data-flow.puml` `[security]` · API error logs not drawn · fixed: F27, no secrets rule.
-- `v1-use-cases.md` UC2/UC6, `06-data-flow.puml` job flows `[docs]` · DF2 and deletion effects
-  absent from use cases; job flows incomplete · fixed.
+- `v1-use-cases.md` § Quotas `[docs]` · sign-in limit wrongly attributed to ADR-0001 · source
+  reworded (new in T2).
+- `v1-traceability.md` §1–3 `[docs]` · gap markers read as open · legend states they are
+  resolved in section 5.
+- `04-class.md` T1 `[design]` · `decidedBy` absence ambiguous; role kinds' target untyped ·
+  note added.
+- `06-data-flow.md` sessions row `[security]` · membership re-check invariant made explicit.
+- `v1-use-cases.md` public browsing `[security]` · public event ids opaque, non-sequential.
+- `HANDOVER.md` `[docs]` · T10–T11 are open, not resolved · reworded.
 
 ## 🔵 Nice to Have
-
-- `06-data-flow.md:5` `[docs]` · incomplete source list · fixed.
-- `06-data-flow.md` `[docs]` · ADR labels · fixed.
-- `06-data-flow.md` export `[docs]` · export scope · left to UC5 (already defines it).
+- `v1-traceability.md:7` `[docs]` · baseline wording includes this branch's edits.
+- `v1-use-cases.md` UC28 2b `[docs]` · per-IP then per-key limit stated.
+- `v1-use-cases.md` § Quotas `[design]` · counters process-local (single instance).
 
 ## ⚪ Disagree / Intentional
-
-- `06-data-flow.md` sessions `[docs]` · "revoked on removal" is correct · J4 D3.
-- `06-data-flow.md` disputes `[security]` · `ModerationDispute` has a `disputant` · 04-class.puml.
+- `v1-traceability.md` section 5 `[design]` · 05c account state diagram deferred · T4 MCDA.
 
 ## Per-dimension summary
-
-- Design: n/a · Docs: consistent after fixes · Tests: n/a · Security/GDPR: inventory and
-  cascade complete after DF4/DF5 · Correctness: aligned with UC1–UC33, 04-class, 02d, ADRs.
+- Design: no over-engineering; DecisionKind extension acceptable · Docs: stale markers fixed ·
+  Tests: n/a · Security: two Must resolved by owner decision · Correctness: n/a
