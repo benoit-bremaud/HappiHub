@@ -65,5 +65,12 @@ option for each finding. Applied:
 | DF4 | Invitations no longer pending hold a third-party email | Deleted once accepted, revoked or expired; `InvitationStatus` only names the transition (data-flow DF4) | Keep them 12 months (390 vs 395) |
 | SQ8 | Past events shown as upcoming until the hourly job runs | Public reads also compare the end date (4.6) | Rely on the job only (3.4, up to one hour stale) |
 
+Final review #247 (2026-10-15, owner validated the top MCDA scores):
+
+| # | Finding | Kept (score /500) | Rejected (score) |
+| --- | --- | --- | --- |
+| T1 | UC30, UC31 3a, UC32 and UC33 must be logged but `DecisionKind` had no value for them | Extend `DecisionKind` (RESTORE_EVENT, LIFT_SUSPENSION, CONFIRM_DECISION, REINSTATE_MEMBER, REJECT_REMOVAL_DISPUTE, GRANT_MODERATOR, REVOKE_MODERATOR); `ModerationTarget` ACCOUNT carries role changes; `decidedBy` absent only for LIFT_SUSPENSION by the maintenance job, otherwise shown as "former member" after deletion; GRANT_MODERATOR and REVOKE_MODERATOR always target an ACCOUNT (430) | Separate `PlatformAuditEntry` class (385); technical logs only (345) |
+| T5 | No way to create the first SUPER_ADMIN | Operator bootstrap: a one-off server command run by the owner at deployment promotes one verified account; refused if a SUPER_ADMIN exists; not a use case | — |
+
 On account deletion, the user's own disputes are deleted with the account (GDPR); moderation
 decisions keep their target reference.

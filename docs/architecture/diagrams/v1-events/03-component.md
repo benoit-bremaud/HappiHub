@@ -40,6 +40,18 @@ Source: [03-component.puml](03-component.puml).
 - Single API instance today: process-local rate limits (ADR-0001 consequences) and the job
   lock ([02d](02d-sequence-scheduled-job.md)) hold only for one instance.
 
+## Use case ↔ HTTP module (T3, #247)
+
+| Module | Use cases |
+| --- | --- |
+| Auth & sessions | UC1–UC6 (sign-up, verification, reset, account, export, deletion) |
+| Membership | UC7, UC8, UC10–UC12, UC14, UC27 (association profile, closure, members, log, API keys) |
+| Events | UC15–UC20 (address proxy CP2 included) |
+| Public read | UC21, UC22, UC24, UC25 (UC23 is client-only) |
+| Moderation | UC9, UC13, UC26, UC29–UC33 |
+| Partner API | UC28 |
+| Maintenance job | time rules of UC2, UC8, UC20, UC27, UC31, J3 D3, DF1–DF5 |
+
 ## Decisions (2026-10-15)
 
 Scored and confronted; the owner chose after a deeper analysis.

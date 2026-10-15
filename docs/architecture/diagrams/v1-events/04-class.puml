@@ -154,6 +154,13 @@ package "Administration" {
     DISMISS
     HIDE_EVENT
     SUSPEND
+    RESTORE_EVENT
+    LIFT_SUSPENSION
+    CONFIRM_DECISION
+    REINSTATE_MEMBER
+    REJECT_REMOVAL_DISPUTE
+    GRANT_MODERATOR
+    REVOKE_MODERATOR
   }
   class Suspension {
     target : ModerationTarget

@@ -28,7 +28,7 @@ Source: [06-data-flow.puml](06-data-flow.puml).
 | Data | Purpose | Legal basis (GDPR art. 6) | Retention |
 | --- | --- | --- | --- |
 | Account: email, `pendingEmail`, password hash, display name | Sign-in, notifications, attribution | Contract (6.1.b) | Until account deletion (A5, immediate); never verified: 30 days, reminder at day 23 (DF2) |
-| Sessions (ADR-0001) | Authentication | Contract | 30 min idle, 8 h absolute; revoked on account deletion, password change or reset, removal from an association (J4 D3) |
+| Sessions (ADR-0001) | Authentication | Contract | 30 min idle, 8 h absolute; revoked on account deletion, password change or reset, account suspension; removal from an association ends access to that association at once through the per-request membership check, without revoking sessions (M1, T6). Security invariant: every association-scoped request re-checks membership; membership is never cached in the session |
 | Verification and reset tokens (hash only) | Prove email ownership | Contract | 24 h / 1 h, single use |
 | Invitation: invitee email, token hash, `invitedBy` | Invite a third party (UC10) | Legitimate interest (6.1.f) of the association | 7 days at most; deleted as soon as accepted, revoked or expired, the activity log keeping the action (DF4) |
 | Memberships, events, association profile, `createdBy`, `lastEditedBy` | Organize and publish events | Contract (members); legitimate interest for attribution | Life of the association; closed association: 30 days then deleted (UC8); drafts untouched 12 months deleted after a 14-day notice (S2) |

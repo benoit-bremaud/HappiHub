@@ -11,7 +11,7 @@ M -> B : edit fields (autosave tick)
 B -> A : PATCH /assos/{slug}/events/{id}\n{changes, originalValues, baseVersion} + CSRF
 A -> A : authenticate session (ADR-0001)
 A -> D : load membership(account, association)
-alt not a member or association suspended
+alt not a member, account or association suspended (T4)
   A --> B : 403
 else member
   A -> D : load event
