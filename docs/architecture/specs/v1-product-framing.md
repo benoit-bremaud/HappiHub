@@ -20,7 +20,7 @@ browses freely without an account.
 | --- | --- | --- |
 | Primary organizer | Cultural associations | Best fit with the culture/sharing/community purpose; under-served by editorial tools (score 4.3) |
 | Core value | Create and present (foundation) + publish everywhere (differentiator) | Matches the confirmed editor and API directions (4.1 / 4.3) |
-| External consumers | The organizers' own websites | Simplest authorization: one revocable key, own published events only (4.8) |
+| External consumers | The organizers' own websites | Simplest authorization: revocable keys scoped to the association, own published events only (4.8); key management detailed and superseded by J6 D2 (several named keys, at most 5) |
 | Participant account | None required; public read-only pages | Minimal personal data and moderation; best sharing/SEO (4.6) |
 | Event managers | An association owns its events; several invited members, all with the same rights | Supports volunteer teams without a role model |
 | Event lifecycle | Draft → Published → Cancelled / Archived | Direct publication by the association; no prior moderation; reporting possible |

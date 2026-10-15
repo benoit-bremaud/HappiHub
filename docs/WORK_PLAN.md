@@ -20,7 +20,8 @@ HappiHub's website and external integrations must share authoritative event rule
 | Complete and approve UML conception before any code implementation | Mandatory owner instruction |
 | Revisit visual design and obtain Clément's feedback | Requested; review not held |
 | Original logo, about ten demo events, dedicated local test credentials | Requested; implementation plan not approved |
-| Target audience, first-release scope, business model, hosting and final database choice | Unresolved |
+| Target audience and first-release scope | Validated 2026-10-15 (V1 product framing) |
+| Business model, hosting and final database choice | Unresolved |
 
 The existing [resumption specification](architecture/specs/event-platform-resumption.md)
 is an earlier proposal, not the final product specification. Its historical baseline must
@@ -184,9 +185,7 @@ identify implemented behavior, proposals and missing approvals without chat hist
 
 ## Immediate next work
 
-Continue the framing conversation with concrete organizer and integration scenarios.
-Finish the feature-evidence synthesis, then propose the first-release boundary and the
-ownership/publication decisions. Author the full conception only against that settled
+Framing, scope and journeys were validated on 2026-10-15. Author the full conception only against that settled
 scope, review it, and obtain explicit approval before any further code implementation.
 
 The owner subsequently authorized mapping this plan into GitHub Project #6 and auditing
