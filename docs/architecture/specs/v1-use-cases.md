@@ -259,7 +259,8 @@ and never reveal whether an address has an account.
   4. The system replaces the password, revokes all sessions and signs the user in.
 - **Extensions**:
   - 3a. Link expired or used: the system offers to start again.
-  - 2a. Rate limit reached: neutral message, retry later.
+  - 2a. Per-IP limit reached: neutral message, retry later; the per-recipient cap answers with
+    the normal neutral confirmation and sends nothing (§ Quotas).
 - **Source**: J1 edge case "forgotten password".
 
 ### UC4 — Update my account
