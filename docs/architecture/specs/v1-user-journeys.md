@@ -1,6 +1,6 @@
 # HappiHub V1 — user journeys
 
-Status: in progress (conception workshop 2). Each journey is validated separately by the
+Status: complete — all six journeys validated on 2026-10-15 (conception workshop 2). Each journey is validated separately by the
 owner. Personas: [V1 personas](v1-personas.md). Scope: [V1 product framing](v1-product-framing.md).
 Journeys drive the use-case diagrams, then wireframes (#249).
 
@@ -11,7 +11,7 @@ Journeys drive the use-case diagrams, then wireframes (#249).
 | J3 | Preview, publish, then cancel or archive | Claire | **Validated 2026-10-15** |
 | J4 | Invite a member and edit together | Claire, Malik | **Validated 2026-10-15** |
 | J5 | Browse a public event page on mobile | Inès | **Validated 2026-10-15** |
-| J6 | Connect the association website (API key) | Malik | To do |
+| J6 | Connect the association website (API key) | Malik | **Validated 2026-10-15** |
 
 ## J2 — Create an event (Claire)
 
@@ -121,3 +121,19 @@ All members have the same rights (framing). J4 keeps that simple without making 
 | D2 Concurrent edits | Optimistic versioning on every save, autosave included; automatic field-level merge when different fields changed; prompt only when the same field changed ("Malik also changed the title: keep yours or his?") (4.6) | Whole-event mine/theirs (3.8): loses the other's fields, frequent prompts with autosave. Lock (3.0): ghost locks. Real-time (3.7): too costly for V1 |
 | D3 Remove or leave | Any member may remove another or leave; never the last member; removal immediate, sessions revoked; removed member is emailed with an "I dispute this" link creating a report the owner can act on (reinstate); action logged (4.5) | Delayed 48 h removal (4.2): ex-volunteer keeps access, scheduled jobs. No recourse (4.0): takeover unrecoverable. Creator-only (2.8): hidden role contrary to framing |
 | D4 Traceability | "Created by" and "Last edited by … ago" on events; activity log of sensitive actions (create, publish, cancel event; invite, join, remove, leave member), visible to members only, kept 12 months, no IP address (4.5) | Author/editor only (4.3): no evidence for D3 disputes. Full version history (3.0): study #114, out of V1 |
+
+## J6 — Connect the association website (Malik)
+
+Framing: read API keyed per organizer, server to server. Goal: "the website updated itself".
+
+| Decision | Choice (score) | Rejected and why |
+| --- | --- | --- |
+| D1 Integration | Server-side JSON REST API with an association key, plus copy-ready snippets (WordPress/PHP, Node, curl) pre-filled with Malik's key (4.2) | Embeddable widget without key in addition (3.8): a second product to design and make accessible, V2. Widget only (3.9): contradicts the framing, loses S2 |
+| D2 Key management | Several named keys per association (e.g. "WordPress site"), secret shown once and stored hashed, revocable, `lastUsedAt`, creation/revocation in the J4 activity log; any member can manage keys (4.5) | Single regenerable key (4.0): rotation breaks the site. OAuth client credentials (2.5): oversized for public event reads |
+| D3 API content | Read-only `/v1`: upcoming published events, cancelled ones included with their status, event detail, past events on request, pagination, `updatedSince`, same fields as the J5 public page, rate limits (4.6) | Webhooks (3.7): delivery queue, retries, signatures, V2. Drafts exposed (2.8): leak of unpublished content |
+
+Security rules: key-authenticated routes reject browser cross-origin calls (no CORS) and are
+documented as server-side only; a key only ever reads its own association's published,
+cancelled or archived events; never drafts, member data or emails.
+
+Success measure served: S2 (`lastUsedAt`), S6.
