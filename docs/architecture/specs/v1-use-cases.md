@@ -217,6 +217,8 @@ and never reveal whether an address has an account.
 - **Extensions**:
   - 2a. Link expired or used: the system offers "Send a new link" (limited per hour).
   - 1a. The user never received the email: from the app, "Resend" (limited per hour).
+  - 1b. Never verified: a reminder is emailed at day 23 and the account is deleted at day
+    30 as in UC6, association content following UC8 (data-flow DF2).
 - **Source**: J1 D2.
 
 ### UC3 — Reset a forgotten password
@@ -274,7 +276,8 @@ and never reveal whether an address has an account.
 - **Minimal guarantee**: no deletion without the current password and explicit confirmation.
 - **Success guarantee**: the account and its personal data are deleted immediately (A5);
   memberships end and log entries are attributed to "former member"; association content stays with the association,
-  attributed to "former member".
+  attributed to "former member"; pending invitations to its email, its own disputes and its
+  unsent emails are deleted (see the [data-flow diagram](../diagrams/v1-events/06-data-flow.md)).
 - **Main success scenario**:
   1. The user chooses "Delete my account".
   2. The system explains the consequences and asks for the current password and confirmation.

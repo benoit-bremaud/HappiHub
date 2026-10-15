@@ -61,6 +61,8 @@ option for each finding. Applied:
 | SQ5 | Closed-association deletion left invitations, keys and removal disputes dangling | Delete them with the association (4.6) | Keep orphans (2.4) |
 | SQ6 | API key hash | SHA-256 for 256-bit random secrets, lookup by key id, constant-time compare (4.7) | bcrypt (3.6, slow for no gain on high-entropy secrets) |
 | SQ7 | `lastUsedAt` write frequency | At most once per hour (4.5) | Every request (3.5, one write per call) |
+| DF2 | Reminder before deleting a never-verified account (data-flow diagram, 2026-10-15) | `Account.verificationReminderAt`, K9 precedent (owner revalidated) | Derive from `createdAt` (not idempotent) |
+| DF4 | Invitations no longer pending hold a third-party email | Deleted once accepted, revoked or expired; `InvitationStatus` only names the transition (data-flow DF4) | Keep them 12 months (390 vs 395) |
 | SQ8 | Past events shown as upcoming until the hourly job runs | Public reads also compare the end date (4.6) | Rely on the job only (3.4, up to one hour stale) |
 
 On account deletion, the user's own disputes are deleted with the account (GDPR); moderation

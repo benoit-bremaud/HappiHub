@@ -18,7 +18,7 @@ Source: [02d-sequence-scheduled-job.puml](02d-sequence-scheduled-job.puml).
 
 ## Notes
 
-- Rules: archiving (J3 D3), suspension end (AD2), draft cleanup with notice (S2), dormant key revocation with notice (I1), closed association deletion only without active suspension (F2, S1), 12-month log purge (J4 D4), invitation expiry.
+- Rules: archiving (J3 D3), suspension end (AD2), draft cleanup with notice (S2), dormant key revocation with notice (I1), closed association deletion only without active suspension (F2, S1), 12-month log purge (J4 D4), invitation expiry. Added by the [data-flow diagram](06-data-flow.md) (DF1, DF2, DF4, DF5, 2026-10-15): deletion of unverified accounts after 30 days (reminder at day 23 through the outbox), deletion of invitations no longer pending (DF4), purge of moderation records 12 months after closure (DF5) and of outbox failures older than 30 days; the sequence picture itself is unchanged.
 - Triggered by an internal timer through `runOnce()` and images deleted through `FileStore`
   ([component diagram](03-component.md) CP1, CP3), updated 2026-10-15 after the component
   review and revalidated by the owner.
