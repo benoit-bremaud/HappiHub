@@ -49,7 +49,7 @@ else valid
       choosing "Join" replays this accept request.
     end note
   else same email, verified
-    A -> D : in one write: membership + invitation ACCEPTED\n+ activity entry
+    A -> D : in one write: membership + delete the invitation\n(DF4: invitee email not kept) + activity entry
     A --> B : 200 → association dashboard
   end
 end

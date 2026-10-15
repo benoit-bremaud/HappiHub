@@ -20,8 +20,14 @@ J -> D : API keys unused 166 days without notice:\noutbox notice "revoked in 14 
 J -> D : API keys unused 180 days and notified: revoke + activity entry (I1)
 J -> F : closed associations past 30 days\nwith no active suspension: delete their images first
 J -> D : then delete content, log,\ninvitations, keys and closed removal disputes (F2, S1)
-J -> D : purge activity entries older than 12 months\nand moderation decisions older than 12 months\nunless linked to an active suspension or open dispute
-J -> D : expire PENDING invitations past expiresAt
+J -> D : purge activity entries older than 12 months
+J -> D : purge reports, decisions, suspensions and disputes\nclosed or lifted over 12 months ago, unless backing\nan active suspension, a hidden event or an open dispute (DF5)
+J -> D : delete PENDING invitations past expiresAt (DF4)
+J -> D : unverified accounts aged 23 days without reminder:\noutbox reminder + verificationReminderAt (DF2)
+loop each unverified account aged 30 days and reminded
+  J -> D : re-check still unverified, then delete it as UC6 effects\n(last-member associations closed per UC8) (DF2)
+end
+J -> D : delete outbox failures older than 30 days (DF1)
 J --> S : done (each step resumable on next run)
 note over J
   Every step is a bounded batch and idempotent:

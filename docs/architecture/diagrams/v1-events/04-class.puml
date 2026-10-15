@@ -9,6 +9,7 @@ package "Account and association" {
     id
     email
     emailVerifiedAt [0..1]
+    verificationReminderAt [0..1]
     pendingEmail [0..1]
     passwordHash
     displayName

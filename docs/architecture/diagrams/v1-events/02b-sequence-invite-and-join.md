@@ -20,4 +20,6 @@ Source: [02b-sequence-invite-and-join.puml](02b-sequence-invite-and-join.puml).
 
 - Q2 (validated, 4.1 vs direct send 4.0, narrow margin): emails are written to an outbox in the same write as the action and sent by a worker every minute with retries; the copyable link works even before the email leaves.
 - Only the token hash is stored; tokens are 32 random bytes, single use, 7 days (J4 D1).
+- DF4 ([data-flow](06-data-flow.md)): acceptance deletes the invitation in the same write; a
+  revocation deletes it too, so an unknown, expired, revoked or used token all answer the same.
 - A newly created account stays unverified (UC11 extension 3a).

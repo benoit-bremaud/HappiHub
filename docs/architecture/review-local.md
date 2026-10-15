@@ -1,30 +1,44 @@
-# Local review — HappiHub (docs/v1-component)
+# Local review — HappiHub (docs/v1-data-flow)
 
 - Date: 2026-10-15
-- Commit: 4ea325c
-- Scope: branch diff origin/docs/v1-use-cases...HEAD (03-component.{puml,svg,md})
-- Checks run: design · docs · tests (n/a, docs only) · security · correctness
-- Verdict: fix Must Have first · Must 2 · Should 5 · Nice 3
-- Resolution: all Must, Should and Nice items applied on 2026-10-15 (owner chose to align 02d); the notation suggestion stays Disagree.
+- Commit: 95d8743 (base) + working tree
+- Scope: branch diff main...docs/v1-data-flow (documentation only)
+- Checks run: docs · security/GDPR · correctness (consistency). Design and tests: not
+  applicable (no code).
+- Verdict: fix Must Have first — all fixed before push · Must 3 · Should 6 · Nice 3 · Disagree 2
 
 ## 🔴 Must Have
-- `docs/architecture/diagrams/v1-events/03-component.puml:15` `[design|docs]` · Auth has no session-store dependency although ADR-0001 stores sessions in the data store · add a "Session store adapter (ADR-0001)" from AUTH to the data store.
-- `docs/architecture/diagrams/v1-events/03-component.md:33` `[docs]` · "job lock" attributed to ADR-0001 consequences, which cover rate limits only · cite 02d for the lock.
+
+- `docs/architecture/diagrams/v1-events/06-data-flow.md` DF2 `[docs|correctness]` · "their
+  drafts go with them" contradicted UC6/A5 · fixed: association content follows UC8.
+- `04-class.puml` Account `[docs]` · day-23 reminder untraceable (K9 precedent) · fixed:
+  `Account.verificationReminderAt [0..1]`, owner revalidated.
+- `06-data-flow.md` inventory `[security]` · invitee email (third party) missing, retention
+  undecided · fixed: DF4 (owner decision, 395/500).
 
 ## 🟡 Should Have
-- `docs/architecture/diagrams/v1-events/02d-sequence-scheduled-job.puml:13` `[design]` · CP3 says the job deletes images through FileStore; 02d has no FileStore step · add the step (images first, then data, so a crash never orphans files).
-- `docs/architecture/diagrams/v1-events/02d-sequence-scheduled-job.puml:5` `[design]` · "Scheduler" participant vs CP1 internal timer · rename to "Internal timer (runOnce)".
-- `docs/architecture/diagrams/v1-events/03-component.puml:11` `[design|security]` · per-client-IP and per-key limits (02c) not located · annotate Nginx/API modules.
-- `docs/architecture/diagrams/v1-events/03-component.puml:11` `[docs|security]` · TLS edge of ADR-0002 missing from the trust chain · add the TLS edge node.
-- `docs/architecture/diagrams/v1-events/03-component.md:6` `[docs]` · ADRs not linked · link both decision files.
+
+- `06-data-flow.md` `[security]` · moderation record retention undecided · fixed: DF5 (400/500).
+- `06-data-flow.md` deletion section `[security|correctness]` · cascade incomplete · fixed:
+  every 0..1 reference listed with its outcome.
+- `06-data-flow.md` API keys `[security]` · wrong legal basis, `name`/`createdBy` missing · fixed.
+- `06-data-flow.md` outbox `[security]` · basis ignored non-member recipients · fixed.
+- `06-data-flow.puml` `[security]` · API error logs not drawn · fixed: F27, no secrets rule.
+- `v1-use-cases.md` UC2/UC6, `06-data-flow.puml` job flows `[docs]` · DF2 and deletion effects
+  absent from use cases; job flows incomplete · fixed.
 
 ## 🔵 Nice to Have
-- `docs/architecture/diagrams/v1-events/03-component.puml:67` `[design]` · Outbox port used for both domain write and worker drain · one-line note.
-- `docs/architecture/diagrams/v1-events/02d-sequence-scheduled-job.puml:9` `[design]` · job writes "to Data store" directly while 03 shows it going through the domain · treat 02d's data store as the Repositories port (note).
-- `docs/architecture/diagrams/v1-events/03-component.md:36` `[docs]` · long heading · shorten.
+
+- `06-data-flow.md:5` `[docs]` · incomplete source list · fixed.
+- `06-data-flow.md` `[docs]` · ADR labels · fixed.
+- `06-data-flow.md` export `[docs]` · export scope · left to UC5 (already defines it).
 
 ## ⚪ Disagree / Intentional
-- `docs/architecture/diagrams/v1-events/03-component.puml:27` `[design]` · lollipop/socket notation suggested · realization arrows are valid UML 2 and match the package style.
+
+- `06-data-flow.md` sessions `[docs]` · "revoked on removal" is correct · J4 D3.
+- `06-data-flow.md` disputes `[security]` · `ModerationDispute` has a `disputant` · 04-class.puml.
 
 ## Per-dimension summary
-- Design: no over-engineering, no dependency-rule breach; consistency gaps with 02d. · Docs: template conforms, two accuracy fixes. · Tests: n/a (no code). · Security: trust chain and rate-limit placement should be explicit. · Correctness: no broken links.
+
+- Design: n/a · Docs: consistent after fixes · Tests: n/a · Security/GDPR: inventory and
+  cascade complete after DF4/DF5 · Correctness: aligned with UC1–UC33, 04-class, 02d, ADRs.

@@ -1,0 +1,70 @@
+@startuml
+title dfd — HappiHub V1 personal data flows (GDPR view)
+skinparam shadowing false
+skinparam componentStyle rectangle
+left to right direction
+
+actor "Member" as M
+actor "Visitor" as V
+node "Partner website server" as P
+
+rectangle "Trust boundary: HappiHub (EU hosting)" {
+  component "Ingress (TLS edge + Nginx)\nnormalized client IP (ADR-0002)" as N
+  component "API process" as API
+  component "Rate limiter\n(process memory, IP or key,\nexpires with window)" as RL
+  component "Image pipeline\n(type/size check, EXIF stripped)" as IMG
+  component "Maintenance job\n(hourly, retention rules)" as MJ
+  component "Outbox worker\n(every minute)" as OW
+
+  database "Data store" as DB {
+    collections "Account\n(email, pendingEmail, passwordHash,\ndisplayName, verificationReminderAt)" as D_ACC
+    collections "Sessions\n(30 min idle, 8 h absolute)" as D_SES
+    collections "Tokens (hashed)\nverify 24 h, reset 1 h" as D_TOK
+    collections "Invitations (invitee email,\ntoken hash, invitedBy)\ndeleted once not pending" as D_INV
+    collections "Memberships, events,\nassociation profile" as D_ASSO
+    collections "Activity log\n(no IP, 12 months)" as D_LOG
+    collections "Reports, decisions, suspensions,\ndisputes (12 months after closure)" as D_MOD
+    collections "Outbox (recipient, template, link)\ndeleted once sent; failures 30 days" as D_OUT
+    collections "API keys\n(name, SHA-256 hash, lastUsedAt)" as D_KEY
+  }
+  storage "Technical logs\n(ingress access + API errors,\nIP, 14 days, no secrets)" as TL
+  storage "File storage\n(event images, logos)" as FS
+}
+
+cloud "Email provider\n(EU processor, to be selected)" as XMAIL
+cloud "Géoplateforme\n(address suggestions)" as XADDR
+
+M --> N : F1 sign-up/in: email, password,\ndisplay name, IP
+V --> N : F2 public reads, report\n(optional email), IP
+P --> N : F3 bearer key, IP
+N --> RL : F4 client IP only
+N --> TL : F23 access log with IP
+N --> API : F5 request + normalized IP
+API --> TL : F27 error log (IP, no secrets)
+API --> D_ACC : F6 account data
+API --> D_SES : F7 session id
+API --> D_TOK : F8 token hashes
+API --> D_INV : F8b invitee email, token hash
+API --> D_ASSO : F9 content, "created by"
+API --> D_LOG : F10 actor, action, time
+API --> D_MOD : F11 report, reporter email [0..1]
+API --> D_KEY : F11b key name, hash
+API --> IMG : F12 uploaded image
+IMG --> FS : F13 stripped image
+API --> D_OUT : F14 email to send
+OW --> D_OUT : F15 read pending
+OW --> XMAIL : F16 recipient address + message
+API --> XADDR : F17 typed address text only\n(no member IP, no account)
+API --> P : F18 public event projection\n(no member identity)
+MJ --> D_LOG : F19 purge > 12 months
+MJ --> D_MOD : F19b purge closed cases > 12 months
+API --> D_INV : F20a delete on accept or revoke (DF4)
+MJ --> D_INV : F20 delete expired invitations
+MJ --> FS : F21 delete images, then data
+MJ --> D_ASSO : F21b drafts (S2), closed associations (UC8)
+MJ --> D_KEY : F21c revoke dormant keys (I1)
+MJ --> D_ACC : F24 delete unverified\naccounts after 30 days
+MJ --> D_OUT : F25 notices and reminders;\ndelete failures > 30 days
+API --> M : F22 export (UC5, JSON)
+API --> D_ACC : F26 account deletion cascade (UC6)
+@enduml

@@ -24,6 +24,14 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   package. The local review aligned the scheduled job sequence (02d: internal timer, images
   deleted before data). Database (#246) and hosting stay undecided. Branch
   `docs/v1-component`, stacked on `docs/v1-use-cases`.
+- **V1 data-flow diagram** — owner validated
+  [06-data-flow](docs/architecture/diagrams/v1-events/06-data-flow.md): personal data
+  inventory with GDPR legal basis and retention, flows leaving HappiHub, account deletion
+  cascade. Decisions DF1 outbox deleted once sent (failures 30 days), DF2 unverified accounts
+  deleted after 30 days (reminder day 23, new `Account.verificationReminderAt`), DF3
+  ingress/error logs with IP kept 14 days, DF4 invitations deleted once not pending, DF5
+  moderation records kept 12 months after closure. UC2/UC6 and 02d aligned after the local
+  review. No consent-based processing in V1. Backups deferred to hosting. Branch `docs/v1-data-flow`.
 
 ## 2026-10-12
 

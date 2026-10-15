@@ -217,6 +217,10 @@ and never reveal whether an address has an account.
 - **Extensions**:
   - 2a. Link expired or used: the system offers "Send a new link" (limited per hour).
   - 1a. The user never received the email: from the app, "Resend" (limited per hour).
+  - 1b. Never verified: a reminder is emailed at day 23 and the scheduled job deletes the
+    account at day 30 (data-flow DF2). This automatic expiry is the one exception to UC6's
+    password and confirmation guarantee; it applies UC6's deletion effects, and an
+    association left without member closes per UC8.
 - **Source**: J1 D2.
 
 ### UC3 — Reset a forgotten password
@@ -271,10 +275,12 @@ and never reveal whether an address has an account.
 
 - **Level**: user goal. **Primary actor**: registered user.
 - **Preconditions**: authenticated.
-- **Minimal guarantee**: no deletion without the current password and explicit confirmation.
+- **Minimal guarantee**: no user-initiated deletion without the current password and explicit
+  confirmation (automatic expiry of never-verified accounts: UC2 1b).
 - **Success guarantee**: the account and its personal data are deleted immediately (A5);
   memberships end and log entries are attributed to "former member"; association content stays with the association,
-  attributed to "former member".
+  attributed to "former member"; pending invitations to its email, its own disputes and its
+  unsent emails are deleted (see the [data-flow diagram](../diagrams/v1-events/06-data-flow.md)).
 - **Main success scenario**:
   1. The user chooses "Delete my account".
   2. The system explains the consequences and asks for the current password and confirmation.
@@ -386,13 +392,14 @@ All members of an association have the same rights (framing). Membership changes
 - **Extensions**:
   - 4a. The account email differs: refused with a masked hint ("This invitation is for
     m•••@gmail.com, ask Claire to invite your address").
-  - 2a. Invitation expired, revoked or used: the system explains and suggests asking again.
+  - 2a. Invitation unknown, expired, revoked or used (indistinguishable once deleted, DF4):
+    one generic message suggests asking the association for a new invitation.
   - 3a. New account: created with the invited email, unverified; continues at 4c.
   - 4c. Account email not verified: the same link may have been copied into a chat, so
     following it proves nothing about mailbox ownership. The system asks to verify the email
     (UC2) and adds no membership. After verification, the user sees the still valid pending
-    invitations for that email and chooses "Join" for each (back to step 4). An expired
-    invitation shows "ask for a new one".
+    invitations for that email and chooses "Join" for each (back to step 4). Expired
+    invitations are not listed; if none remain, the system suggests asking for a new one.
   - 4b. Malik already belongs to another association: the membership is added; the
     association switcher lists both (M1).
 - **Source**: J4 D1.
