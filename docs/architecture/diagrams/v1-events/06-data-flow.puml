@@ -58,6 +58,7 @@ API --> XADDR : F17 typed address text only\n(no member IP, no account)
 API --> P : F18 public event projection\n(no member identity)
 MJ --> D_LOG : F19 purge > 12 months
 MJ --> D_MOD : F19b purge closed cases > 12 months
+API --> D_INV : F20a delete on accept or revoke (DF4)
 MJ --> D_INV : F20 delete expired invitations
 MJ --> FS : F21 delete images, then data
 MJ --> D_ASSO : F21b drafts (S2), closed associations (UC8)

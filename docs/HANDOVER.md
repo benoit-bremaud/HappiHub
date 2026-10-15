@@ -126,7 +126,7 @@ have occurred. Do not interpret candidate folders as an approved implementation 
 3. Done 2026-10-15: audience, first-release scope, ownership and publication choices.
 4. Produce the full functional/API/data/UML conception, review it, obtain approval.
    V1 package status (2026-10-15): framing, journeys, use cases, class, state, sequences and
-   component and personal-data flow (06, DF1–DF3) diagrams validated; next: traceability
+   component and personal-data flow (06, DF1–DF5) diagrams validated; next: traceability
    matrix, final review (#247). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.
 
