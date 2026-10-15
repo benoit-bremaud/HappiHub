@@ -13,7 +13,7 @@ main success scenario, extensions, source. "The system" is HappiHub.
 | Event management | UC15–UC20 | **Validated 2026-10-15** |
 | Account and association | UC1–UC9 | **Validated 2026-10-15** |
 | Membership | UC10–UC14 | **Validated 2026-10-15** |
-| Public browsing | UC21–UC26 | To do |
+| Public browsing | UC21–UC26 | **Validated 2026-10-15** |
 | Website integration | UC27–UC28 | To do |
 | Administration | UC29–UC33 | To do |
 
@@ -53,7 +53,8 @@ J4 D2).
     page and offers "Retry"; no silent loss.
   - 5c. Start date or time already past: the system warns at once that it must be in the
     future to publish (E2); the draft can still be saved.
-  - 5b. Address not found by suggestions: Claire keeps free text.
+  - 5b. Address not found by suggestions: Claire keeps free text and picks the city from a
+    list, so every event has a normalized city (P1).
   - 7a. Image rejected (type or size): the system explains the limits and suggests a style.
   - *a. Claire leaves at any step: the draft keeps what was saved; she resumes later at the
     last step reached.
@@ -450,3 +451,108 @@ All members of an association have the same rights (framing). Membership changes
   Effects on other fiches: UC1 extension 1b (a signed-in user creates another association);
   UC6 extension 2a applies to every association where the user is the last member; UC31
   suspends one association or, for an account, all its memberships.
+
+## Public browsing
+
+No account, no cookie beyond what is strictly necessary, no third-party script. Public pages
+only ever show published, cancelled or archived events of non-suspended associations, with the
+J5 public fields: never drafts, member names, emails or internal identifiers. Pages are
+server-rendered or prerendered enough to carry Open Graph metadata.
+
+### UC21 — Browse upcoming events
+
+- **Level**: user goal. **Primary actor**: visitor (Inès).
+- **Minimal guarantee**: only public, upcoming events appear; no ranking or profiling.
+- **Success guarantee**: Inès sees upcoming events in chronological order, filtered as chosen.
+- **Main success scenario**:
+  1. Inès opens the agenda (home page).
+  2. The system lists published and cancelled upcoming events, soonest first, as compact cards
+     (poster, title, date, city, status badge), paginated.
+  3. Inès filters by city (list of cities that have upcoming events) and by type (chips);
+     filters live in the URL so the view can be shared (P1). She opens an event (UC22).
+- **Extensions**:
+  - 2a. No event matches: friendly empty state suggesting to clear filters.
+  - 2b. A cancelled event is listed with a visible "Cancelled" badge.
+- **Source**: review F16, J3 D3.
+
+### UC22 — View an event page
+
+- **Level**: user goal. **Primary actor**: visitor (Inès).
+- **Minimal guarantee**: a draft or hidden event is never displayed.
+- **Success guarantee**: Inès reads what, when, where and how much within seconds.
+- **Main success scenario**:
+  1. Inès opens an event link.
+  2. The system shows the status banner if any (cancelled with reason, past event, updated
+     on …), the reduced poster, the essentials card and the actions (UC23, UC24, directions),
+     then the long description and "Upcoming events from this troupe".
+- **Extensions**:
+  - 2a. Unknown, draft or deleted event: "This event does not exist" (404).
+  - 2b. Event hidden by moderation or association suspended: "This event is no longer
+    available" (410), without detail.
+- **Source**: J5 D1, D3.
+
+### UC23 — Share an event
+
+- **Level**: user goal. **Primary actor**: visitor.
+- **Success guarantee**: the event link is handed to the chosen app or copied.
+- **Main success scenario**:
+  1. Inès chooses "Share".
+  2. The system opens the device's native share sheet with title and link.
+- **Extensions**:
+  - 2a. Native sharing unavailable (desktop): the system copies the link and confirms.
+- **Source**: J5 D2.
+
+### UC24 — Add an event to a calendar
+
+- **Level**: user goal. **Primary actor**: visitor.
+- **Success guarantee**: Inès's calendar app receives the event (title, start, end, venue,
+  link).
+- **Main success scenario**:
+  1. Inès chooses "Add to calendar".
+  2. The system serves an .ics file with a stable event identifier.
+- **Extensions**:
+  - 2a. Event cancelled: the action is hidden.
+  - 2b. No end time: a default duration of 2 hours is used and stated.
+- **Source**: J5 D2.
+
+### UC25 — View an association page
+
+- **Level**: user goal. **Primary actor**: visitor.
+- **Minimal guarantee**: no member name, personal email or street address is shown.
+- **Success guarantee**: Inès sees name, logo, city, presentation, website link, optional
+  generic contact email, upcoming events then the 6 latest past events with "See more".
+- **Main success scenario**:
+  1. Inès opens the association page from an event or a link.
+  2. The system shows the page.
+- **Extensions**:
+  - 2a. Association closed: "Association closed" for 30 days, then 404.
+  - 2b. Association suspended: 410 without detail.
+- **Source**: J1 D4, J5 D3, F2.
+
+### UC26 — Report an event or an association
+
+- **Level**: user goal. **Primary actor**: visitor (no account needed).
+- **Minimal guarantee**: reporting reveals nothing about the reporter to the association;
+  abusive mass reporting is throttled.
+- **Success guarantee**: a report with a reason is queued for moderators (UC29); the visitor
+  is thanked.
+- **Main success scenario**:
+  1. Inès chooses "Report" on an event or association page.
+  2. The system asks for a reason (spam, misleading, inappropriate, other) and an optional
+     comment, plus an optional email to be informed of the outcome.
+  3. Inès submits; the system records the report and confirms.
+- **Extensions**:
+  - 3a. Rate limit reached or bot detected (hidden honeypot field, no third-party captcha):
+    the system refuses neutrally.
+  - 3b. The same target already has an open report: the new one is attached to it.
+- **Source**: J1 D3, review F6.
+
+### Decisions — Public browsing (validated 2026-10-15)
+
+- **P1** Agenda filters: city chosen from the list of cities with upcoming events, plus event
+  type chips (fixed list of about 8 types aligned with J2 step 1), both in the URL; every event
+  stores a normalized city (4.6). Rejected: free-text city + type (3.7, typos hide events),
+  city only (4.3), city + type + period (3.7, crowded on mobile), keyword search (3.1).
+  "Near me" geolocation is excluded from V1 (permission prompt, location data).
+  Effect on UC15: at step 2 a normalized city is required; when the address is typed freely,
+  Claire picks the city from a list.
