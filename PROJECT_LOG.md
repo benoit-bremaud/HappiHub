@@ -5,6 +5,14 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-10-15
+
+- **V1 product framing** — owner validated the V1 framing (cultural associations, create,
+  present and publish everywhere through a read-only partner API), personas and journeys
+  J1–J6 ([framing](docs/architecture/specs/v1-product-framing.md),
+  [journeys](docs/architecture/specs/v1-user-journeys.md)). Partner keys follow J6 D2:
+  several named keys per association. Branch `docs/v1-product-framing`.
+
 ## 2026-10-12
 
 Session scope: repository recovery, security remediation and product framing.
