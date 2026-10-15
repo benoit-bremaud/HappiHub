@@ -9,7 +9,7 @@ Journeys drive the use-case diagrams, then wireframes (#249).
 | J1 | Discover HappiHub and sign up the association | Claire | **Validated 2026-10-15** |
 | J2 | Create an event | Claire | **Validated 2026-10-15** |
 | J3 | Preview, publish, then cancel or archive | Claire | **Validated 2026-10-15** |
-| J4 | Invite a member and edit together | Claire, Malik | To do |
+| J4 | Invite a member and edit together | Claire, Malik | **Validated 2026-10-15** |
 | J5 | Browse a public event page on mobile | Inès | **Validated 2026-10-15** |
 | J6 | Connect the association website (API key) | Malik | To do |
 
@@ -105,3 +105,14 @@ collisions need a rule in the conception.
 
 New dependency to study in the conception: a transactional email provider (verification,
 password reset, invitations) compatible with zero budget and EU hosting.
+
+## J4 — Invite a member and edit together (Claire, Malik)
+
+All members have the same rights (framing). J4 keeps that simple without making it unsafe.
+
+| Decision | Choice (score) | Rejected and why |
+| --- | --- | --- |
+| D1 Invite | Invitation bound to the invitee's email, sent by mail **and** copyable for WhatsApp; single use, expires after 7 days, revocable from "Pending invitations"; inviter needs a verified email; quota (e.g. 10 per day per association) (4.5). Wrong-address acceptance is refused with a masked hint | Single-use link for any email (4.4): a link leaked in a group chat admits the first clicker with full rights. Open link (3.6). Direct add of an existing account (3.6): Malik signs up alone, duplicate troupe risk |
+| D2 Concurrent edits | Optimistic versioning on every save, autosave included; automatic field-level merge when different fields changed; prompt only when the same field changed ("Malik also changed the title: keep yours or his?") (4.6) | Whole-event mine/theirs (3.8): loses the other's fields, frequent prompts with autosave. Lock (3.0): ghost locks. Real-time (3.7): too costly for V1 |
+| D3 Remove or leave | Any member may remove another or leave; never the last member; removal immediate, sessions revoked; removed member is emailed with an "I dispute this" link creating a report the owner can act on (reinstate); action logged (4.5) | Delayed 48 h removal (4.2): ex-volunteer keeps access, scheduled jobs. No recourse (4.0): takeover unrecoverable. Creator-only (2.8): hidden role contrary to framing |
+| D4 Traceability | "Created by" and "Last edited by … ago" on events; activity log of sensitive actions (create, publish, cancel event; invite, join, remove, leave member), visible to members only, kept 12 months, no IP address (4.5) | Author/editor only (4.3): no evidence for D3 disputes. Full version history (3.0): study #114, out of V1 |
