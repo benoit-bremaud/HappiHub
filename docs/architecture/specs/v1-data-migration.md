@@ -86,8 +86,8 @@ variant, not a separate option, and are scored under criterion 3 as fallbacks on
 - Margin: B leads C by 50 and A by 120. B vs C: equal on budget, C wins on operations, B
   wins on integrity, concurrency and the possibility of a second API instance. B vs A: A is
   cheaper today (rewrite), but the V1 model is reshaped anyway and A leaves integrity to code.
-- Sensitivity: doubling rewrite cost (criterion 4 → 30, integrity → 10) gives B 390, C 355,
-  A 345: B stays first. A wins only if rewrite cost outweighs integrity by more than 3 to 1.
+- Sensitivity: doubling rewrite cost (criterion 4 → 30, integrity → 10) gives B 390, D 370, C 355,
+  A 345: B stays first.
 - Estimates: criterion 6 (skills) and the managed free-tier limits are not measured. No
   estimate can flip B, since B leads on the two heaviest verified criteria.
 - **Recommendation: B, PostgreSQL**, self-hosted in the EU next to the API.
@@ -104,22 +104,22 @@ Conventions: `snake_case` tables; `uuid` primary keys (public event ids allowed,
 
 | Table | Columns (key constraints) | Source |
 | --- | --- | --- |
-| `account` | `id` PK, `email` UNIQUE (case-folded), `email_verified_at`, `verification_reminder_at`, `pending_email`, `password_hash`, `display_name`, `platform_role` CHECK (NONE, MODERATOR, SUPER_ADMIN), `auth_version`, `created_at` | Account, DF2 |
-| `association` | `id` PK, `name`, `slug` UNIQUE, `city`, `presentation`, `website_url`, `contact_email`, `status` CHECK (ACTIVE, CLOSED), `closed_at`, `created_by` FK account ON DELETE SET NULL, `created_at`; CHECK `status = 'CLOSED'` ⇔ `closed_at` set | Association, 05b |
+| `account` | `id` PK, `email` UNIQUE (case-folded), `email_verified_at`, `verification_reminder_at`, `pending_email` (re-checked unique at confirmation), `password_hash`, `display_name`, `platform_role` CHECK (NONE, MODERATOR, SUPER_ADMIN), `auth_version`, `created_at`; partial index on `created_at` where `email_verified_at` IS NULL (F24) | Account, DF2 |
+| `association` | `id` PK, `name`, `slug` UNIQUE, `city`, `presentation`, `website_url`, `contact_email`, `status` CHECK (ACTIVE, CLOSED), `closed_at`, `logo_image_id` FK image UNIQUE ON DELETE SET NULL, `created_by` FK account ON DELETE SET NULL, `created_at`; CHECK `status = 'CLOSED'` ⇔ `closed_at` set | Association, 05b |
 | `membership` | PK (`account_id`, `association_id`), both FK ON DELETE CASCADE, `joined_at` | Membership |
-| `invitation` | `id` PK, `association_id` FK CASCADE, `email`, `token_hash` UNIQUE, `expires_at`, `status`, `invited_by` FK SET NULL; partial UNIQUE (`association_id`, `email`) where `status = 'PENDING'` | Invitation, DF4 |
-| `event` | `id` PK, `association_id` FK CASCADE, `type` CHECK (8 values), `title`, `short_description`, `long_description`, `starts_at`, `ends_at` CHECK ≥ `starts_at`, `venue_label`, `venue_address`, `venue_normalized_city`, `price_kind` CHECK, `price_amount_cents` CHECK (> 0 only when AMOUNT), `poster_style`, `status` CHECK (DRAFT, PUBLISHED, CANCELLED, ARCHIVED), `cancellation_reason`, `published_at`, `schedule_changed_at`, `hidden_by_moderation` default false, `cleanup_notice_at`, `version`, `created_by`/`last_edited_by` FK SET NULL, `updated_at`; **no unique index on `title`** | Event, 05a, 02a |
-| `image` | `id` PK, `storage_key` UNIQUE, `mime_type`, `width`, `height`, `alt_text`; owned through `event.poster_image_id` / `association.logo_image_id` (UNIQUE, nullable) | Image |
+| `invitation` | `id` PK, `association_id` FK CASCADE, `email`, `token_hash` UNIQUE, `expires_at`, `status` CHECK (InvitationStatus), `invited_by` FK SET NULL; partial UNIQUE (`association_id`, `email`) where `status = 'PENDING'`; index on `expires_at` (F20) | Invitation, DF4 |
+| `event` | `id` PK, `association_id` FK CASCADE, `type` CHECK (8 values), `title`, `short_description`, `long_description`, `starts_at`, `ends_at` CHECK ≥ `starts_at`, `venue_label`, `venue_address`, `venue_normalized_city`, `price_kind` CHECK, `price_amount_cents` CHECK `(price_kind = 'AMOUNT') = (price_amount_cents IS NOT NULL AND price_amount_cents > 0)`, `poster_style`, `poster_image_id` FK image UNIQUE ON DELETE SET NULL, `status` CHECK (DRAFT, PUBLISHED, CANCELLED, ARCHIVED), `cancellation_reason`, `published_at`, `schedule_changed_at`, `hidden_by_moderation` default false, `cleanup_notice_at`, `version`, `created_by`/`last_edited_by` FK SET NULL, `updated_at`; **no unique index on `title`** | Event, 05a, 02a |
+| `image` | `id` PK, `storage_key` UNIQUE, `mime_type`, `width`, `height`, `alt_text`; owned through `event.poster_image_id` / `association.logo_image_id`; files and rows are deleted by the use case or job before the owner (F21) | Image |
 | `api_key` | `id` PK, `association_id` FK CASCADE, `name`, `prefix` UNIQUE, `secret_hash`, `created_by` FK SET NULL, `created_at`, `last_used_at`, `revoked_at`, `revocation_notice_at` | ApiKey, I1 |
 | `activity_entry` | `id` PK, `association_id` FK CASCADE, `actor_id` FK SET NULL, `action`, `target_ref`, `occurred_at`; index on `occurred_at` for the 12-month purge | ActivityEntry, F19 |
-| `report` | `id` PK, `target_kind`, `target_id`, `reason` CHECK, `comment`, `reporter_email`, `status`, `created_at`, `closed_by` FK moderation_decision | Report |
-| `moderation_decision` | `id` PK, `kind` CHECK (11 values), `target_kind`, `target_id`, `reason`, `decided_at`, `decided_by` FK SET NULL | ModerationDecision, T1 |
-| `suspension` | `id` PK, `target_kind`, `target_id`, `ends_at`, `lifted_at`, `issued_by` FK UNIQUE, `lifted_by` FK UNIQUE | Suspension, T9 |
-| `removal_dispute` | `id` PK, `disputant_id` FK CASCADE, `association_id` FK CASCADE, `removed_at`, `explanation`, `status`, `resolution`, `resolved_by` FK SET NULL, `created_at` | RemovalDispute |
-| `moderation_dispute` | `id` PK, `disputant_id` FK CASCADE, `decision_id` FK UNIQUE, `explanation`, `status`, `resolution`, `resolved_by` FK SET NULL, `created_at` | ModerationDispute |
-| `auth_token` | `id` PK, `account_id` FK CASCADE, `purpose` CHECK (VERIFY, RESET), `token_hash` UNIQUE, `expires_at` | 06 D_TOK |
-| `outbox_message` | `id` PK, `recipient`, `template`, `payload`, `created_at`, `attempts`, `failed_at`; row deleted once sent | 06 D_OUT, DF1 |
-| `session` | session id PK, `data`, `expires_at` | 06 D_SES, ADR-0001 |
+| `report` | `id` PK, `target_kind` CHECK (TargetKind), `target_id`, `reason` CHECK, `comment`, `reporter_email`, `status` CHECK (CaseStatus), `created_at`, `closed_by` FK moderation_decision; index (`target_kind`, `target_id`), index (`status`, `created_at`) (F19b) | Report |
+| `moderation_decision` | `id` PK, `kind` CHECK (11 values), `target_kind` CHECK, `target_id`, `reason`, `decided_at`, `decided_by` FK SET NULL; index (`target_kind`, `target_id`), index `decided_at` | ModerationDecision, T1 |
+| `suspension` | `id` PK, `target_kind` CHECK, `target_id`, `ends_at`, `lifted_at`, `issued_by` FK UNIQUE, `lifted_by` FK UNIQUE; index (`target_kind`, `target_id`) | Suspension, T9 |
+| `removal_dispute` | `id` PK, `disputant_id` FK SET NULL (nullable), `association_id` FK SET NULL (nullable), `association_name`, `removed_at`, `explanation`, `status` CHECK, `resolution`, `resolved_by` FK SET NULL, `created_at` | RemovalDispute |
+| `moderation_dispute` | `id` PK, `disputant_id` FK SET NULL (nullable), `decision_id` FK UNIQUE, `explanation`, `status` CHECK, `resolution`, `resolved_by` FK SET NULL, `created_at` | ModerationDispute |
+| `auth_token` | `id` PK, `account_id` FK CASCADE, `purpose` CHECK (VERIFY, RESET), `token_hash` UNIQUE, `expires_at`; index `expires_at` | 06 D_TOK |
+| `outbox_message` | `id` PK, `recipient`, `template`, `payload`, `created_at`, `attempts`, `failed_at`; row deleted once sent; `payload` (which holds the token link) cleared on final failure, index `failed_at` (F25) | 06 D_OUT, DF1 |
+| `session` | session id PK, `data`, `expires_at` index; revocation by `account.auth_version` (ADR-0001), expired rows purged | 06 D_SES, ADR-0001 |
 
 Rules kept in the domain, not in the schema (they span rows or depend on time): at least one
 member per active association, ≤ 5 associations created per account, ≤ 5 active API keys,
@@ -128,8 +128,15 @@ write they guard, with a row lock on the owning association or account.
 
 `ModerationTarget` stays polymorphic (`target_kind`, `target_id`) without a foreign key, as
 in 04: moderation records must survive deletion of their target for the 12-month retention
-(F19b). Account deletion (F26) cascades through the FKs above; the deletion use case still
-removes images from file storage first (F21).
+(F19b). Moderation records and disputes reference accounts and associations with `SET NULL`, so
+closing an association or deleting an account keeps them for their 12-month retention
+(F19b, DF5); only that purge removes them. After deletion, `target_id` of a deleted account
+remains a pseudonymous reference; 06 must list it as retained data.
+
+Account deletion (F26) runs in one transaction: lock the account's associations, apply the
+last-member rule of UC6 2a (close each such association, UC8), delete pending invitations to its email and
+pending outbox rows to its address (no FK), then delete the account so memberships and
+tokens cascade. Images are removed from file storage first (F21).
 
 ## 4. D2 — Legacy data strategy (MCDA)
 
@@ -153,7 +160,7 @@ No production data exists; the legacy database holds only local synthetic fixtur
 
 Points: A 30 + 25 + 25 + 40 = **120**; B 120 + 125 + 125 + 100 = **470** 🏆; C 60 + 50 + 75 + 60 = **245**.
 
-Sensitivity: B stays first under any single weight doubled. Recommendation: **B, fresh start**. Fallback C (245) only if real users
+Sensitivity: B scores highest or equal on every criterion, so no weight change can displace it. Recommendation: **B, fresh start**. Fallback C (245) only if real users
 appear before V1 ships; it would then need its own consent and mapping study.
 
 ### Legacy item disposition (applies to B; documents why nothing maps)
