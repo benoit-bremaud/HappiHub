@@ -1,7 +1,7 @@
 # HappiHub V1 — use case specifications
 
-Status: in progress (conception workshop 3). Each domain is reviewed and validated with the
-owner. Diagram: [uc — HappiHub V1](../diagrams/v1-events/01-use-case.md). Sources:
+Status: complete — all 33 use cases validated with the owner on 2026-10-15 (conception
+workshop 3). Diagram: [uc — HappiHub V1](../diagrams/v1-events/01-use-case.md). Sources:
 [framing](v1-product-framing.md), [personas](v1-personas.md), [journeys](v1-user-journeys.md).
 Session, CSRF and sign-in rules come from ADR-0001 and are referred to as "authenticated".
 
@@ -15,7 +15,7 @@ main success scenario, extensions, source. "The system" is HappiHub.
 | Membership | UC10–UC14 | **Validated 2026-10-15** |
 | Public browsing | UC21–UC26 | **Validated 2026-10-15** |
 | Website integration | UC27–UC28 | **Validated 2026-10-15** |
-| Administration | UC29–UC33 | To do |
+| Administration | UC29–UC33 | **Validated 2026-10-15** |
 
 ## Event management
 
@@ -612,3 +612,111 @@ CORS headers, so browsers cannot call them from another origin.
   before, logged; reuses the scheduled job already needed for archiving and closures (4.3).
   Rejected: no expiry with a UI warning only (4.1, dormant keys stay valid), mandatory
   12-month expiry (2.9, breaks active sites when renewal is forgotten).
+
+## Administration
+
+Moderation applies after publication (no prior moderation). Every moderation action records
+its author, reason and time in a platform moderation log (kept 12 months, no IP address) and
+notifies the affected association members or account by email with an "I dispute this" link
+(UC9). Conflict of interest: a moderator never handles a report or dispute concerning an
+association they belong to; it is escalated to the super administrator.
+
+### UC29 — Handle a report
+
+- **Level**: user goal. **Primary actor**: moderator.
+- **Preconditions**: authenticated moderator; an open report exists.
+- **Minimal guarantee**: the reporter's identity and email are never shown to the association.
+- **Success guarantee**: the report is closed as dismissed, as "event hidden", or escalated
+  to a suspension (UC31); the reporter is informed if they left an email, which is then
+  deleted.
+- **Main success scenario**:
+  1. The moderator opens the report queue, oldest first, grouped by target.
+  2. The moderator reviews the target and the reasons.
+  3. The moderator dismisses, hides the event, or opens UC31, writing a reason.
+  4. The system applies the decision, logs it and notifies.
+- **Extensions**:
+  - 3a. Hiding: the event shows 410 publicly and disappears from agenda and API; the
+    association sees it as "hidden by moderation" with the reason.
+  - 3b. Conflict of interest: the system offers escalation only.
+  - 4a. A hidden event is later restored through UC32: it returns to its previous state.
+- **Source**: J1 D3, review F6.
+
+### UC30 — Resolve a removal dispute
+
+- **Level**: user goal. **Primary actor**: moderator.
+- **Preconditions**: an open removal dispute (UC13).
+- **Success guarantee**: the dispute is closed as upheld (the person is reinstated as a member)
+  or rejected; both parties are informed; the decision is logged in the association log and
+  the moderation log.
+- **Main success scenario**:
+  1. The moderator opens the dispute with the explanation and the association's activity
+     entries around the removal.
+  2. The moderator decides with a reason.
+  3. The system applies it and notifies the disputing person and the association members.
+- **Extensions**:
+  - 2a. Conflict of interest: escalated to the super administrator.
+  - 3a. Reinstatement while the association is closed: the dispute is rejected automatically
+    with an explanation.
+- **Source**: J4 D3.
+
+### UC31 — Suspend an account or an association
+
+- **Level**: user goal. **Primary actor**: moderator.
+- **Preconditions**: authenticated moderator; the target is not the super administrator.
+- **Minimal guarantee**: no suspension without a written reason; the target is notified with
+  a dispute link.
+- **Success guarantee**: a suspended association's public pages answer 410, its events leave
+  agenda and API, its members cannot write for it; a suspended account loses its sessions and
+  every membership's write access, for the chosen duration (AD2).
+- **Main success scenario**:
+  1. The moderator chooses "Suspend" on an account or association, from a report or directly.
+  2. The moderator writes the reason and picks a duration: 7 days, 30 days or no limit (AD2).
+  3. The system applies the suspension, revokes sessions where relevant, logs and notifies.
+- **Extensions**:
+  - 1a. Target is the super administrator or a moderator: only the super administrator may
+    act (on a moderator).
+  - 1b. Conflict of interest: escalated.
+  - 3a. The duration ends: the scheduled job lifts the suspension, logs it and notifies.
+- **Source**: platform administration decision (a2), anti-persona spammer.
+
+### UC32 — Resolve a moderation dispute
+
+- **Level**: user goal. **Primary actor**: super administrator.
+- **Preconditions**: an open dispute about a hidden event or a suspension (UC9), or an
+  escalated case.
+- **Success guarantee**: the decision is confirmed or reversed (event restored, suspension
+  lifted); the disputing party is informed; logged.
+- **Main success scenario**:
+  1. The super administrator opens the dispute with the original decision, its reason and
+     author, and the explanation.
+  2. The super administrator confirms or reverses, with a reason.
+  3. The system applies, logs and notifies.
+- **Extensions**:
+  - 2a. The original decision was taken by the super administrator: the known limit applies
+    (no independent review); the screen states it.
+- **Source**: review F3/F10.
+
+### UC33 — Grant or revoke the moderator role
+
+- **Level**: user goal. **Primary actor**: super administrator.
+- **Preconditions**: authenticated super administrator; the target account has a verified
+  email.
+- **Minimal guarantee**: there is always at least one super administrator; a moderator can
+  never grant the role.
+- **Success guarantee**: the target gains or loses the moderator role, is notified by email,
+  and the change is logged; on revocation their moderator sessions lose that access at once.
+- **Main success scenario**:
+  1. The super administrator searches an account by exact email.
+  2. The super administrator grants or revokes the role, after confirmation.
+  3. The system applies, logs and notifies.
+- **Extensions**:
+  - 2a. Attempt to revoke one's own super administrator role: refused.
+- **Source**: platform administration decision (a2).
+
+### Decisions — Administration (validated 2026-10-15)
+
+- **AD2** The moderator picks 7 days, 30 days or no limit; lifting is automatic at the end
+  through the existing scheduled job (4.3). Rejected: no duration, lifted manually only (3.9,
+  every lift depends on the owner), always permanent (2.6, disproportionate).
+- Conflict of interest rule: a moderator never handles a case concerning an association they
+  belong to; it is escalated to the super administrator.
