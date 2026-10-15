@@ -161,6 +161,7 @@ package "Administration" {
     REJECT_REMOVAL_DISPUTE
     GRANT_MODERATOR
     REVOKE_MODERATOR
+    GRANT_SUPER_ADMIN
   }
   class Suspension {
     target : ModerationTarget
