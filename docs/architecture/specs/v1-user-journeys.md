@@ -6,7 +6,7 @@ Journeys drive the use-case diagrams, then wireframes (#249).
 
 | # | Journey | Persona | Status |
 | --- | --- | --- | --- |
-| J1 | Discover HappiHub and sign up the association | Claire | To do |
+| J1 | Discover HappiHub and sign up the association | Claire | **Validated 2026-10-15** |
 | J2 | Create an event | Claire | **Validated 2026-10-15** |
 | J3 | Preview, publish, then cancel or archive | Claire | **Validated 2026-10-15** |
 | J4 | Invite a member and edit together | Claire, Malik | To do |
@@ -84,3 +84,24 @@ preview well; no third-party scripts on public pages.
 
 Implication for the conception: V1 needs a minimal **public association page** (name, short
 description, upcoming and past events). To be covered with J1.
+
+## J1 — Discover HappiHub and sign up the association (Claire)
+
+Goal: from first click to first poster in under 5 minutes overall.
+
+| Decision | Choice (score) | Rejected and why |
+| --- | --- | --- |
+| D1 Sign-up flow | One screen: email, password, association name, then straight into J2 "Create your first event" (4.7) | Account first, association later (3.6): empty dashboard, Claire must guess. Verified association (RNA/SIRET) first (2.6): number rarely at hand, near-certain drop-off |
+| D2 Authentication | Email + password on the existing cookie sessions; drafts allowed immediately, verified email required before first publication (4.4) | Magic link (3.9): opening mail at every sign-in, redoes the secured auth. Google/Facebook (2.8): third-party dependency, GDPR, not every volunteer has an account |
+| D3 Abuse guard (no prior moderation) | Verified email to publish, creation quotas and rate limits, "Report" button handled by the owner (4.5) | Mandatory RNA (3.2): excludes informal collectives, real check costly. Manual approval (3.0): depends on owner availability, contradicts J3 |
+| D4 Public association page | Name, optional logo, city only, short presentation, website link, optional generic contact email (`mailto:`), upcoming then 6 latest past events with "See more", readable URL slug (4.5) | Same without contact (4.4): Inès cannot ask an access question. Rich page (2.9): mail relay, spam, members exposed. No page (3.8): breaks J5 D3 |
+
+Privacy rules: never display member names or personal emails; city only (the registered
+address is often a member's home); logos follow the event image rules (#62).
+
+Edge cases: interrupted sign-up resumes without re-entry; if the troupe already exists,
+sign-up suggests asking for an invitation (J4) to avoid duplicate associations; slug
+collisions need a rule in the conception.
+
+New dependency to study in the conception: a transactional email provider (verification,
+password reset, invitations) compatible with zero budget and EU hosting.
