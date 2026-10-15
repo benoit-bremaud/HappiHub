@@ -1,6 +1,6 @@
 # HappiHub event platform resumption
 
-Status: proposed, pending owner validation. This document is the equivalent work item for initial conception; no implementation is approved yet.
+Status: superseded on 2026-10-15 by the [V1 product framing](v1-product-framing.md) and [V1 personas](v1-personas.md). Kept as historical input; not an approved specification.
 
 Planning note (2026-10-12): the current sequencing and expanded product direction are
 recorded in the [prioritized work plan](../../WORK_PLAN.md). This earlier specification

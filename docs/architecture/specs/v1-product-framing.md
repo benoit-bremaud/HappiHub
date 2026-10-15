@@ -66,6 +66,10 @@ plus usability sessions on the creation journey.
 - Safe, light images: size and type limits, EXIF metadata stripped (#62).
 - No imposed delivery date; pace follows conception approval.
 
+## Personas
+
+See [V1 personas](v1-personas.md): Claire (primary organizer), Malik (communication and web volunteer in the same troupe), Inès (visitor), plus anti-personas.
+
 ## Next workshop
 
 Workshop 2 — user journeys and UX: organizer onboarding, event creation (easy and playful),
