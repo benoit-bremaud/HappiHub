@@ -49,9 +49,11 @@ Raw earlier audit exports remain untracked and must not be bulk-staged.
 - Complete detailed UML conception and receive explicit owner validation before code.
 - Revisit visual identity with Clément; logo and expanded local demo remain pending.
 
-These are direction decisions. Audience, complete feature behavior, first-release scope,
-organization model, publication destinations, external API authorization, business model,
-hosting and final database technology are not approved decisions.
+These are direction decisions. Since 2026-10-15 the V1 audience (cultural associations),
+first-release scope, organization model, publication destinations and partner API
+authorization are owner-validated in the [V1 product framing](architecture/specs/v1-product-framing.md)
+and [user journeys](architecture/specs/v1-user-journeys.md). Business model, hosting and
+final database technology are not approved decisions.
 
 ## Implemented local baseline
 
@@ -119,9 +121,9 @@ have occurred. Do not interpret candidate folders as an approved implementation 
 
 ## Next actions
 
-1. Continue framing: concrete organizer, participant and external-integrator scenarios.
-2. Finish research synthesis and prioritize candidate outcomes with explicit confidence.
-3. Propose and validate audience, first-release scope, ownership and publication choices.
+1. Done 2026-10-15: V1 framing, personas and journeys J1–J6 validated.
+2. Research synthesis is superseded for V1 by the validated framing.
+3. Done 2026-10-15: audience, first-release scope, ownership and publication choices.
 4. Produce the full functional/API/data/UML conception, review it, obtain approval.
    V1 package status (2026-10-15): framing, journeys, use cases, class, state, sequences and
    component diagrams validated; next: 06 personal-data flow, traceability matrix, final
