@@ -11,7 +11,7 @@ main success scenario, extensions, source. "The system" is HappiHub.
 | Domain | Use cases | Status |
 | --- | --- | --- |
 | Event management | UC15–UC20 | **Validated 2026-10-15** |
-| Account and association | UC1–UC9 | To do |
+| Account and association | UC1–UC9 | **Validated 2026-10-15** |
 | Membership | UC10–UC14 | To do |
 | Public browsing | UC21–UC26 | To do |
 | Website integration | UC27–UC28 | To do |
@@ -166,3 +166,174 @@ J4 D2).
 - **E2** Publication requires a future start date, with a warning already at step 2 (4.3).
   Rejected: publish with confirmation and archive at once (3.3, second path into "past",
   hides year typos); publish silently (2.9).
+
+## Account and association
+
+Account emails (verification, reset, notifications) go through the transactional email
+provider still to be selected (zero budget, EU). Links in emails are single-use, expiring,
+and never reveal whether an address has an account.
+
+### UC1 — Sign up an association
+
+- **Level**: user goal. **Primary actor**: visitor (Claire).
+- **Preconditions**: none; sign-up rate limits not exceeded.
+- **Minimal guarantee**: no account or association is half-created; the response never
+  reveals whether the email already has an account.
+- **Success guarantee**: an unverified account and an association with Claire as its only
+  member exist; a verification email is sent; Claire is signed in and lands in UC15.
+- **Main success scenario**:
+  1. Claire chooses "Create my association".
+  2. The system shows one screen: email, password (policy A2), association name.
+  3. Claire submits.
+  4. The system validates, creates the account and the association with a readable slug,
+     sends the verification email and signs Claire in.
+  5. The system opens "Create your first event" (UC15).
+- **Extensions**:
+  - 3a. Invalid field: explained inline, input kept (password excepted).
+  - 4a. The email already has an account: the system shows the same neutral message and
+    emails the address owner with sign-in and reset links.
+  - 4b. An association with a similar name exists: the system warns "Your troupe may already
+    be on HappiHub — ask a member for an invitation" and lets Claire continue; the slug gets
+    a distinguishing suffix.
+  - 3b. Rate limit reached: the system asks to retry later.
+- **Source**: J1 D1, D2, D3.
+
+### UC2 — Verify email address
+
+- **Level**: user goal. **Primary actor**: registered user.
+- **Preconditions**: the account exists and its email is not verified.
+- **Minimal guarantee**: an expired, reused or foreign link verifies nothing.
+- **Success guarantee**: the email is marked verified; publishing (UC18) and inviting (UC10)
+  become possible.
+- **Main success scenario**:
+  1. The user opens the link received by email.
+  2. The system checks the token (single use, 24 h) and marks the email verified.
+  3. The system confirms and returns to where the user was.
+- **Extensions**:
+  - 2a. Link expired or used: the system offers "Send a new link" (limited per hour).
+  - 1a. The user never received the email: from the app, "Resend" (limited per hour).
+- **Source**: J1 D2.
+
+### UC3 — Reset a forgotten password
+
+- **Level**: user goal. **Primary actor**: registered user.
+- **Preconditions**: none (signed out).
+- **Minimal guarantee**: the response never reveals whether an email has an account; a reset
+  link works once.
+- **Success guarantee**: the password is replaced, every existing session is revoked
+  (ADR-0001 authentication version) and the user is signed in.
+- **Main success scenario**:
+  1. The user chooses "Forgot password" and enters an email.
+  2. The system answers neutrally and, if an account exists, emails a link (single use, 1 h).
+  3. The user opens the link and enters a new password (policy A2).
+  4. The system replaces the password, revokes all sessions and signs the user in.
+- **Extensions**:
+  - 3a. Link expired or used: the system offers to start again.
+  - 2a. Rate limit reached: neutral message, retry later.
+- **Source**: J1 edge case "forgotten password".
+
+### UC4 — Update my account
+
+- **Level**: user goal. **Primary actor**: registered user.
+- **Preconditions**: authenticated.
+- **Minimal guarantee**: email and password never change without the current password.
+- **Success guarantee**: the display name, email or password is updated.
+- **Main success scenario**:
+  1. The user opens "My account" and changes the display name, email or password.
+  2. For an email or password change, the system asks for the current password.
+  3. The system saves. A new email stays pending until verified through UC2; the old address
+     is notified. A new password revokes the other sessions.
+- **Extensions**:
+  - 2a. Wrong current password: refused, rate-limited.
+  - 3a. The new email already has an account: neutral message, no disclosure.
+- **Source**: framing, #263.
+
+### UC5 — Export my data
+
+- **Level**: user goal. **Primary actor**: registered user.
+- **Preconditions**: authenticated.
+- **Minimal guarantee**: the export contains only the requester's own data.
+- **Success guarantee**: a JSON file with the account, memberships, and the events, invitations
+  and log entries the user authored is downloaded.
+- **Main success scenario**:
+  1. The user chooses "Export my data".
+  2. The system builds the file and offers the download.
+- **Extensions**:
+  - 2a. Repeated requests: limited per day.
+- **Source**: review F11 (GDPR right of access).
+
+### UC6 — Delete my account
+
+- **Level**: user goal. **Primary actor**: registered user.
+- **Preconditions**: authenticated.
+- **Minimal guarantee**: no deletion without the current password and explicit confirmation.
+- **Success guarantee**: the account and its personal data are deleted immediately (A5);
+  memberships end and log entries are attributed to "former member"; association content stays with the association,
+  attributed to "former member".
+- **Main success scenario**:
+  1. The user chooses "Delete my account".
+  2. The system explains the consequences and asks for the current password and confirmation.
+  3. The user confirms.
+  4. The system deletes the account immediately (A5), revokes every session and signs the user out.
+- **Extensions**:
+  - 2a. The user is the last member of an association: the system warns explicitly that the
+    association will be closed with the account and lists the effects (UC8); confirmation
+    covers both (review F8).
+  - 2b. Wrong password: refused, rate-limited.
+- **Source**: framing (GDPR), review F1, F8.
+
+### UC7 — Edit the association profile
+
+- **Level**: user goal. **Primary actor**: association member.
+- **Preconditions**: authenticated member; association not suspended.
+- **Success guarantee**: the public association page shows the new name, logo, city,
+  presentation, website link or generic contact email; the change is logged.
+- **Main success scenario**:
+  1. The member opens the association profile and edits fields.
+  2. The system validates (logo: image rules #62; contact email: optional, generic) and saves.
+- **Extensions**:
+  - 2a. Name change: the slug stays stable to keep shared links working.
+- **Source**: J1 D4.
+
+### UC8 — Close the association
+
+- **Level**: user goal. **Primary actor**: association member (last member).
+- **Preconditions**: authenticated; the actor is the only member.
+- **Minimal guarantee**: no closure while other members remain; explicit confirmation.
+- **Success guarantee**: upcoming events are cancelled ("Association closed"), API keys are
+  revoked, the page shows "Association closed" for 30 days with its slug reserved, then all
+  association content and its log are deleted; the member's account remains.
+- **Main success scenario**:
+  1. The member chooses "Close the association".
+  2. The system lists the effects and asks for confirmation.
+  3. The member confirms; the system applies the closure.
+- **Extensions**:
+  - 1a. Other members remain: the system explains they must leave or be removed first (UC12).
+- **Source**: review F2.
+
+### UC9 — Dispute a moderation decision
+
+- **Level**: user goal. **Primary actor**: registered user (affected member or account).
+- **Preconditions**: a moderation decision (hidden event, suspended account or association)
+  affects the user; no open dispute exists for it.
+- **Success guarantee**: a dispute with the user's explanation is queued for the super
+  administrator (UC32); the user is told it was received.
+- **Main success scenario**:
+  1. The user follows "I dispute this" from the notification email or the decision notice.
+  2. The user writes an explanation (bounded length).
+  3. The system records the dispute, notifies the super administrator and confirms.
+- **Extensions**:
+  - 1a. A dispute is already open: the system shows its status.
+  - 1b. The user is suspended: the dispute page stays reachable through the emailed link.
+- **Source**: review F3/F10.
+
+### Decisions — Account and association (validated 2026-10-15)
+
+- **A2** Password policy aligned with NIST SP 800-63B-4 for single-factor passwords (4.3):
+  15 to 64 characters, no composition rules, refusal of common and known-compromised
+  passwords from a local list (no third-party call), hint "a sentence of 3 or 4 words".
+  Must fit bcrypt's 72-byte limit. Existing shorter passwords still sign in (#262); the policy
+  applies at the next change. Rejected: 12 characters (3.8, below the standard), 8 (2.9).
+- **A5** Immediate deletion after current password and explicit confirmation (4.4). Rejected:
+  14-day deactivation grace (3.8, extra state everywhere), deactivation without deletion (2.4,
+  not GDPR erasure).
