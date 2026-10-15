@@ -182,7 +182,7 @@ single API instance (ADR-0001 consequences). Limits apply per normalized client 
 | Sign-up | 5 per hour per IP | UC1 3b |
 | Sign-in failures | 5 per 15 min per (account, IP) pair, plus 20 per 15 min per IP; same neutral 429 whether the account exists or not (no targeted lockout) | sign-in (ADR-0001), new in T2 (review M2) |
 | Wrong current password | 5 per 15 min per account | UC4 2a, UC6 2b |
-| Verification / reset emails | 3 per hour per account or email | UC2 1a/2a, UC3 2a |
+| Verification / reset emails | 5 per hour per IP before any lookup; at most 10 per hour per recipient, extra requests silently send nothing (same neutral answer), so nobody can block another person's recovery (PR #269 C3) | UC2 1a/2a, UC3 2a |
 | Invitations | 10 per day per association | UC10 2a |
 | Reports | 10 per hour per IP | UC26 3a |
 | Data export | 3 per day per account | UC5 2a |
@@ -312,6 +312,8 @@ and never reveal whether an address has an account.
     warns explicitly that each will be closed with the account and lists the effects (UC8); confirmation
     covers both (review F8).
   - 2b. Wrong password: refused, rate-limited.
+  - 2c. The account is the last super administrator: deletion is refused; the owner first
+    bootstraps another super administrator (operator command, T5) (PR #269 C1).
 - **Source**: framing (GDPR), review F1, F8.
 
 ### UC7 — Edit the association profile

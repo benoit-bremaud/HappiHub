@@ -158,6 +158,7 @@ diagrams 20, security/GDPR 15, testability 10.
 | T7 | Prefixes mS*/rF* in this document only | — | here |
 | T8 | Public event identifier allowed | — | use cases, public browsing |
 | T9 | Suspension effect derived at read time | — | 05a |
+| PR #269 C1–C3 | Last SUPER_ADMIN cannot delete itself (480); `Suspension.issuedBy`/`liftedBy` (440); reset/verification limited per IP before lookup with a silent per-recipient cap (445) | see 04 and use cases | 04, UC6, § Quotas |
 | T10, T11 | Not resolved: open dependencies, preconditions of the affected bricks | — | HANDOVER |
 
 Runner-ups recorded as design fallbacks: T1 `PlatformAuditEntry` if the moderation log must
