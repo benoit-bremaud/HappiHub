@@ -7,6 +7,13 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-16
 
+- **V1 data and migration study (#246)** — owner decided by MCDA top scores
+  ([study](docs/architecture/specs/v1-data-migration.md), [ADR-0003](docs/architecture/decisions/0003-postgresql-primary-database.md)):
+  D1 PostgreSQL self-hosted in the EU (435/500; fallback SQLite 385), D2 fresh start with an
+  archived legacy dump (470; no production data exists), D3 frozen participation/comments
+  ported as two minimal tables (395; fallback retire 360). Target schema derived from 04/06;
+  legacy pending/approved/rejected, unique title index and association-less events are not
+  mapped. T10 resolved; 06 inventory update for D3 pending. Branch `docs/246-data-migration-study`.
 - **V1 implementation-approval gate** — owner explicitly approved the V1 conception at
   `main` @ `798b323` ([gate](docs/architecture/specs/v1-implementation-gate.md)). First
   brick by MCDA top score: #246 data/migration study (425/500; runner-up event lifecycle
