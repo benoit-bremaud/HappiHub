@@ -10,7 +10,7 @@ Journeys drive the use-case diagrams, then wireframes (#249).
 | J2 | Create an event | Claire | **Validated 2026-10-15** |
 | J3 | Preview, publish, then cancel or archive | Claire | **Validated 2026-10-15** |
 | J4 | Invite a member and edit together | Claire, Malik | To do |
-| J5 | Browse a public event page on mobile | Inès | To do |
+| J5 | Browse a public event page on mobile | Inès | **Validated 2026-10-15** |
 | J6 | Connect the association website (API key) | Malik | To do |
 
 ## J2 — Create an event (Claire)
@@ -67,3 +67,20 @@ stateDiagram-v2
 
 This replaces the current pending/approved/rejected moderation for V1 (no prior moderation;
 reporting remains). Migration of existing events is a conception item.
+
+## J5 — Browse a public event page on mobile (Inès)
+
+Context: shared link, no account, phone, sometimes enlarged text. Goal: what, when, where
+and how much in 10 seconds, then share.
+
+| Decision | Choice (score) | Rejected and why |
+| --- | --- | --- |
+| D1 Top of page | Status banner first (cancelled / past), reduced J2 poster, then an "essentials" card (what, when, where, price) with actions (4.7) | Text-first (3.9): loses the visual appeal promised to Claire. Full-screen hero (3.2): essentials pushed below the fold, fails at 200 % text, slower |
+| D2 Practical actions | Native share (Web Share API, copy-link fallback), add to calendar (.ics), "Directions" link opening the device's map app (4.8) | Embedded map + social buttons (3.0): third-party trackers, consent banner, slower. Share only (3.9): Inès retypes date and address |
+| D3 Continue the visit | "Upcoming events from this troupe" list and a link to the association's public page (4.6) | Global recommendations (3.0): needs taxonomy and ranking (#126), out of V1. Nothing (3.6): dead end |
+
+Also: Open Graph and basic structured metadata (title, image, date, venue) so shared links
+preview well; no third-party scripts on public pages.
+
+Implication for the conception: V1 needs a minimal **public association page** (name, short
+description, upcoming and past events). To be covered with J1.
