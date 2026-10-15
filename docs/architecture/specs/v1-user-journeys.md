@@ -40,6 +40,11 @@ Success measures served: S3 (create and publish in < 5 minutes), S4, S5, S7.
 Open points for the conception: address suggestion provider (must respect zero budget and
 EU/GDPR), image limits and EXIF stripping (#62), poster style catalogue.
 
+Idea to debrief later (owner, 2026-10-15, not yet a decision): suggest seasonal poster
+backgrounds from the event date in step 3 (e.g. Halloween, Christmas). To assess: V1 or
+later, catalogue size and licensing, date windows, cultural neutrality, accessibility of
+backgrounds behind text.
+
 ## J3 — Preview, publish, then cancel or archive (Claire)
 
 Preview is J2 step 4. Three lifecycle decisions, each chosen against the alternatives:
