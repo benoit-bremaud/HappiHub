@@ -3,7 +3,9 @@
 > **Feature**: epic #41 — HappiHub V1 conception package
 > **Source specs**: [V1 product framing](../../specs/v1-product-framing.md), [V1 use cases](../../specs/v1-use-cases.md)
 > **Related**: [class diagram](04-class.md), [scheduled job](02d-sequence-scheduled-job.md),
-> [partner API](02c-sequence-api-retrieve-events.md), ADR-0001 (sessions), ADR-0002 (ingress)
+> [partner API](02c-sequence-api-retrieve-events.md),
+> [ADR-0001](../../decisions/0001-server-managed-cookie-sessions.md) (sessions),
+> [ADR-0002](../../decisions/0002-normalize-client-address-at-ingress.md) (ingress)
 
 Status: validated by the owner on 2026-10-15 (conception workshop 5).
 
@@ -20,20 +22,27 @@ Source: [03-component.puml](03-component.puml).
 
 ## Notes
 
-- Browsers and partner servers reach the API only through the Nginx trusted ingress
-  (ADR-0002). Browser writes carry the session cookie and CSRF token (ADR-0001); partner
+- Browsers and partner servers reach the API only through the TLS edge and the Nginx
+  trusted ingress, which forwards one normalized client address (ADR-0002). Browser writes carry the session cookie and CSRF token (ADR-0001); partner
   calls carry a bearer key, get no CORS headers and are read-only (UC28).
 - HTTP modules depend on the domain core. The domain core owns the ports; adapters
   implement them (dependency rule). Only real boundaries get a port.
-- The outbox is written in the same data store as domain changes (Q2) and drained every
+- Sessions live in the data store through the session store adapter (ADR-0001); they stay
+  outside the domain model.
+- Per-client-IP limits apply on sign-in/sign-up and before any partner key lookup, then
+  per-key limits (02c).
+- The outbox (email decision Q2, see the [V1 use cases](../../specs/v1-use-cases.md)) is
+  written in the same data store as domain changes and drained every
   minute by the outbox worker through `EmailSender`, with retries.
 - Domain ports: `Repositories`, `Outbox`, `AddressLookup`, `FileStore`, `Clock`. The outbox
   worker, `EmailSender` and the provider adapter form the "Email delivery" infrastructure
   package; the domain only knows `Outbox`.
-- Single API instance today: process-local rate limits and the job lock hold only for one
-  instance (ADR-0001 consequences).
+- Single API instance today: process-local rate limits (ADR-0001 consequences) and the job
+  lock ([02d](02d-sequence-scheduled-job.md)) hold only for one instance.
 
-## Decisions (2026-10-15, scored and confronted, owner choices after a deeper analysis)
+## Decisions (2026-10-15)
+
+Scored and confronted; the owner chose after a deeper analysis.
 
 | # | Decision | Kept (score) | Rejected (score) |
 | --- | --- | --- | --- |

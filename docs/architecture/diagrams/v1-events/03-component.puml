@@ -8,16 +8,17 @@ actor "Member / visitor" as U
 node "Partner website server" as P
 
 component "React browser client" as C
-component "Nginx trusted ingress\n(ADR-0002)" as N
+node "TLS edge\n(overwrites forwarding headers)" as E
+component "Nginx trusted ingress\n(ADR-0002, normalized client IP)" as N
 
 package "API server process (single instance)" {
   package "HTTP modules" {
-    component "Auth & sessions\n(ADR-0001, CSRF)" as AUTH
+    component "Auth & sessions\n(ADR-0001, CSRF,\nper-IP limits)" as AUTH
     component "Events" as EV
     component "Membership" as MEM
     component "Moderation" as MOD
     component "Public read" as PUB
-    component "Partner API\n(read-only, hashed keys)" as PAPI
+    component "Partner API\n(read-only, hashed keys,\nper-IP then per-key limits)" as PAPI
   }
   package "Scheduled jobs (runOnce)" {
     component "Maintenance job\n(hourly, lock)" as MJ
@@ -40,6 +41,7 @@ package "API server process (single instance)" {
       component "Email provider adapter" as AMAIL
     }
     component "System clock" as ACLK
+    component "Session store adapter\n(ADR-0001)" as ASES
   }
 }
 
@@ -49,8 +51,9 @@ cloud "Address suggestion provider\n(Géoplateforme, free)" as XADDR
 cloud "Email provider\n(EU, to be selected)" as XMAIL
 
 U --> C : HTTPS
-C --> N : JSON + cookie + CSRF
-P --> N : Bearer key (server to server)
+C --> E : JSON + cookie + CSRF
+P --> E : Bearer key (server to server)
+E --> N
 N --> AUTH
 N --> EV
 N --> MEM
@@ -82,10 +85,16 @@ AMAIL -up-|> IMAIL
 ACLK -up-|> ICLK
 
 ADB --> DB
+AUTH ..> ASES
+ASES --> DB : sessions
 AFS --> FS
 AADDR --> XADDR : HTTPS, no visitor IP
 AMAIL --> XMAIL : HTTPS
 
+note top of IOUT
+  Outbox: the domain enqueues in the same
+  transaction; the worker drains it.
+end note
 note bottom of DOM
   Dependency rule: domain owns the ports;
   adapters depend on them, never the reverse.
