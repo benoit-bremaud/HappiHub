@@ -11,8 +11,11 @@ S -> J : runOnce (at startup, then hourly), single instance lock
 J -> D : archive PUBLISHED and CANCELLED events whose end passed (J3 D3)
 J -> D : lift suspensions whose endsAt passed (AD2)\n+ moderation log + outbox notice
 J -> D : drafts untouched 50 weeks without notice:\noutbox notice "deleted in 14 days" (S2)
-J -> F : drafts untouched 12 months and notified:\ndelete their images first (missing file is fine)
-J -> D : then delete those drafts, re-checking\n"untouched 12 months" in the delete (S2)
+loop each draft untouched 12 months and notified
+  J -> D : re-check it is still untouched (skip if edited)
+  J -> F : delete its images (missing file is fine)
+  J -> D : then delete the draft, re-checking\n"untouched 12 months" in the delete (S2)
+end
 J -> D : API keys unused 166 days without notice:\noutbox notice "revoked in 14 days" (I1)
 J -> D : API keys unused 180 days and notified: revoke + activity entry (I1)
 J -> F : closed associations past 30 days\nwith no active suspension: delete their images first

@@ -22,8 +22,9 @@ Source: [02d-sequence-scheduled-job.puml](02d-sequence-scheduled-job.puml).
 - Triggered by an internal timer through `runOnce()` and images deleted through `FileStore`
   ([component diagram](03-component.md) CP1, CP3), updated 2026-10-15 after the component
   review and revalidated by the owner.
-- Deletion order (scored 4.85): images first, then data with the selection criterion
-  re-checked, so a crash never orphans files and a draft edited meanwhile is kept (it falls
+- Deletion order (scored 4.85): per draft, re-check eligibility, delete images, then delete
+  the data with the criterion re-checked again (refined after Codex review on PR #267, 4.5 vs
+  4.1 for keeping a batch-wide stale selection; the remaining race is milliseconds), so a crash never orphans files and a draft edited meanwhile is kept (it falls
   back to its poster style). Rejected: mark-then-delete (4.1, changes the validated class
   diagram); data first with an orphan sweep (3.15); data first alone (2.7, orphaned files).
 - Idempotent bounded batches under a single-instance lock: a crash is safe and the next run resumes.
