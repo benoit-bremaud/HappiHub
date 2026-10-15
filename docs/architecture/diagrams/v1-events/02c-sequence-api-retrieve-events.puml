@@ -8,6 +8,7 @@ database "Data store" as D
 
 P -> A : GET /api/v1/events?updatedSince=…\nAuthorization: Bearer hh_live_<keyId>_<secret>
 A -> A : parse key, no CORS headers on this route
+A -> A : per-client-IP limit before any lookup
 A -> D : find API key by keyId
 alt unknown or revoked, or hash mismatch (constant-time)
   A --> P : 401 (no detail)

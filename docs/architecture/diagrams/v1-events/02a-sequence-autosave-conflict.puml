@@ -18,7 +18,7 @@ else member
   alt status CANCELLED or ARCHIVED (E1)
     A --> B : 409 read-only
   else draft or published
-    A -> A : validate changes\n(published keeps required fields)
+    A -> A : validate changes\n(published keeps required fields\nand a future start, E2)
     A -> D : update where version = baseVersion\nset changes, version+1, lastEditedBy,\nscheduleChangedAt if published and start, end or venue changed
     alt matched (no concurrent change)
       A --> B : 200 {version}

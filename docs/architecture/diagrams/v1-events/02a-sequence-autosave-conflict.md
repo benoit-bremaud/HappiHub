@@ -4,7 +4,7 @@
 > **Source specs**: [V1 use cases](../../specs/v1-use-cases.md) UC16, UC17
 > **Related**: [class diagram](04-class.md), ADR-0001 (sessions, CSRF)
 
-Status: proposed (conception workshop 4); decisions Q1 and Q2 validated by the owner on 2026-10-15, diagram pending owner review.
+Status: validated on 2026-10-15 after review (owner delegated keeping the highest-scored options; see the review table in [04-class](04-class.md#review--class-and-sequence-diagrams-2026-10-15)).
 
 ## Context
 

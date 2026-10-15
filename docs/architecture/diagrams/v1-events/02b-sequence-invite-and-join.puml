@@ -35,7 +35,7 @@ A -> D : find by hash(token)
 alt unknown, expired, revoked or used
   A --> B : 410 "ask again"
 else valid
-  A --> B : association name, masked email
+  A --> B : association name, masked email\n(Referrer-Policy: no-referrer, token never logged)
   K -> B : sign in or sign up (email pre-filled)
   B -> A : POST /invitations/{token}/accept + CSRF
   A -> A : account email == invitation email?
