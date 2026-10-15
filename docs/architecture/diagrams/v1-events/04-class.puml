@@ -1,0 +1,220 @@
+@startuml
+title cd — HappiHub V1 domain model
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide empty methods
+
+package "Account and association" {
+  class Account {
+    id
+    email
+    emailVerifiedAt [0..1]
+    pendingEmail [0..1]
+    passwordHash
+    displayName
+    platformRole : PlatformRole
+    authVersion
+    createdAt
+  }
+  enum PlatformRole {
+    NONE
+    MODERATOR
+    SUPER_ADMIN
+  }
+  class Association {
+    id
+    name
+    slug {unique}
+    city
+    presentation [0..1]
+    websiteUrl [0..1]
+    contactEmail [0..1]
+    status : AssociationStatus
+    closedAt [0..1]
+    createdAt
+  }
+  enum AssociationStatus {
+    ACTIVE
+    CLOSED
+  }
+  class Membership {
+    joinedAt
+  }
+  class Invitation {
+    email
+    tokenHash
+    expiresAt
+    status : InvitationStatus
+  }
+  enum InvitationStatus {
+    PENDING
+    ACCEPTED
+    REVOKED
+    EXPIRED
+  }
+}
+
+package "Event management" {
+  class Event {
+    id
+    type : EventType
+    title
+    shortDescription
+    longDescription [0..1]
+    startsAt
+    endsAt [0..1]
+    venue : Venue
+    price : Price
+    posterStyle : PosterStyle
+    status : EventStatus
+    cancellationReason [0..1]
+    publishedAt [0..1]
+    scheduleChangedAt [0..1]
+    hiddenByModeration : Boolean
+    cleanupNoticeAt [0..1]
+    version
+    updatedAt
+  }
+  enum EventStatus {
+    DRAFT
+    PUBLISHED
+    CANCELLED
+    ARCHIVED
+  }
+  enum EventType {
+    THEATRE
+    CONCERT
+    EXHIBITION
+    WORKSHOP
+    DANCE
+    CINEMA
+    TALK
+    OTHER
+  }
+  enum PriceKind {
+    FREE
+    AMOUNT
+    PAY_WHAT_YOU_WANT
+  }
+  class Venue <<value>> {
+    label
+    address
+    normalizedCity
+  }
+  class Price <<value>> {
+    kind : PriceKind
+    amountCents [0..1]
+  }
+  class Image {
+    storageKey
+    mimeType
+    width
+    height
+    altText
+  }
+}
+
+package "Website integration" {
+  class ApiKey {
+    name
+    prefix
+    secretHash
+    createdAt
+    lastUsedAt [0..1]
+    revokedAt [0..1]
+    revocationNoticeAt [0..1]
+  }
+}
+
+package "Traceability" {
+  class ActivityEntry {
+    action
+    targetRef
+    occurredAt
+  }
+}
+
+package "Administration" {
+  class Report {
+    target : ModerationTarget
+    reason : ReportReason
+    comment [0..1]
+    reporterEmail [0..1]
+    status : CaseStatus
+    createdAt
+  }
+  class ModerationDecision {
+    kind : DecisionKind
+    target : ModerationTarget
+    reason
+    decidedAt
+  }
+  enum DecisionKind {
+    DISMISS
+    HIDE_EVENT
+    SUSPEND
+  }
+  class Suspension {
+    target : ModerationTarget
+    endsAt [0..1]
+    liftedAt [0..1]
+  }
+  class ModerationTarget <<value>> {
+    kind : TargetKind
+    id
+  }
+  enum CaseStatus {
+    OPEN
+    UPHELD
+    REJECTED
+  }
+  enum ReportReason {
+    SPAM
+    MISLEADING
+    INAPPROPRIATE
+    OTHER
+  }
+  enum TargetKind {
+    EVENT
+    ASSOCIATION
+    ACCOUNT
+  }
+  class RemovalDispute {
+    removedAt
+    explanation
+    status : CaseStatus
+    resolution [0..1]
+    createdAt
+  }
+  class ModerationDispute {
+    explanation
+    status : CaseStatus
+    resolution [0..1]
+    createdAt
+  }
+}
+
+Account "1" -- "0..*" Membership
+Association "1" -- "1..*" Membership : members >
+Association "1" *-- "0..*" Invitation
+Invitation "0..*" --> "0..1" Account : invitedBy
+Association "1" *-- "0..*" Event : owns >
+Event "0..*" --> "0..1" Account : createdBy
+Event "0..*" --> "0..1" Account : lastEditedBy
+Event "1" *-- "0..1" Image : poster
+Association "1" *-- "0..1" Image : logo
+Association "1" *-- "0..5" ApiKey
+ApiKey "0..*" --> "0..1" Account : createdBy
+Association "1" *-- "0..*" ActivityEntry
+ActivityEntry "0..*" --> "0..1" Account : actor
+Report "0..*" --> "0..1" ModerationDecision : closedBy
+ModerationDecision "0..*" --> "0..1" Account : decidedBy
+ModerationDecision "1" -- "0..1" Suspension
+RemovalDispute "0..*" --> "1" Account : disputant
+RemovalDispute "0..*" --> "1" Association : removedFrom
+RemovalDispute "0..*" --> "0..1" Account : resolvedBy (moderator or super admin)
+ModerationDispute "0..*" --> "1" Account : disputant
+ModerationDispute "0..1" --> "1" ModerationDecision : contests
+ModerationDispute "0..*" --> "0..1" Account : resolvedBy (super admin)
+Association "0..5" --> "0..1" Account : createdBy
+@enduml

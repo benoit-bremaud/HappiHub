@@ -1,0 +1,19 @@
+@startuml
+title stm — Association
+skinparam shadowing false
+hide empty description
+
+[*] --> Active : sign up (UC1)
+
+state Active : members write\npublic pages online
+state Suspended : public 410\nno member writes\ndisputable (UC9)
+state Closed : "Association closed" page\nslug reserved, keys revoked
+
+Active --> Suspended : suspend (UC31)\n[reason, 7 d / 30 d / no limit]
+Suspended --> Active : duration ends (scheduled job)
+Suspended --> Active : lifted on dispute (UC32)
+Active --> Closed : close (UC8)\n[actor is last member]
+Active --> Closed : last member deletes account (UC6)
+Suspended --> Closed : last member deletes account (UC6)\n[GDPR right; close (UC8) is blocked (S1)]
+Closed --> [*] : 30 days elapsed and no active suspension\n(content and log deleted)
+@enduml

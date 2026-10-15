@@ -125,6 +125,7 @@ have occurred. Do not interpret candidate folders as an approved implementation 
 2. Research synthesis is superseded for V1 by the validated framing.
 3. Done 2026-10-15: audience, first-release scope, ownership and publication choices.
 4. Produce the full functional/API/data/UML conception, review it, obtain approval.
+   Use cases, class, state and sequence diagrams validated 2026-10-15.
 5. Only then implement the validated increment and verify it.
 
 Technical migration and demo-tooling studies may be prepared alongside framing, but their

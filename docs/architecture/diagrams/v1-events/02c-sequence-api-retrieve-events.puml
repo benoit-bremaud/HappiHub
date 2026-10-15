@@ -1,0 +1,31 @@
+@startuml
+title sd — UC28 Retrieve association events (partner website)
+skinparam shadowing false
+autonumber
+participant "Partner server\n(WordPress)" as P
+participant "API server" as A
+database "Data store" as D
+
+P -> A : GET /api/v1/events?updatedSince=…\nAuthorization: Bearer hh_live_<keyId>_<secret>
+A -> A : parse key, no CORS headers on this route
+A -> A : per-client-IP limit before any lookup
+A -> D : find API key by keyId
+alt unknown or revoked, or hash mismatch (constant-time)
+  A --> P : 401 (no detail)
+else valid key
+  A -> A : per-key rate limit
+  alt limit exceeded
+    A --> P : 429 Retry-After
+  else within limit
+    A -> D : load association
+    alt suspended or closed
+      A --> P : 403 {code}
+    else active
+      A -> D : events of this association only\nstatus PUBLISHED or CANCELLED (+ ARCHIVED if include=past)\nnot hidden, updatedAt > updatedSince, paginated
+      A -> A : project J5 public fields only
+      A --> P : 200 {items, next}
+      A -> D : update lastUsedAt (at most once per hour)
+    end
+  end
+end
+@enduml

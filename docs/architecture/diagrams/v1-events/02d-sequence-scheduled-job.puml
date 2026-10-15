@@ -1,0 +1,25 @@
+@startuml
+title sd — Scheduled maintenance job (hourly, idempotent)
+skinparam shadowing false
+autonumber
+participant "Scheduler" as S
+participant "Maintenance job" as J
+database "Data store" as D
+
+S -> J : run (hourly), single instance lock
+J -> D : archive PUBLISHED and CANCELLED events whose end passed (J3 D3)
+J -> D : lift suspensions whose endsAt passed (AD2)\n+ moderation log + outbox notice
+J -> D : drafts untouched 50 weeks without notice:\noutbox notice "deleted in 14 days" (S2)
+J -> D : drafts untouched 12 months and notified: delete with images (S2)
+J -> D : API keys unused 166 days without notice:\noutbox notice "revoked in 14 days" (I1)
+J -> D : API keys unused 180 days and notified: revoke + activity entry (I1)
+J -> D : closed associations past 30 days\nwith no active suspension: delete content, log,\ninvitations, keys and closed removal disputes (F2, S1)
+J -> D : purge activity entries older than 12 months\nand moderation decisions older than 12 months\nunless linked to an active suspension or open dispute
+J -> D : expire PENDING invitations past expiresAt
+J --> S : done (each step resumable on next run)
+note over J
+  Every step is a bounded batch and idempotent:
+  a crash mid-run is safe, the next run continues.
+  Emails only go through the outbox (Q2).
+end note
+@enduml

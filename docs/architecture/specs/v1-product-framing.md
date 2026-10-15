@@ -25,6 +25,17 @@ browses freely without an account.
 | Event managers | An association owns its events; several invited members, all with the same rights | Supports volunteer teams without a role model |
 | Event lifecycle | Draft → Published → Cancelled / Archived | Direct publication by the association; no prior moderation; reporting possible |
 
+## Platform administration
+
+Validated 2026-10-15 (score 4.7, against moderator without suspension 4.4, extra content
+curator role 3.9, à-la-carte permissions 3.0). The owner is the single **super
+administrator**: only role able to grant or revoke the **moderator** role and to intervene on
+someone's account. There is always at least one super administrator. A moderator handles
+reports, removal disputes and suspends abusive accounts or associations; a moderator never
+appoints anyone. Every grant, revocation and suspension is logged and notified by email;
+suspensions can be disputed and reversed by the super administrator. Roles inside an
+association remain out of scope.
+
 ## Out of scope for V1 (deferred)
 
 - Ticketing, payments and donations (an external link is allowed).

@@ -1,0 +1,35 @@
+@startuml
+title stm — Event
+skinparam shadowing false
+hide empty description
+
+[*] --> Draft : create (UC15)
+
+state Draft : editable (UC16)\nautosave
+state Published : editable live (UC16)\n"Updated on" when schedule changes
+state Cancelled : read-only (E1)\npublic banner + reason
+state Archived : read-only (E1)\n"Past event"
+
+Draft --> Published : publish (UC18)\n[required fields, verified email,\nfuture start (E2)]
+Draft --> [*] : delete draft (UC20)
+Draft --> [*] : untouched 12 months (S2)
+Published --> Cancelled : cancel (UC19)\n[explicit confirmation]
+Published --> Cancelled : association closed (UC8)\n[upcoming]
+Published --> Archived : end passed\n(scheduled job)
+Cancelled --> Archived : end passed\n(scheduled job)
+
+state "Moderation overlay (orthogonal)" as Overlay {
+  state Visible
+  state Hidden : public 410, out of agenda and API
+  [*] --> Visible
+  Visible --> Hidden : hide (UC29)
+  Hidden --> Visible : restore (UC32)
+}
+note right of Overlay
+  Applies to Published, Cancelled and Archived.
+  Hiding never changes the lifecycle state, so restoring
+  returns the event exactly where it was.
+  An association suspension hides its events the same way
+  without touching their state.
+end note
+@enduml
