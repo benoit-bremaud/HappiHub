@@ -123,6 +123,9 @@ have occurred. Do not interpret candidate folders as an approved implementation 
 2. Finish research synthesis and prioritize candidate outcomes with explicit confidence.
 3. Propose and validate audience, first-release scope, ownership and publication choices.
 4. Produce the full functional/API/data/UML conception, review it, obtain approval.
+   V1 package status (2026-10-15): framing, journeys, use cases, class, state, sequences and
+   component diagrams validated; next: 06 personal-data flow, traceability matrix, final
+   review (#247).
 5. Only then implement the validated increment and verify it.
 
 Technical migration and demo-tooling studies may be prepared alongside framing, but their
