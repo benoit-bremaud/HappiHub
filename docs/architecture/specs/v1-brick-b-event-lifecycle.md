@@ -26,7 +26,7 @@ with the V1 event lifecycle on PostgreSQL.
 | Cancel with optional reason (final) | UC19, E1 |
 | Delete a draft (and its image, if any) | UC20 |
 | Lifecycle transitions of the maintenance job: archive after end, draft-untouched-12-months notice (day 0) and deletion (day 14) | 05a, 02d, S2 |
-| Association closure hook (UC8): cancel upcoming published events, delete drafts | 05a, brick D § 5 UC8 |
+| Association closure hook (UC8): cancel upcoming published events (drafts stay until the 30-day purge, C1) | 05a, brick D § 5 UC8 |
 | Event data in the account export (UC5) and deletion effects (UC6) | 06 F22, F26 |
 | Activity entries for every write (UC14 reads them later) | 04 ActivityEntry |
 | Member-side reads: list the association's events, read one event for the editor | UC16 step 1 |
@@ -72,13 +72,15 @@ API (brick C), the frozen D3 participation/comment tables (their own small brick
 
 ## 3. Data model delivered by brick B
 
-One migration creates `event` exactly as in the schema study § 3, without `poster_image_id`:
+One migration creates `event` as in the schema study § 3, without `poster_image_id` and with
+one addition, `created_at` (needed by the quota Q), and recreates the `outbox_message.template`
+CHECK with the new template `DRAFT_CLEANUP_NOTICE` (section 6):
 
 | Column | Type / constraint |
 | --- | --- |
 | `id` | `uuid` PK (`gen_random_uuid()`), public id allowed (T8) |
 | `association_id` | FK `association` ON DELETE CASCADE, NOT NULL, indexed |
-| `type` | `text` CHECK IN (THEATRE, CONCERT, EXHIBITION, WORKSHOP, DANCE, CINEMA, TALK, OTHER) |
+| `type` | `text` NOT NULL, CHECK IN (THEATRE, CONCERT, EXHIBITION, WORKSHOP, DANCE, CINEMA, TALK, OTHER) |
 | `title` | `text` NOT NULL, 1–120 chars; **no unique index** (D2, homonyms allowed) |
 | `short_description` | `text` NULL in draft, ≤ 280 chars |
 | `long_description` | `text` NULL, ≤ 10 000 chars, plain text with line breaks (no HTML stored) |
@@ -89,7 +91,7 @@ One migration creates `event` exactly as in the schema study § 3, without `post
 | `price_amount_cents` | `integer`; CHECK `(price_kind = 'AMOUNT') = (price_amount_cents IS NOT NULL AND price_amount_cents > 0)` |
 | `poster_style` | `text` CHECK IN closed list (decision P), default first style |
 | `status` | `text` CHECK IN (DRAFT, PUBLISHED, CANCELLED, ARCHIVED), default DRAFT |
-| `cancellation_reason` | `text` NULL ≤ 500; CHECK only when `status IN ('CANCELLED','ARCHIVED')` |
+| `cancellation_reason` | `text` NULL ≤ 500; CHECK `cancellation_reason IS NULL OR status IN ('CANCELLED','ARCHIVED')` |
 | `published_at` | `timestamptz`; CHECK `status = 'DRAFT'` ⇔ `published_at IS NULL` |
 | `schedule_changed_at` | `timestamptz` NULL |
 | `hidden_by_moderation` | `boolean` NOT NULL default false |
@@ -98,7 +100,7 @@ One migration creates `event` exactly as in the schema study § 3, without `post
 | `created_by`, `last_edited_by` | FK `account` ON DELETE SET NULL |
 | `created_at`, `updated_at` | `timestamptz` NOT NULL default `now()` |
 
-Indexes: `(association_id, status)`, `(status, ends_at)` and `(status, starts_at)` for the job,
+Indexes: `(association_id, status)`, an expression index `(status, COALESCE(ends_at, starts_at + interval '1 day'))` for the job and public reads,
 `(association_id, created_at)` for the quota. Draft mode allows NULLs; the publication guard
 (section 5) and UC16 2c enforce completeness in code, and a CHECK enforces it in the database:
 `status = 'DRAFT' OR (short_description, starts_at, venue_label, venue_normalized_city) all NOT NULL`.
@@ -117,7 +119,8 @@ Effective end for archiving and public "past" checks: `COALESCE(ends_at, starts_
 | 3 | Agenda freshness (old events leave quickly) | 25 | **3**: up to a day extra | **4** | **5** |
 | **Total / 500** | | 100 | **450** 🏆 | 365 | 340 |
 
-Sensitivity: freshness at 50 (others 25/25): A 400, B 375 — A stays first. **Recommendation: A.**
+Sensitivity: freshness at 50 (others 25/25): A 400, C 400, B 375 — tie A/C, broken by
+criterion 1 (J3 D3: C shows events as past while they happen). **Recommendation: A.**
 
 ## 4. Lifecycle (05a refined)
 
@@ -126,12 +129,13 @@ stateDiagram-v2
   [*] --> DRAFT : UC15 create (first save)
   DRAFT --> DRAFT : UC16 save (version+1)
   DRAFT --> PUBLISHED : UC18 [guard G1–G4]
-  DRAFT --> [*] : UC20 delete / job S2 (notice + 14 d) / UC8 closure
+  DRAFT --> [*] : UC20 delete / job S2 (notice + 14 d) / association purge (C1)
   PUBLISHED --> PUBLISHED : UC16 save (schedule_changed_at if start/end/venue changed)
   PUBLISHED --> CANCELLED : UC19 confirm / UC8 closure [upcoming]
   PUBLISHED --> ARCHIVED : job [effective end < now]
   CANCELLED --> ARCHIVED : job [effective end < now]
-  ARCHIVED --> [*] : association deleted (cascade, 30 d after closure)
+  CANCELLED --> [*] : association purge (cascade, 30 d after closure)
+  ARCHIVED --> [*] : association purge (cascade, 30 d after closure)
 ```
 
 Publication guard: **G1** required fields (title, type, short description, start, venue label,
@@ -144,19 +148,30 @@ Reads compare the effective end, so an ended event never appears upcoming before
 ## 5. API and use-case realization
 
 All writes: authenticated session, CSRF, exact-origin check (ADR-0001); membership and
-association status re-checked in the database on each request (06, T6). Errors use the
-existing error envelope. Paths under the association slug, like brick D.
+association status re-checked in the database on each request (06, T6); the suspension check
+is a no-op hook until the moderation brick adds its table. Paths under the association slug,
+like brick D.
+
+Error body: brick D answers `{message}`. Brick B extends it additively to
+`{message, code?, details?}` — `code` a stable upper-case identifier, `details` structured data
+(guard failures, conflicting fields). Brick D routes keep working unchanged; the API contract
+documents the format.
 
 | UC | Endpoint | Transaction / behavior |
 | --- | --- | --- |
-| UC15 | `POST /api/associations/{slug}/events` {title, type, shortDescription?, …} | quota check (Q below) under `FOR UPDATE` on the association row; insert DRAFT, `version` 1, `created_by`; activity `EVENT_CREATED`. 201 + body with `version`. 429 + `Retry-After` (next UTC-day boundary of the window) when exhausted |
+| UC15 | `POST /api/associations/{slug}/events` {title, type, shortDescription?, …} | quota check (Q below) under `FOR UPDATE` on the association row; insert DRAFT, `version` 1, `created_by`; activity `EVENT_CREATED`. 201 + body with `version`. 429 `EVENT_QUOTA` + `Retry-After` = oldest `created_at` in the 24 h window + 24 h − now |
 | list | `GET /api/associations/{slug}/events?status=` | member view: id, title, type, status, startsAt, updatedAt, lastEditedBy display name |
-| read | `GET /api/associations/{slug}/events/{id}` | full event + `version` + ETag-free (version in body) |
+| read | `GET /api/associations/{slug}/events/{id}` | full event with `version` in the body; an event of another association answers 404 |
 | UC16/UC17 | `PATCH /api/associations/{slug}/events/{id}` {baseVersion, changes:{field: value}, base:{field: originalValue}} | see merge M below |
 | UC18 | `POST /api/associations/{slug}/events/{id}/publish` {baseVersion} | `SELECT … FOR UPDATE`; guard G1–G4; status PUBLISHED, `published_at`, version+1; activity `EVENT_PUBLISHED`. 422 with the list of failing guard codes (`MISSING_FIELD:<name>`, `EMAIL_NOT_VERIFIED`, `START_IN_PAST`) so the client links to the step |
 | UC19 | `POST /api/associations/{slug}/events/{id}/cancel` {baseVersion, reason?, confirm: true} | only PUBLISHED with effective end ≥ now; status CANCELLED, reason, version+1; activity `EVENT_CANCELLED` |
-| UC20 | `DELETE /api/associations/{slug}/events/{id}` body {confirm: true} | only DRAFT; delete row; activity `EVENT_DELETED` (target ref = id, title copied in activity detail) |
+| UC20 | `POST /api/associations/{slug}/events/{id}/delete` {baseVersion, confirm: true} | only DRAFT; delete row; activity `EVENT_DELETED` (target ref = id, title copied in activity detail) |
 | public | `GET /api/events/{id}` (no session) | only PUBLISHED / CANCELLED / ARCHIVED, not hidden, association ACTIVE and not suspended; public projection: no `created_by`, `last_edited_by`, version, cleanup fields (AGENTS.md); 404 for drafts and unknown ids alike |
+
+Lifecycle actions (publish, cancel, delete) answer 409 `STALE_VERSION` when `baseVersion`
+differs from the current version (the client reloads and re-asks), 409 `INVALID_TRANSITION`
+when the status does not allow the action (second publish, cancel of a draft, delete of a
+published event) and 409 `EVENT_ENDED` for a cancel after the effective end.
 
 The UC18 confirmation ("can be edited or cancelled at any time") and UC19 explanation are
 client texts; the API requires `confirm: true` on cancel and delete so a single misfired
@@ -169,7 +184,8 @@ Within one transaction, `SELECT … FOR UPDATE` the event:
 1. Status CANCELLED/ARCHIVED → 409 `EVENT_READ_ONLY`.
 2. `baseVersion == version` → apply `changes`.
 3. Otherwise, for each changed field: if current value equals `base[field]`, apply
-   (different-field merge, UC16 2a); else it is a conflict.
+   (different-field merge, UC16 2a); else it is a conflict. A changed field without a
+   `base` value while versions differ answers 400 `BASE_REQUIRED`.
 4. Any conflict → 409 `EDIT_CONFLICT` with, per field, `yours`, `theirs`, `lastEditedBy`
    display name and the current `version`; nothing is written (UC17 minimal guarantee).
    The client resubmits with the chosen values and the new `baseVersion`; a newer change
@@ -178,7 +194,9 @@ Within one transaction, `SELECT … FOR UPDATE` the event:
    `PUBLISHED_FIELD_REQUIRED`).
 6. Write with `version = version + 1`, `last_edited_by`, `updated_at`; for PUBLISHED, set
    `schedule_changed_at = now()` when `starts_at`, `ends_at` or any venue field changed.
-   Activity `EVENT_EDITED` with the list of field names (no values, J4 D4).
+   Activity `EVENT_EDITED` with the list of field names (no values, J4 D4), coalesced: an
+   entry by the same actor on the same event within 15 minutes is updated (field names
+   merged) instead of adding a new one, so autosave does not flood UC14.
 
 The row lock makes check-and-update atomic, so no retry loop is needed (02a "bounded retry"
 reduces to zero retries). Autosave and explicit save use the same endpoint; a session expiry
@@ -233,8 +251,9 @@ fixes `posterStyle` as a closed value.
 ## 6. Cross-brick effects
 
 - **UC8 closure** (brick D hook, currently a no-op): in the closing transaction, PUBLISHED
-  events with effective end ≥ now become CANCELLED with reason "Association closed"; drafts are
-  deleted; past events stay ARCHIVED until the 30-day association purge cascades.
+  events with effective end ≥ now become CANCELLED with reason "Association closed"; drafts
+  and past events stay as they are (unreachable while CLOSED) until the 30-day association purge
+  cascades (C1).
 - **UC5 export**: adds events where the account is `created_by` or `last_edited_by`, with their
   association slug (no co-member identifiers).
 - **UC6 deletion**: `created_by`/`last_edited_by` become NULL (FK SET NULL); events stay with
@@ -244,7 +263,7 @@ fixes `posterStyle` as a closed value.
   its own transaction: archive (PUBLISHED/CANCELLED with effective end < now); draft cleanup
   notice (`DRAFT`, `updated_at < now() - 12 months`, `cleanup_notice_at IS NULL` → set it and
   queue outbox `DRAFT_CLEANUP_NOTICE` to every member); draft deletion (`cleanup_notice_at <
-  now() - 14 days` and not edited since the notice). Any edit resets `cleanup_notice_at` to NULL.
+  now() - 14 days`). Any edit resets `cleanup_notice_at` to NULL.
 - **Outbox**: new template `DRAFT_CLEANUP_NOTICE` (log transport until T11a).
 - **06 data-flow**: event rows already inventoried; the change is that `created_by` /
   `last_edited_by` are cleared on account deletion and that drafts are deleted by S2 — both
@@ -267,23 +286,24 @@ fixes `posterStyle` as a closed value.
 | # | Criterion | UC |
 | --- | --- | --- |
 | BC1 | A member creates a draft with only title and type; non-members and members of another association get 404 | UC15 |
-| BC2 | The 21st creation in 24 h for one association answers 429 with `Retry-After`; other associations are unaffected | UC15 1a |
+| BC2 | The 21st creation in 24 h for one association answers 429 with `Retry-After` equal to the time until the oldest creation leaves the window; other associations are unaffected | UC15 1a |
 | BC3 | A save with the current version applies and increments it; `last_edited_by` is the actor | UC16 |
 | BC4 | Concurrent saves of different fields both succeed and the final row holds both values | UC16 2a |
 | BC5 | Concurrent saves of the same field: the second gets 409 with yours/theirs/editor and nothing is written; resubmitting with the new version succeeds | UC17 |
 | BC6 | Clearing a required field of a published event answers 422 and changes nothing | UC16 2c |
 | BC7 | Changing start, end or venue of a published event sets `schedule_changed_at`; other fields do not | UC16 3 |
-| BC8 | Publish fails with the precise guard codes for missing fields, unverified email, past start; the event stays DRAFT | UC18 3a–3c |
+| BC8 | Publish fails with the precise guard codes for missing fields, unverified email, past start; a stale `baseVersion` gives `STALE_VERSION`, a second publish `INVALID_TRANSITION`; the event stays as it was | UC18 3a–3c |
 | BC9 | Publish succeeds with all guards and sets `published_at`; the public read returns it without account ids | UC18 |
-| BC10 | Cancel requires `confirm`, keeps the reason, is final; every later write answers 409 `EVENT_READ_ONLY` | UC19, E1 |
-| BC11 | Delete works only for drafts with `confirm`; a published event cannot be deleted | UC20 |
+| BC10 | Cancel requires `confirm`, keeps the reason, is final; every later write answers 409 `EVENT_READ_ONLY`; cancel after the effective end answers `EVENT_ENDED` | UC19, E1 |
+| BC11 | Delete works only for drafts with `confirm` and current version; a published event answers `INVALID_TRANSITION` | UC20 |
 | BC12 | Public read answers the same 404 for drafts, unknown ids, and events of closed associations | UC18, T8 |
 | BC13 | The job archives events whose effective end passed, sends the 12-month notice once, deletes the draft 14 days later unless edited | 05a, S2, A1 |
-| BC14 | Closing an association cancels upcoming published events and deletes drafts in the same transaction | UC8 |
+| BC14 | Closing an association cancels upcoming published events in the same transaction; drafts are untouched and removed only by the 30-day association purge | UC8, C1 |
 | BC15 | Export lists the requester's created/edited events; account deletion leaves events with NULL author fields | UC5, UC6 |
-| BC16 | `PATCH` ignores or rejects non-allow-listed fields (status, version, ids) with 400 | security |
+| BC16 | `PATCH` rejects non-allow-listed fields (status, version, ids) with 400 `UNKNOWN_FIELD`; over-length text and control characters answer 400 | security |
 | BC17 | Migrations up, down, up on a disposable database; all CHECK constraints reject invalid rows inserted directly | L2 |
-| BC18 | Each write creates exactly one activity entry with field names only | UC14 (data) |
+| BC18 | Each create/publish/cancel/delete creates one activity entry; edits by one actor within 15 min coalesce into one entry; entries hold field names only |
+| BC19 | An event id used under another association's slug answers the same 404 on read, edit, publish, cancel and delete (IDOR) | UC14 (data) |
 
 ## 9. Test plan
 
@@ -292,9 +312,9 @@ clock and outbox transport.
 
 - **Unit (many)**: merge algorithm M on in-memory events (all branches of steps 1–5), guard
   G1–G4, field validation and allow-list, effective end A1, city lookup V, quota window maths.
-- **Integration (per UC)**: BC1–BC18 against the Express app; two concurrency tests with
+- **Integration (per UC)**: BC1–BC19 against the Express app; two concurrency tests with
   parallel PATCHes on the same and on different fields (BC4, BC5) and parallel creations at
-  the quota boundary (BC2); CHECK constraint tests by direct INSERT (BC17); job tests with a
+  the quota boundary (BC2); CHECK constraint tests by direct INSERT, outbox template CHECK included (BC17); job tests with a
   fixed clock (BC13).
 - **Static**: SQL-concatenation scan extended to the new repository module.
 - **E2E / QA**: no client in this brick — the pre-merge QA pass drives the API with a scripted
@@ -305,7 +325,7 @@ clock and outbox transport.
 ## 10. Diagram changes
 
 - [05a-state-event](../diagrams/v1-events/05a-state-event.md): notes for A1 (effective end)
-  and the UC8 draft deletion (picture regenerated with the next diagram edit).
+  and C1 (drafts of a closed association leave only with the association purge).
 - [02a](../diagrams/v1-events/02a-sequence-autosave-conflict.md): note that the conditional
   write is a row lock, so the bounded retry is zero; request carries `base` values.
 - 04, 03, 06: no change.
@@ -321,7 +341,9 @@ These notes were applied with the validation (2026-10-16).
 | Q | Creation quota storage | A count rows in DB (410) | C counter table (365) |
 | V | Venue city while T11c is open | A static commune list, proxy later (450) | C free text (365) |
 | P | Poster styles | 6 placeholder keys, renamable | — |
+| C1 | Drafts at association closure (local review Must) | B keep, removed by the 30-day purge (470/500): UC8 unchanged | A delete at closure (315) |
 
 | Date | S | A1 | Q | V | P | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
+| 2026-10-16 (review) | | | | | | C1 B chosen by Benoît (470) |
 | 2026-10-16 | A backend only (440) | A start + 24 h (450) | A count rows (410) | A static commune list (450) | 6 placeholder keys | Weights validated and top scores chosen by Benoît |
