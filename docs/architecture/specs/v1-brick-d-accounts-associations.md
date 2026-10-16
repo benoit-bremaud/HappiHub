@@ -1,7 +1,7 @@
 # HappiHub V1 — brick D: accounts and associations foundation (UC1–UC12)
 
-Status: **conception awaiting the owner's decision** (section 9). This document authorizes no
-code, schema creation or dependency change until Benoît records his decisions below.
+Status: **decided by the owner on 2026-10-16** (section 9). Conception approved; implementation
+of brick D may start on its own branch, within this specification.
 
 Baseline: `main` @ `9df2379`. Inputs: [use cases](v1-use-cases.md) UC1–UC12,
 [data and migration study](v1-data-migration.md) (schema, D1–D3),
@@ -243,7 +243,7 @@ Mongo until brick B only if the owner chooses it (decision S3).
 
 | Date | L1 | L2 | S1 | S2 | S3 | 06 | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| _pending_ | | | | | | | |
+| 2026-10-16 | A `pg` (465) | A `node-pg-migrate` (465) | Accepted | Accepted | Legacy event routes disabled in D | Approved | Weights validated and top scores chosen by Benoît |
 
 ## 10. Diagram changes in this brick
 

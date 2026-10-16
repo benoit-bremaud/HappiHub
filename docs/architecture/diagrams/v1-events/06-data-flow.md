@@ -12,7 +12,7 @@
 Status: validated by the owner on 2026-10-15 (conception workshop 6), DF4–DF5 and the
 local-review fixes included. Amendment for the frozen D3 tables and pseudonymous moderation
 references proposed by [brick D](../../specs/v1-brick-d-accounts-associations.md) § 10,
-**awaiting owner approval**.
+approved by the owner on 2026-10-16.
 
 ## Context
 

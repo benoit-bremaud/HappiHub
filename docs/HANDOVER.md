@@ -133,9 +133,9 @@ have occurred. Do not interpret candidate folders as an approved implementation 
    then accounts/associations, event lifecycle backend, partner API.
    Done 2026-10-16: #246 data/migration study ([study](architecture/specs/v1-data-migration.md),
    ADR-0003): PostgreSQL, fresh start, frozen features as two tables; T10 resolved.
-   Brick D conception proposed 2026-10-16 ([spec](architecture/specs/v1-brick-d-accounts-associations.md)):
-   `pg` + `node-pg-migrate` + `connect-pg-simple`, scope decisions S1–S3 and the 06 amendment
-   await Benoît's recorded decision (§ 9); no code before it. Open: email provider, hosting/backups
+   Brick D conception decided 2026-10-16 ([spec](architecture/specs/v1-brick-d-accounts-associations.md)):
+   `pg` + `node-pg-migrate` + `connect-pg-simple`, scope S1–S3 and the 06 amendment approved
+   by Benoît (§ 9). Next: brick D implementation on its own branch; T11a blocks deployment. Open: email provider, hosting/backups
    (must provide EU PostgreSQL) and Géoplateforme quota (T11). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.
 
