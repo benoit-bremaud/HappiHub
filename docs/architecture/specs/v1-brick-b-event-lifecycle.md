@@ -1,7 +1,7 @@
 # HappiHub V1 — brick B: event lifecycle and editor backend (UC15–UC20)
 
-Status: **proposed — awaiting owner validation** (section 11). No code is authorized until
-Benoît validates this specification and its MCDA weights.
+Status: **decided by the owner on 2026-10-16** (section 11). Conception approved; implementation
+of brick B may start on its own branch, within this specification.
 
 Baseline: `main` @ `4a58b5a`. Inputs: [use cases](v1-use-cases.md) UC15–UC20 (E1, E2, quotas
 T2), [data and migration study](v1-data-migration.md) § 3 (`event`, `image`),
@@ -304,13 +304,13 @@ clock and outbox transport.
 
 ## 10. Diagram changes
 
-- [05a-state-event](../diagrams/v1-events/05a-state-event.md): add notes for A1 (effective end)
-  and the UC8 draft deletion transition (`Draft --> [*] : association closed`).
+- [05a-state-event](../diagrams/v1-events/05a-state-event.md): notes for A1 (effective end)
+  and the UC8 draft deletion (picture regenerated with the next diagram edit).
 - [02a](../diagrams/v1-events/02a-sequence-autosave-conflict.md): note that the conditional
   write is a row lock, so the bounded retry is zero; request carries `base` values.
 - 04, 03, 06: no change.
 
-These edits are applied in the same PR as this specification once validated.
+These notes were applied with the validation (2026-10-16).
 
 ## 11. Owner decisions
 
@@ -324,4 +324,4 @@ These edits are applied in the same PR as this specification once validated.
 
 | Date | S | A1 | Q | V | P | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| | | | | | | Pending Benoît's validation of weights and choices |
+| 2026-10-16 | A backend only (440) | A start + 24 h (450) | A count rows (410) | A static commune list (450) | 6 placeholder keys | Weights validated and top scores chosen by Benoît |

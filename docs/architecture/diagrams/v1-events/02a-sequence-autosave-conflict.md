@@ -19,6 +19,7 @@ Source: [02a-sequence-autosave-conflict.puml](02a-sequence-autosave-conflict.pum
 ## Notes
 
 - Q1 (validated, 4.6 vs browser-side merge 2.8): the server merges field by field. A field conflicts only when its current value differs from the original value the browser loaded, so concurrent edits of different fields merge silently (J4 D2).
+- Brick B (2026-10-16, [spec](../../specs/v1-brick-b-event-lifecycle.md) § 5 M): the conditional write is a `SELECT … FOR UPDATE` row lock, so the merge needs no retry; the request carries `baseVersion` and the original `base` value of each changed field.
 - The conditional write makes check-and-update atomic; the merge retry is bounded.
 - T4 (#247): a suspended account is refused like a suspended association; its sessions are revoked (UC31) and a new sign-in only reaches "My account" (UC5, UC6, UC9).
 - `scheduleChangedAt` is set in the same write when a published event's start, end or venue changes (J3 D1).

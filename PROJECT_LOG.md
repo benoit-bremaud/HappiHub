@@ -7,7 +7,8 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-16
 
-- **Brick B conception proposed — event lifecycle backend (UC15–UC20)** —
+- **Brick B conception decided — event lifecycle backend (UC15–UC20)** — Benoît validated the
+  weights and top scores of S, A1, Q, V and P on 2026-10-16; 05a and 02a notes applied.
   [spec](docs/architecture/specs/v1-brick-b-event-lifecycle.md), branch
   `docs/brick-b-event-lifecycle-spec`. MCDA recommendations awaiting owner validation: S backend
   only, images and wizard client in later bricks (440/500; images 320, with client 280); A1

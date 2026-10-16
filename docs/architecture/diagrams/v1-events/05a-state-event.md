@@ -27,5 +27,7 @@ Source: [05a-state-event.puml](05a-state-event.puml).
 - T9 (#247): the suspension effect is derived at read time from the active `Suspension`; it never sets `hiddenByModeration`, so lifting it cannot reveal an event hidden by a report.
 - S2 (validated, 4.2 vs keep forever 3.8): a draft untouched for 12 months is deleted after a
   14-day email notice to members, same mechanism as API keys (I1).
+- Brick B (2026-10-16, [spec](../../specs/v1-brick-b-event-lifecycle.md) A1): an event without an end date counts as ended 24 h after its start, for archiving and public "past" checks.
+- Brick B (UC8 closure): drafts of a closing association are deleted; upcoming published events are cancelled. This transition is not yet drawn in the picture.
 - Replaces the legacy pending/approved/rejected moderation; migrating existing events is a
   conception item for the data study (#246).
