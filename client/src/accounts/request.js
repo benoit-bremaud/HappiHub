@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { apiFetch } from '../api';
 
 /** JSON call to the API; never throws for HTTP errors so screens can show the server message. */
@@ -13,10 +14,15 @@ export const send = async (path, method = 'GET', body) => {
   }
 };
 
-/** Read a link token from the URL fragment once, then remove it from the address bar (DF3). */
-export const takeFragmentToken = () => {
-  const token = window.location.hash.slice(1);
-  if (token) window.history.replaceState(null, '', window.location.pathname + window.location.search);
+/**
+ * Link token from the URL fragment (DF3). The read is pure, so StrictMode's double render gets
+ * the same value; the fragment is removed from the address bar after mount.
+ */
+export const useFragmentToken = () => {
+  const [token] = useState(() => window.location.hash.slice(1));
+  useEffect(() => {
+    if (window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  }, []);
   return token;
 };
 

@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ForgotPassword, ResetPassword, VerifyEmail } from './AuthPages';
@@ -55,6 +56,15 @@ describe('VerifyEmail (UC2, S1-C)', () => {
     expect(await screen.findByText('Your email address is verified.')).toBeInTheDocument();
     expect(bodyOf('POST /email-verification')).toEqual({ token: 'verify-token' });
     expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
+  });
+
+  test('under StrictMode the token is still read once and sent (QA regression)', async () => {
+    withFragment('strict-token');
+    session({ status: 'anonymous' });
+    routes['POST /email-verification'] = [200, { signedIn: false }];
+    render(<StrictMode><MemoryRouter><VerifyEmail /></MemoryRouter></StrictMode>);
+    await screen.findByText('Your email address is verified.');
+    expect(bodyOf('POST /email-verification')).toEqual({ token: 'strict-token' });
   });
 
   test('an invalid link offers to send a new one', async () => {

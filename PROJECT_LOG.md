@@ -16,6 +16,12 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   Tests: server unit + integration against disposable PostgreSQL (line coverage ~98 %), client
   suite and build green. Design gaps A-D1–A-D5 recorded in spec § 11, validated by Benoît the same day (invitee sign-up without association, join by invitation id, 409 for the
   5-association cap, 30-day purge of closed associations, member emails visible).
+- **Brick D local review** ([report](docs/architecture/review-local.md)) — 7 Must fixed. Owner chose
+  S1-C (415/500; B 400, A 370) against a pre-registration takeover: verification no longer
+  signs in, sign-in requires a verified email, a password reset verifies the address (supersedes
+  the "verification signs in" part of N1). The QA pass found and fixed a StrictMode bug that broke
+  every verification link in development, and a console error from unused Bootstrap JS. Gate
+  still red on SonarQube only (scanner token rejected, 403).
 - **Brick D conception — accounts and associations (UC1–UC8, UC10–UC12)** — owner decided by MCDA top scores
   ([spec](docs/architecture/specs/v1-brick-d-accounts-associations.md)): L1 data access `pg` (465/500; Kysely 415, Prisma 310), L2 migrations
   `node-pg-migrate` (465; Graphile 375, Kysely Migrator 335, custom 315), sessions on

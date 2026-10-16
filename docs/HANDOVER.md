@@ -136,8 +136,8 @@ have occurred. Do not interpret candidate folders as an approved implementation 
    Brick D conception decided 2026-10-16 ([spec](architecture/specs/v1-brick-d-accounts-associations.md)):
    `pg` + `node-pg-migrate` + `connect-pg-simple`, scope S1–S3 and the 06 amendment approved
    by Benoît (§ 9). Brick D implemented 2026-10-16 on `feat/brick-d-accounts-associations`
-   (local, unpushed): amendments A-D1–A-D5 validated (spec § 11); review-local and PR
-   authorization pending. Database setup: `npm run migrate` from `server/`. T11a blocks deployment. Open: email provider, hosting/backups
+   (local, unpushed): amendments A-D1–A-D5 and S1-C validated; review-local Must items fixed; SonarQube
+   not run (token 403); push and PR need owner authorization. Database setup: `npm run migrate` from `server/`. T11a blocks deployment. Open: email provider, hosting/backups
    (must provide EU PostgreSQL) and Géoplateforme quota (T11). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.
 

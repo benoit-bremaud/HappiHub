@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../session';
-import { send, takeFragmentToken } from './request';
+import { send, useFragmentToken } from './request';
 import { Message, useSubmit } from './AuthPages';
 import './accounts.css';
 
@@ -9,8 +9,9 @@ import './accounts.css';
 export const InvitationPage = () => {
   const { status } = useSession();
   const navigate = useNavigate();
-  // A fresh link wins over a token kept from an earlier visit; read once (StrictMode-safe).
-  const [token] = useState(() => takeFragmentToken() || sessionStorage.getItem('invitationToken') || '');
+  // A fresh link wins over a token kept from an earlier visit.
+  const fragment = useFragmentToken();
+  const [token] = useState(() => fragment || sessionStorage.getItem('invitationToken') || '');
   const [invitation, setInvitation] = useState(null);
   const { busy, message, run } = useSubmit();
   useEffect(() => {

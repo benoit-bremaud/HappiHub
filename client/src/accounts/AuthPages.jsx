@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from '../session';
-import { PASSWORD_HINT, send, takeFragmentToken } from './request';
+import { PASSWORD_HINT, send, useFragmentToken } from './request';
 import './accounts.css';
 
 /** Submit-once form state shared by the account screens. */
@@ -120,8 +120,7 @@ export const ForgotPassword = () => (
 export const ResetPassword = () => {
   const { refresh } = useSession();
   const navigate = useNavigate();
-  // Read once on mount (a lazy initializer survives StrictMode double renders).
-  const [token] = useState(takeFragmentToken);
+  const token = useFragmentToken();
   const [password, setPassword] = useState('');
   const { busy, message, run } = useSubmit();
   const submit = (event) => {
@@ -153,7 +152,7 @@ export const ResetPassword = () => {
  */
 export const VerifyEmail = () => {
   const { status, refresh } = useSession();
-  const [token] = useState(takeFragmentToken);
+  const token = useFragmentToken();
   const [result, setResult] = useState({ status: 'checking' });
   const started = useRef(false);
   useEffect(() => {
