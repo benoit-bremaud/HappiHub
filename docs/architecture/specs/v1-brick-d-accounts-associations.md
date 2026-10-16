@@ -1,6 +1,6 @@
-# HappiHub V1 — brick D: accounts and associations foundation (UC1–UC12)
+# HappiHub V1 — brick D: accounts and associations foundation (UC1–UC8, UC10–UC12)
 
-Status: **decided by the owner on 2026-10-16** (section 9). Conception approved; implementation
+Status: **decided by the owner on 2026-10-16** (section 9), revised after the local review (S2, N1). Conception approved; implementation
 of brick D may start on its own branch, within this specification.
 
 Baseline: `main` @ `9df2379`. Inputs: [use cases](v1-use-cases.md) UC1–UC12,
@@ -26,10 +26,14 @@ Mongo account layer with PostgreSQL and delivers:
 | Invitations, joining, removal and leaving | UC10–UC12 |
 | Activity entries written by these use cases (read view is UC14, later) | 04 ActivityEntry |
 | Outbox rows for every email of these use cases | DF1 |
+| Maintenance job tasks for these tables: expire invitations (F20), day-23 reminder and day-30 deletion of never-verified accounts (F24, DF2), purge outbox failures > 30 days (F25), purge expired tokens, purge activity entries > 12 months (F19) | 02d, 06 |
+| Client screens for these flows and the [API contract](../../API_DOCUMENTATION.md) update; legacy account routes and pages retire | AGENTS.md |
 | Schema migration tooling and the disposable PostgreSQL test harness | ADR-0003 consequences |
 
 Out of scope, proposed for owner confirmation (decision S1, section 9):
 
+- **UC13 Dispute a removal** — needs `removal_dispute`; moves with UC9 to the administration
+  brick. Until then the removal email carries no dispute link.
 - **UC9 Dispute a moderation decision** — it needs `moderation_decision`, which only exists
   with the administration brick. Brick D creates no moderation table; UC9 moves to that brick.
 - **Association logo (UC7)** — it needs the image pipeline (#62, F12/F13) built with event
@@ -81,8 +85,9 @@ Options (Context7 checks on 2026-10-16):
   TypeScript to exploit B's typing. A's injection risk is mitigated by a review rule (every
   query text is a constant; values only through `$n`) and a test asserting it.
 - Sensitivity: injection safety raised to 35 (simplicity 5): A 450, B 445 — A still first but
-  by 5; **if the server migrates to TypeScript, B becomes the better choice** (criterion 6
-  flips). Estimates: criterion 4 and 5 are judgment, not measured.
+  by 5. A TypeScript server alone does not flip the result (B gains at most 20 points on
+  criterion 6, A loses about 10); B overtakes only with both a TypeScript switch and the
+  raised injection weight — revisit L1 if both happen. Estimates: criterion 4 and 5 are judgment, not measured.
 - **Recommendation: A, `pg`.** Fallback B (415), adoptable later module by module on the same pool.
 
 ## 3. L2 — Schema migration tool (MCDA)
@@ -118,7 +123,9 @@ C 125 + 80 + 60 + 30 + 40 + 40 = **375**; D 125 + 40 + 60 + 30 + 10 + 50 = **315
 
 Session store (ADR-0001 store change, no alternative scored): `connect-pg-simple` on the same
 `pg` pool, `createTableIfMissing: false` (the `session` table is created by a migration),
-expired rows pruned by its built-in interval. Its default `sess json` / `expire` layout replaces
+expired rows pruned by its built-in interval. Its idle expiry is the store `expire`; the 8 h
+absolute cap stays a check in code (ADR-0001). The table has no account column, so revocation
+at deletion, reset or suspension relies on the `auth_version` check, as today. Its default `sess json` / `expire` layout replaces
 the generic `data` / `expires_at` names of the schema study. Cookie, CSRF, lifetimes and
 `auth_version` revocation are unchanged.
 
@@ -134,10 +141,15 @@ these precisions:
 - `association.logo_image_id` is added by the image brick (S1), not here.
 - `association.slug`: lowercase ASCII from the name, `-n` suffix on collision (UC1 4b);
   never changed on rename (UC7 2a); reserved while CLOSED (UC8).
-- `association.created_by` counts toward the ≤ 5 rule (M1) for ACTIVE associations only
-  (decision S2, section 9).
-- `invitation`: no `ACCEPTED`/`REVOKED`/`EXPIRED` row is ever stored in practice: DF4 deletes
-  them; the enum stays for the model, rows hold `PENDING` only.
+- ≤ 5 associations created per account (M1, "5 in total", S2): counted by a new
+  `account.associations_created` integer incremented in the creating transaction, because
+  closed associations are purged after 30 days and `created_by` alone would let a
+  create-then-close cycle bypass the cap.
+- `invitation`: accepted and revoked rows are deleted at once (DF4) and expired rows by the
+  hourly job (F20); between expiry and the job, reads treat `expires_at < now()` as expired
+  (accept answers 410, a new invitation to the same email replaces the expired row).
+- `activity_entry.target_ref` holds an internal id or the association slug, never an email
+  or a token (DF4: the invitee email is not kept).
 - `outbox_message.template` is a closed list (section 6); `payload` holds the token link.
 
 Domain rules enforced in the write transaction (locks on the association or account row):
@@ -153,9 +165,10 @@ limiter (one API instance).
 
 | UC | Endpoint (proposed) | Transaction content |
 | --- | --- | --- |
-| UC1 | `POST /api/signup` {email, password, associationName}; signed in: `POST /api/associations` {name} | account + association + membership + verify token + outbox(VERIFY) + activity; existing email: outbox(ACCOUNT_EXISTS) only |
+| UC1 | `POST /api/signup` {email, password, associationName}; signed in: `POST /api/associations` {name} | account + association + membership + verify token + outbox(VERIFY) + activity, **no session**; existing email: dummy bcrypt then outbox(ACCOUNT_EXISTS) only. Both answer the same 202 "check your inbox" without cookie (decision N1) |
 | sign-in/out | `POST /api/session`, `DELETE /api/session` | session regenerate / destroy (ADR-0001) |
-| UC2 | `POST /api/email-verification` {token}; `POST /api/email-verification/resend` | set `email_verified_at` (or promote `pending_email`), delete token; list pending invitations for the email |
+| invitation lookup | link opens the client page `/invitations#<token>` (fragment never sent to the server or logged); the page calls `POST /api/invitations/lookup` {token} | read only |
+| UC2 | `POST /api/email-verification` {token}; `POST /api/email-verification/resend` | set `email_verified_at` (or promote `pending_email`), delete token; after a sign-up verification, open a regenerated session and land in UC15 (N1); list pending invitations for the email |
 | UC3 | `POST /api/password-reset` {email}; `POST /api/password-reset/confirm` {token, password} | reset token + outbox; confirm: new hash, `auth_version`+1, delete token, new session |
 | UC4 | `PATCH /api/account` | display name; email → `pending_email` + verify token + outbox to new and notice to old; password → hash + `auth_version`+1 keeping the current session |
 | UC5 | `GET /api/account/export` | read-only JSON: account, memberships, invitations sent, activity entries as actor (events added by brick B, participation/comments by their brick) |
@@ -163,12 +176,12 @@ limiter (one API instance).
 | UC7 | `PATCH /api/associations/{slug}` | name, city, presentation, website URL, contact email + activity |
 | UC8 | `POST /api/associations/{slug}/close` | status CLOSED, `closed_at`, activity; event cancellation and key revocation hooks are no-ops until bricks B/C add those tables |
 | UC10 | `POST/GET /api/associations/{slug}/invitations`, `DELETE …/{id}`, `POST …/{id}/resend` | per 02b: invitation + activity + outbox; revoke deletes the row (DF4) |
-| UC11 | `GET /api/invitations/{token}`, `POST /api/invitations/{token}/accept` | per 02b: membership + delete invitation + activity, only with matching verified email |
-| UC12 | `DELETE /api/associations/{slug}/members/{accountId}`, `POST …/leave` | delete membership + activity + outbox(REMOVED, with dispute link for UC13) |
+| UC11 | `POST /api/invitations/accept` {token} | per 02b (paths updated here: tokens move from the URL path to the body so access logs never hold them): membership + delete invitation + activity, only with matching verified email |
+| UC12 | `DELETE /api/associations/{slug}/members/{accountId}`, `POST …/leave` | delete membership + activity + outbox(`MEMBER_REMOVED`, no dispute link until UC13 ships) |
 
-Tokens (verify, reset, invitation): 32 random bytes, base64url in the link, SHA-256 stored,
-single use, compared by hash lookup; links sent with `Referrer-Policy: no-referrer`; never
-logged (DF3). Password hashing stays bcrypt (A2: 15–64 characters, ≤ 72 bytes, local
+Tokens (verify 24 h, reset 1 h, invitation 7 days): 32 random bytes, base64url in the link
+fragment, SHA-256 stored, single use, compared by hash lookup; sent to the API only in request
+bodies; pages served with `Referrer-Policy: no-referrer`; never logged (DF3). Password hashing stays bcrypt (A2: 15–64 characters, ≤ 72 bytes, local
 blocklist).
 
 ## 6. Email and the T11a dependency
@@ -178,7 +191,7 @@ Brick D writes every email as an `outbox_message` row (templates: `VERIFY`, `VER
 worker reads rows through a **transport port** with one implementation in brick D:
 
 - `log` transport (development and tests only): marks the row sent and writes the link to the
-  local console. Refused at start-up when `NODE_ENV=production`.
+  local console, then deletes the row (DF1: deleted once sent). Refused at start-up when `NODE_ENV=production`.
 
 T11a (EU email provider) remains open and **blocks any deployment** of sign-up, not the
 brick's merge: without a real transport, UC1–UC3, UC10 cannot reach users. The provider
@@ -191,8 +204,8 @@ Each criterion maps to at least one automated test (section 8).
 | # | Criterion | UC |
 | --- | --- | --- |
 | AC1 | Sign-up creates account, association (readable unique slug) and membership in one transaction; a failure leaves none of them | UC1 |
-| AC2 | Sign-up with an existing email returns the same response as a new one and only queues `ACCOUNT_EXISTS` | UC1 4a |
-| AC3 | A signed-in account cannot create a 6th active association | UC1 1b |
+| AC2 | Sign-up with an existing email returns the same status, body and headers (no `Set-Cookie`) as a new one, within a comparable time (dummy bcrypt), and only queues `ACCOUNT_EXISTS`; the verification link signs the new user in | UC1 4a, N1 |
+| AC3 | An account cannot create a 6th association, even after closing earlier ones | UC1 1b |
 | AC4 | Verification token works once within 24 h; expired, reused or unknown tokens change nothing | UC2 |
 | AC5 | Reset answers neutrally; confirm replaces the hash, increments `auth_version`, invalidates every other session | UC3 |
 | AC6 | Email or password change requires the current password; a new email is pending until verified and cannot take an existing account's email | UC4 |
@@ -201,11 +214,14 @@ Each criterion maps to at least one automated test (section 8).
 | AC9 | Profile edit keeps the slug; change is logged | UC7 |
 | AC10 | Closure refused while other members remain; afterwards the slug stays reserved | UC8 |
 | AC11 | Invitation requires a verified inviter, refuses existing members, enforces 10/day; revoke stops the link at once and deletes the row | UC10 |
-| AC12 | Accept admits only the invited email once verified; unverified gets 202 and no membership; different email gets 403 with a masked hint; the invitation row is deleted on success | UC11 |
+| AC12 | Unknown, expired, revoked or used tokens all answer the same 410 (UC11 2a); accept admits only the invited email once verified; unverified gets 202 and no membership; different email gets 403 with a masked hint; the invitation row is deleted on success | UC11 |
 | AC13 | Removing or leaving never leaves zero members; a removed member loses association access on the next request without session revocation | UC12 |
 | AC14 | Sessions live in PostgreSQL with 30 min idle / 8 h absolute; logout deletes the row; a store outage fails closed | ADR-0001 |
 | AC15 | No query text is built by string concatenation with input; tokens and passwords never appear in logs | security |
 | AC16 | Migrations apply from empty to latest and down to empty on a disposable database | L2 |
+| AC17 | Every limit of the [quotas table](v1-use-cases.md) that applies to UC1–UC12 answers 429 with `Retry-After`; the per-recipient email cap answers neutrally and sends nothing | T2 |
+| AC18 | No token appears in ingress or API logs; invitation, verify and reset links carry the token in the fragment | DF3 |
+| AC19 | The maintenance job expires invitations, reminds at day 23 and deletes never-verified accounts at day 30 with UC6 effects, purges outbox failures > 30 days, expired tokens and activity entries > 12 months | F19–F25 |
 
 ## 8. Test plan
 
@@ -227,8 +243,8 @@ Pyramid, mocking only boundaries (clock, randomness, outbox transport):
   as the QA pass of the pre-merge gate.
 - Coverage target ≥ 80 % on new modules (owner gate).
 
-Legacy Mongo routes for accounts are removed in the same brick; event routes keep working on
-Mongo until brick B only if the owner chooses it (decision S3).
+Legacy Mongo account routes are removed in the same brick and legacy event routes are
+disabled (S3); MongoDB leaves the runtime with brick D.
 
 ## 9. Owner decisions
 
@@ -237,18 +253,21 @@ Mongo until brick B only if the owner chooses it (decision S3).
 | L1 | Data access library | A `pg` (465/500) | B Kysely (415) |
 | L2 | Migration tool | A `node-pg-migrate` (465/500) | C Graphile Migrate (375) |
 | S1 | Scope: UC9 moved to the administration brick; association logo moved to the image brick | Accept | Keep in D (adds moderation and image tables early) |
-| S2 | ≤ 5 associations counts ACTIVE ones only | Accept | Count every association ever created |
+| S2 | ≤ 5 associations per account | Initially ACTIVE only (240/500 after review); **revised: 5 in total as validated (440)** | — |
+| N1 | Non-disclosing sign-up (review Must) | Verify first: same 202 for all, the verification link signs in and opens UC15 (335/500) | Immediate sign-in with accepted residual disclosure (330) |
 | S3 | Legacy event routes during the D → B gap | Disable legacy event routes in D (fresh start, D2) | Keep them on Mongo until B (two stores temporarily) |
 | 06 | Data-flow update for D3 tables and pseudonymous references (section 10) | Approve | — |
 
 | Date | L1 | L2 | S1 | S2 | S3 | 06 | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 2026-10-16 | A `pg` (465) | A `node-pg-migrate` (465) | Accepted | Accepted | Legacy event routes disabled in D | Approved | Weights validated and top scores chosen by Benoît |
+| 2026-10-16 (review) | | | | Revised: 5 in total (440) | | | N1 verify first (335); both chosen by Benoît after the local review |
 
 ## 10. Diagram changes in this brick
 
 [06-data-flow](../diagrams/v1-events/06-data-flow.md) adds the frozen `event_participation` and
 `event_comment` tables (D3) to the inventory, export (F22) and deletion cascade (F26), and
 records that moderation records keep the deleted account's `target_id` as a pseudonymous
-reference until DF5 purges them. Diagrams 04, 02b and 03 need no change: brick D realizes them
-as validated.
+reference until DF5 purges them. [02b](../diagrams/v1-events/02b-sequence-invite-and-join.md)
+keeps its flow; its endpoint paths are superseded by section 5 (token in the body). Diagrams
+04 and 03 need no change.

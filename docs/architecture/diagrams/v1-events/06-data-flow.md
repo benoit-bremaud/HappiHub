@@ -43,7 +43,7 @@ Source: [06-data-flow.puml](06-data-flow.puml).
 | API keys: name, SHA-256 hash, `createdBy`, `lastUsedAt` | Partner access requested by members | Contract | Revoked after 180 days unused, 14-day notice (I1); deleted with the association |
 | Images and logos (EXIF stripped) | Event presentation | Contract | Deleted with their draft, event or association; images before data (02d) |
 | Frozen participation (`event_participation`: event, account) and comments (`event_comment`: event, account, text, date) — D3, F28 | Existing behavior kept, not extended | Contract | Deleted with the event or the account (cascade); never in public projections or the partner API |
-| Pseudonymous `target_id` of a deleted account in reports, decisions and suspensions | Moderation accountability | Legitimate interest | Kept after account deletion until DF5 purges the record; no other account data is retained with it |
+| `target_id` of a deleted account in reports, decisions and suspensions (pseudonymised identifier, still personal data; the record's free-text `reason`/`comment` stays with it) | Moderation accountability | Legitimate interest | Kept after account deletion until DF5 purges the record |
 
 No consent-based processing exists in V1: no analytics, no third-party script, only strictly
 necessary cookies (session, CSRF), so no consent banner.
