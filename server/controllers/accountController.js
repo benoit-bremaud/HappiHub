@@ -64,8 +64,11 @@ export const signOut = async (req, res) => {
 };
 
 const signUpSchema = Joi.object({ email: emailSchema.required(), password: newPasswordSchema.required(),
-  associationName: associationName.required() });
-/** UC1 (N1): the same 202 and no cookie whether or not the email has an account. */
+  associationName });
+/**
+ * UC1 (N1): the same 202 and no cookie whether or not the email has an account. Without an
+ * association name it is the invitee sign-up of UC11 3a (amendment A-D1).
+ */
 export const signUpHandler = handle(async (req, res) => {
   const { error, value } = signUpSchema.validate(req.body ?? {});
   if (error) {

@@ -40,12 +40,12 @@ const consumeToken = async (client, ctx, token, purpose) => {
 
 /**
  * UC1 (decision N1): a new email gets account, association, membership and a verification
- * email in one transaction; an existing email only gets ACCOUNT_EXISTS. Both paths hash once
+ * email in one transaction (an invitee, UC11 3a, gets no association); an existing email only gets ACCOUNT_EXISTS. Both paths hash once
  * and answer identically, without a session.
  */
 export const signUp = async (ctx, { email, password, associationName }) => {
   const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
-  const similarAssociation = await similarAssociationExists(ctx.db, associationName);
+  const similarAssociation = associationName !== undefined && await similarAssociationExists(ctx.db, associationName);
   await withTransaction(ctx.db, async (client) => {
     const { rows: [created] } = await client.query(
       'INSERT INTO account (email, password_hash, created_at) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING RETURNING id',
@@ -55,7 +55,7 @@ export const signUp = async (ctx, { email, password, associationName }) => {
         payload: { signInLink: ctx.links.signIn(), resetLink: ctx.links.forgotPassword() } });
       return;
     }
-    await createAssociation(client, ctx, created.id, associationName);
+    if (associationName !== undefined) await createAssociation(client, ctx, created.id, associationName);
     const token = await issueToken(client, ctx, created.id, 'VERIFY');
     await queueEmail(client, ctx, { recipient: email, template: 'VERIFY', payload: { link: ctx.links.verify(token) } });
   });

@@ -113,7 +113,9 @@ describe('UC11 joining (AC12)', () => {
     await claire.post('/api/associations/troupe/invitations', { email: 'malik@gmail.com' });
     const { token } = await lastEmail(pool, 'malik@gmail.com', 'INVITATION');
     const malik = await browser(app);
-    await malik.post('/api/signup', { email: 'malik@gmail.com', password: PASSWORD, associationName: 'Own' });
+    // UC11 3a: the invitee signs up without an association name.
+    expect((await malik.post('/api/signup', { email: 'malik@gmail.com', password: PASSWORD })).status).toBe(202);
+    expect((await pool.query("SELECT associations_created FROM account WHERE email = 'malik@gmail.com'")).rows[0].associations_created).toBe(0);
     malik.adopt(await malik.post('/api/session', { email: 'malik@gmail.com', password: PASSWORD }));
     const pending = await malik.post('/api/invitations/accept', { token });
     expect(pending.status).toBe(202);
