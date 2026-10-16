@@ -1,41 +1,36 @@
-import React from "react";
 import "./header.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useSession } from "../../session";
+import { send } from "../../accounts/request";
 
-
-
-const Header = ({isLoggedIn}) => {
-    return (
-        <header className="header">
-            <div className="logo">
-                <h1>LOGO</h1>
-            </div>
-            <div className="nav">
-                <ul>
-                    <li><Link to="/"><button className="nav-btn">Home</button></Link></li>
-                    { isLoggedIn &&(
-                        <>
-                        <li><Link to="/events/create"> <button className="nav-btn">Create Event</button></Link></li>
-                        <li><Link to="/profil"><button className="nav-btn">Profil</button></Link></li>
-                        <li><Link to="/events"><button className="nav-btn">Event</button></Link></li>
-                        <li><Link to="/logout"><button className="nav-btn">Logout</button></Link></li>
-                        </>
-                    )}
-                    {!isLoggedIn && (
-                        <>
-                    <li><Link to="/register"><button className="nav-btn">Signin</button></Link></li>
-                    <li><Link to="/login"><button className="nav-btn">Login</button></Link></li>
-                        </>
-                    )}
-
-
-
-
-                </ul>
-
-            </div>            
-        </header>
-    )
+/** Navigation; sign-out revokes the server session (DELETE /session). */
+export const Header = () => {
+  const { status, refresh } = useSession();
+  const navigate = useNavigate();
+  const signOut = async () => {
+    await send("/session", "DELETE");
+    await refresh();
+    navigate("/");
+  };
+  return (
+    <header className="header">
+      <div className="logo"><h1>HappiHub</h1></div>
+      <nav className="nav">
+        <ul>
+          <li><Link className="nav-btn" to="/">Home</Link></li>
+          {status === "authenticated" ? (
+            <>
+              <li><Link className="nav-btn" to="/account">My account</Link></li>
+              <li><button className="nav-btn" onClick={signOut}>Sign out</button></li>
+            </>
+          ) : (
+            <>
+              <li><Link className="nav-btn" to="/signup">Sign up</Link></li>
+              <li><Link className="nav-btn" to="/signin">Sign in</Link></li>
+            </>
+          )}
+        </ul>
+      </nav>
+    </header>
+  );
 };
-
-export default Header;

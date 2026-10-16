@@ -1,49 +1,68 @@
-# Local review — HappiHub (branch docs/brick-d-accounts-associations vs main)
+# Local review — HappiHub (brick D)
 
-- Date: 2026-10-16
-- Commit: c2b5be5 + review fixes
-- Scope: brick D spec, 06-data-flow (md/puml/svg), UC1 and J1 D1 amendments, PROJECT_LOG.md,
-  docs/HANDOVER.md (documentation only)
-- Checks run: design · docs · security · correctness (MCDA arithmetic, consistency with
-  UC1–UC12, schema study, 02b, 04, ADR-0001/0003); test-quality pass not applicable to a docs-only diff
-- Verdict: ship after fixes · Must 2 (fixed with owner decisions) · Should 9 (fixed) · Nice 5 (3 fixed, 2 disagree)
+- Date: 2026-10-16 (second pass after fixes)
+- Commit: see the commit that adds this report (fixes in 7c5527f and the QA fix commit)
+- Scope: branch diff origin/main...feat/brick-d-accounts-associations
+- Checks run: design · docs · tests · security · correctness · QA pass
+- Verdict: Must Have resolved; gate green · Must 0 open (7 fixed + 2 found in QA, fixed) · Should 10 · Nice 12
 
-## 🔴 Must Have
-- `specs/v1-brick-d-accounts-associations.md` §4/§9 S2 `[correctness|design]` · "ACTIVE only" contradicted UC1 1b, quotas and 04 `0..5`, and allowed create-then-close bypass · Fixed: owner revised S2 to "5 in total" (440 vs 240), enforced by `account.associations_created`.
-- `specs/v1-brick-d-accounts-associations.md` §5 UC1 `[security]` · sign-in on sign-up revealed existing emails (cookie, timing) · Fixed: owner decision N1 "verify first" (335 vs 330); same 202 without cookie, dummy bcrypt, link signs in; UC1 and J1 D1 amended; AC2 strengthened.
+## Pre-merge gate
+| Step | Result |
+|---|---|
+| 1 Tests | ✅ server 48 unit + 51 integration (disposable PostgreSQL) · ✅ client 36 · ✅ client build |
+| 2 Coverage | server 91.8 % stmts / 72.5 % branches / 96.8 % funcs / 93.8 % lines · client `src/accounts` 93.9 % stmts / 69.8 % branches / 96.8 % funcs / 97.1 % lines · docs: every exported function flagged by the doc audit now documented (no counter tool in this repo) |
+| 3 SonarQube | ✅ QUALITY GATE PASSED on ba6542b (local SonarQube 26.5, project `happihub`) |
+| 4 Secrets | ✅ gitleaks clean on origin/main..HEAD · no tracked .env (the ignored `server/.env.docker.local` is local only) · diff read: only the non-secret local compose credential |
+| 5 QA pass | ✅ full pass on the Docker stack: sign-up, sign-in refused before verification, verification link, sign-in, account page, invitation sent, invitation page as anonymous · network clean (lookup 200, verification 200) · screenshots in `docs/architecture/qa/2026-10-16-brick-d-*.jpg` |
+- Gate: **GREEN — merge authorised pending owner approval**
+
+## 🔴 Must Have (all fixed)
+- Emailed-link pages posted before the CSRF bootstrap → now wait for the session (7c5527f).
+- `deliverOutbox` hand-rolled transaction → `withTransaction` (7c5527f).
+- Client modules below 80 % → page tests, `src/accounts` 97 % lines.
+- AC15/AC18 log test with fake tokens → real tokens, stdout/stderr captured.
+- AC2 headers → compared. AC18 fragment → explicit test.
+- Docs coverage → missing docstrings added, maintenance scheduling documented.
+- S1 pre-registration takeover (security Should, escalated by owner decision S1-C, 415/500) → verification opens no session, sign-in requires a verified email, reset verifies.
+- QA finding: StrictMode double render consumed the fragment token, so every verification link failed in development → pure read in `useFragmentToken` + regression test.
+- QA finding: unused Bootstrap JS without jQuery threw on every page → removed from `index.html`.
 
 ## 🟡 Should Have
-- §2 sensitivity `[correctness]` · TypeScript-flip claim false · Fixed.
-- §1 scope `[design]` · maintenance job tasks F19–F25 missing; accept ignored `expires_at` · Fixed: scope row, §4 expiry rule, AC19.
-- §1/§5 `[docs]` · dead UC13 dispute link, template name mismatch · Fixed: UC13 out of scope, `MEMBER_REMOVED` without link.
-- §6 log transport `[correctness]` · marked rows sent instead of deleting (DF1) · Fixed.
-- §5 tokens `[security]` · invitation token in URL path reached access logs; `target_ref` content unspecified · Fixed: token in fragment and request bodies, AC18, `target_ref` never an email.
-- §1 `[docs]` · client and API contract scope missing · Fixed.
-- §8 `[docs]` · stale S3 sentence · Fixed.
-- §7 `[tests]` · ACs missing UC11 2a, rate limits, token lifetimes · Fixed: AC12, AC17, token lifetimes in §5.
-- `06-data-flow.md` `[security]` · "pseudonymous, no other data" overstated · Fixed: personal data, free text stays until DF5.
+- `server/services/accounts.js:149-156` `[security]` · S2 resend matches `pending_email` of another account; `LIMIT 1` without order can replace the real owner's token · prefer the row whose own email matches, skip pending addresses already taken.
+- `server/services/invitations.js:112-134` `[correctness]` · accept vs close lock-order deadlock · lock the association first and re-check ACTIVE.
+- `server/services/accounts.js` deleteAccount `[correctness]` · last SUPER_ADMIN check racy · advisory lock before the count.
+- `server/utils/keyedLimiter.js` `[correctness|security]` · unbounded map keyed by attacker-chosen emails · prune expired entries.
+- `server/jobs/runMaintenance.js:5`, `server/server.js:25` `[design]` · context built twice; CLI imports the HTTP app · `createContext` module.
+- `server/jobs/maintenance.js:26-29` `[design|correctness]` · duplicates `issueToken` · export and reuse.
+- `server/controllers/accountController.js` `[design]` · five validation variants, token schema ×4 · extend `validate(schema, body, extra)`, shared `tokenSchema`.
+- `client/src/accounts/AuthPages.jsx:9-22` `[design]` · shared `useSubmit`/`Message` live in one page · move to `form.jsx`.
+- `server/app.js:47-56` `[design]` · inline session refresh middleware · `middleware/session.js`.
+- `accounts.test.js` `[tests]` · still open: AC14 idle expiry untested; AC17 partial (resend, accept, lookup, Retry-After everywhere); weak `toBeDefined` assertions; monolithic UC11 and AC8 tests.
 
 ## 🔵 Nice to Have
-- §3 session store `[design]` · absolute cap and per-account revocation · Fixed: stated in code via `auth_version`.
-- §10 02b paths `[docs]` · Fixed: §5 supersedes 02b paths.
-- Title vs scope `[docs]` · Fixed: UC1–UC8, UC10–UC12.
+- `server/services/invitations.js` `[security]` · raw invitation link returned to the inviter (DF3) · drop `link` unless required.
+- `server/services/accounts.js:138` `[security]` · email change does not bump `auth_version`.
+- `server/services/outbox.js` `[security]` · log transport enabled whenever not production · explicit `EMAIL_TRANSPORT=log` opt-in.
+- `server/routes/api.js` `[security]` · no rate limit on lookup / verification / reset confirm (bcrypt before token check) · limiter or token-first.
+- Sign-up timing difference `[security]` · bcrypt dominates; accepted.
+- `server/services/accounts.js:85-88` `[correctness]` · dead pending_email clear before throw.
+- `server/jobs/maintenance.js` `[correctness]` · one failing account aborts the run · per-account try/catch.
+- `client/src/accounts/AccountPage.jsx:30-35` `[correctness]` · email state not reset after save.
+- `server/services/associations.js` updateProfile/closeAssociation `[correctness]` · actor membership not re-checked under lock.
+- `AccountPage`/`AssociationPage` `[correctness]` · "Loading…" forever when session unavailable; stale state on slug change.
+- Hard-coded 5/10 in messages, `PASSWORD_HINT` duplicated client/server, export limiter flow `[design|docs]`.
+- `outbox.js` deliver holds a transaction while sending `[correctness]` · revisit with T11a.
 
 ## ⚪ Disagree / Intentional
-- `docs/HANDOVER.md` long line `[docs]` · consistent with the existing list style.
-- `docs/WORK_PLAN.md` not updated `[docs]` · HANDOVER and PROJECT_LOG carry brick status; WORK_PLAN holds direction only.
-
-## Pre-merge gate (local, 2026-10-16)
-
-| Step | Result |
-| --- | --- |
-| 1 Tests | Server 93/93 unit; diff touches no code |
-| 2 Coverage | Unchanged from `main` (server 83.2 %; client 58.5 % pre-existing, #272); docs diff only |
-| 3 SonarQube | Not run: pre-existing unavailability, #274 |
-| 4 Secrets | gitleaks `origin/main..HEAD` clean; no tracked `.env`; manual diff read clean |
-| 5 QA | Not applicable to the product: diff is documentation; 06 SVG re-rendered with PlantUML and checked |
-
-Gate: docs-only diff is safe; red items are the pre-existing ones under the owner's waiver of
-2026-10-16 (#272–#274).
+- SQL in services without a repository layer — spec § 2 option A.
+- `CASE WHEN` profile update — constant query text rule (spec § 2), checked by `queryText.test.js`.
+- Transport interface with one implementation — spec § 6, T11a provider planned.
+- Integration-heavy server pyramid — SQL/transaction brick, ADR-0001.
+- Member emails visible to co-members — amendment A-D5 validated.
 
 ## Per-dimension summary
-- Design: scope gaps (jobs, UC13, client) closed · Docs: links resolve, statuses current · Tests: AC set completed · Security: enumeration and token logging fixed · Correctness: all MCDA totals verified.
+- Design: proportionate; one Must (outbox transaction), duplication cleanups.
+- Docs: no stale docs; ~70 % presence, maintenance scheduler undocumented.
+- Tests: server strong; AC2/AC15/AC18 false confidence; client pages untested.
+- Security: no Must; S1 pre-registration takeover and S2 resend mismatch need fixing.
+- Correctness: emailed-link pages broken by CSRF bootstrap order; lock-order and race issues.

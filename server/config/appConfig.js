@@ -6,6 +6,7 @@ export const readAppConfig = (env) => {
     cookieName: production ? '__Host-happihub.sid' : 'happihub.sid',
     origin: env[`APP_URL_${suffix}`], port: Number(env[`PORT_${suffix}`] || 5000),
     trustedProxy: env.TRUSTED_PROXY || false,
+    databaseUrl: env[`DATABASE_URL_${suffix}`],
   };
   if (typeof config.sessionSecret !== 'string' || Buffer.byteLength(config.sessionSecret) < 32)
     throw new Error('Session signing key must contain at least 32 bytes');
@@ -17,5 +18,7 @@ export const readAppConfig = (env) => {
   if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) throw new Error('Port configuration is invalid');
   if (config.trustedProxy && !/^[a-fA-F0-9:.]+(?:\/[0-9]{1,3})?$/.test(config.trustedProxy))
     throw new Error('Trusted proxy must be an explicit IP address or CIDR');
+  if (typeof config.databaseUrl !== 'string' || !/^postgres(ql)?:\/\//.test(config.databaseUrl))
+    throw new Error('Database URL configuration is invalid');
   return Object.freeze(config);
 };

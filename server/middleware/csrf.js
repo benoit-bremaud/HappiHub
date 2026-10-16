@@ -14,6 +14,7 @@ export const protectWrites = (req, res, next) => {
       !/^[a-f0-9]{64}$/.test(expected) || !/^[a-f0-9]{64}$/.test(actual) || expected.length !== actual.length || !timingSafeEqual(Buffer.from(expected), Buffer.from(actual))) {
     return res.status(403).json({ message: 'Session changed or request origin rejected. Refresh before retrying.' });
   }
-  if (!req.is('application/json')) return res.status(415).json({ message: 'JSON request required' });
+  // Bodiless writes (DELETE /api/session) carry no content type; any body must be JSON.
+  if (req.is('application/json') === false) return res.status(415).json({ message: 'JSON request required' });
   return next();
 };

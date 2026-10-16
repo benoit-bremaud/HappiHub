@@ -17,11 +17,13 @@ RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY --chown=node:node app.js server.js ./
 COPY --chown=node:node config ./config
 COPY --chown=node:node controllers ./controllers
+COPY --chown=node:node db ./db
+COPY --chown=node:node domain ./domain
+COPY --chown=node:node jobs ./jobs
 COPY --chown=node:node middleware ./middleware
-COPY --chown=node:node models ./models
-COPY --chown=node:node queries ./queries
+COPY --chown=node:node migrations ./migrations
 COPY --chown=node:node routes ./routes
+COPY --chown=node:node services ./services
 COPY --chown=node:node utils ./utils
-COPY --chown=node:node validation ./validation
 EXPOSE 5000
 CMD ["node", "server.js"]

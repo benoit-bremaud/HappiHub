@@ -168,7 +168,7 @@ limiter (one API instance).
 | UC1 | `POST /api/signup` {email, password, associationName}; signed in: `POST /api/associations` {name} | account + association + membership + verify token + outbox(VERIFY) + activity, **no session**; existing email: dummy bcrypt then outbox(ACCOUNT_EXISTS) only. Both answer the same 202 "check your inbox" without cookie (decision N1) |
 | sign-in/out | `POST /api/session`, `DELETE /api/session` | session regenerate / destroy (ADR-0001) |
 | invitation lookup | link opens the client page `/invitations#<token>` (fragment never sent to the server or logged); the page calls `POST /api/invitations/lookup` {token} | read only |
-| UC2 | `POST /api/email-verification` {token}; `POST /api/email-verification/resend` | set `email_verified_at` (or promote `pending_email`), delete token; after a sign-up verification, open a regenerated session and land in UC15 (N1); list pending invitations for the email |
+| UC2 | `POST /api/email-verification` {token}; `POST /api/email-verification/resend` | set `email_verified_at` (or promote `pending_email`), delete token; no session is opened (S1-C): the user then signs in; pending invitations for the email are listed after sign-in (UC11 4c) |
 | UC3 | `POST /api/password-reset` {email}; `POST /api/password-reset/confirm` {token, password} | reset token + outbox; confirm: new hash, `auth_version`+1, delete token, new session |
 | UC4 | `PATCH /api/account` | display name; email → `pending_email` + verify token + outbox to new and notice to old; password → hash + `auth_version`+1 keeping the current session |
 | UC5 | `GET /api/account/export` | read-only JSON: account, memberships, invitations sent, activity entries as actor (events added by brick B, participation/comments by their brick) |
@@ -204,7 +204,7 @@ Each criterion maps to at least one automated test (section 8).
 | # | Criterion | UC |
 | --- | --- | --- |
 | AC1 | Sign-up creates account, association (readable unique slug) and membership in one transaction; a failure leaves none of them | UC1 |
-| AC2 | Sign-up with an existing email returns the same status, body and headers (no `Set-Cookie`) as a new one, within a comparable time (dummy bcrypt), and only queues `ACCOUNT_EXISTS`; the verification link signs the new user in | UC1 4a, N1 |
+| AC2 | Sign-up with an existing email returns the same status, body and headers (no `Set-Cookie`) as a new one, within a comparable time (dummy bcrypt), and only queues `ACCOUNT_EXISTS`; sign-in is refused with the neutral 401 until the email is verified | UC1 4a, N1, S1-C |
 | AC3 | An account cannot create a 6th association, even after closing earlier ones | UC1 1b |
 | AC4 | Verification token works once within 24 h; expired, reused or unknown tokens change nothing | UC2 |
 | AC5 | Reset answers neutrally; confirm replaces the hash, increments `auth_version`, invalidates every other session | UC3 |
@@ -256,12 +256,14 @@ disabled (S3); MongoDB leaves the runtime with brick D.
 | S2 | ≤ 5 associations per account | Initially ACTIVE only (240/500 after review); **revised: 5 in total as validated (440)** | — |
 | N1 | Non-disclosing sign-up (review Must) | Verify first: same 202 for all, the verification link signs in and opens UC15 (335/500) | Immediate sign-in with accepted residual disclosure (330) |
 | S3 | Legacy event routes during the D → B gap | Disable legacy event routes in D (fresh start, D2) | Keep them on Mongo until B (two stores temporarily) |
+| S1-C | Pre-registration takeover found by the local review: an attacker signs up with the victim's email; the auto sign-in on verification hands the victim an attacker-known password | C: verification opens no session and sign-in is refused until the email is verified; a password reset also verifies the email (415/500) | B: password asked after verification (400); A: keep auto sign-in, bump auth_version (370) |
 | 06 | Data-flow update for D3 tables and pseudonymous references (section 10) | Approve | — |
 
 | Date | L1 | L2 | S1 | S2 | S3 | 06 | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 2026-10-16 | A `pg` (465) | A `node-pg-migrate` (465) | Accepted | Accepted | Legacy event routes disabled in D | Approved | Weights validated and top scores chosen by Benoît |
 | 2026-10-16 (review) | | | | Revised: 5 in total (440) | | | N1 verify first (335); both chosen by Benoît after the local review |
+| 2026-10-16 (implementation review) | | | | | | | S1-C chosen by Benoît (415); supersedes the "verification signs in" part of N1 |
 
 ## 10. Diagram changes in this brick
 
@@ -271,3 +273,21 @@ records that moderation records keep the deleted account's `target_id` as a pseu
 reference until DF5 purges them. [02b](../diagrams/v1-events/02b-sequence-invite-and-join.md)
 keeps its flow; its endpoint paths are superseded by section 5 (token in the body). Diagrams
 04 and 03 need no change.
+
+## 11. Implementation amendments (validated 2026-10-16)
+
+Gaps found while implementing brick D. Benoît validated the "Implemented" column on
+2026-10-16.
+
+| # | Gap | Implemented | Alternative |
+| --- | --- | --- | --- |
+| A-D1 | UC11 3a needs an invitee sign-up, but `POST /signup` required an association name | `associationName` optional; without it no association is created. Client hides the field when coming from an invitation | Separate `/signup/invitee` endpoint |
+| A-D2 | UC11 4c "Join" after verification has no token to send | `POST /invitations/accept` also takes `{invitationId}`, valid only for the same signed-in, verified invited address | Re-send each invitation email and require the link |
+| A-D3 | AC17 says every quota answers 429 + Retry-After; the 5-association cap is permanent | `409` for the 5-in-total cap (no retry time exists) | `429` without `Retry-After` |
+| A-D4 | Closed associations are kept forever (slug reserved) | Maintenance deletes closed associations 30 days after closing (UC8 notice); the slug becomes free again | Keep closed rows indefinitely |
+| A-D5 | Members see each other's email in the member list | Kept (needed to identify co-organizers) | Display names only |
+
+Follow-ups outside brick D: a real password blocklist (current list is a short placeholder),
+running `npm run test:integration` in CI (`quality-tests.yml` needs owner authorization), a
+least-privilege PostgreSQL application role, and the T11a email transport (production start is
+refused until then).

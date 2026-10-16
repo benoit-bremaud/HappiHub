@@ -6,7 +6,7 @@ These legacy suffixes are runtime keys, not additional environment tiers.
 
 Supply `SESSION_SECRET_<suffix>` with a freshly generated private key containing at least
 32 random bytes. Do not reuse former JWT keys. Startup accepts `SESSION_SECRET_PROD_FILE`
-and `MONGO_URI_PROD_FILE` for mounted production secrets. JWT keys and expiry settings
+and `DATABASE_URL_PROD_FILE` for mounted production secrets. JWT keys and expiry settings
 are no longer used by the application authentication flow.
 
 APP_URL is the exact browser origin. Production requires HTTPS. TRUSTED_PROXY, if set,
@@ -20,8 +20,11 @@ configuration validation and disposable regression command. This file contains a
 allowlist, not application credentials. It does not broaden Express's TRUSTED_PROXY.
 Client REACT_APP_API_URL includes /api and is public configuration, never a secret.
 
-Use the existing Mongo database for accounts and the sessions collection. The application
-identity needs readWrite permissions and permission to create the collection's TTL index.
+Supply `DATABASE_URL_<suffix>`, a PostgreSQL connection URL. Apply the schema with the explicit
+operator step `npm run migrate` (from `server/`) before starting the API; the server never
+migrates on start. Sessions live in the `session` table (`connect-pg-simple`). Run
+`npm run maintenance` periodically (hourly) for expiry purges and reminders. Production start is
+refused until a real email transport exists (T11a); only the development log transport exists.
 Session idle lifetime is 30 minutes and absolute lifetime eight hours. Anonymous bootstrap
 lifetime is 30 minutes. Expiry policy is checked before authority is granted, independent
 of physical TTL deletion. Session-store failures fail closed for protected requests.
