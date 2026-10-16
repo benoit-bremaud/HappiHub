@@ -1,0 +1,21 @@
+// Local list of common and known-compromised passwords of 15+ characters (A2: no third-party call).
+export const PASSWORD_BLOCKLIST = Object.freeze([
+  'passwordpassword',
+  '123456789012345',
+  '1234567890123456',
+  'qwertyuiopasdfgh',
+  'iloveyouiloveyou',
+  'letmeinletmeinletmein',
+  'passwordpassword1',
+  'password12345678',
+  'correcthorsebatterystaple',
+  'aaaaaaaaaaaaaaa',
+  'abcdefghijklmnop',
+  'qwertyqwertyqwerty',
+  '000000000000000',
+  '111111111111111',
+  'trustno1trustno1',
+  'welcomewelcome1',
+  'adminadminadmin',
+  'happihubhappihub',
+]);

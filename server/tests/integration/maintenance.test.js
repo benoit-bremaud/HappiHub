@@ -1,0 +1,87 @@
+import { runMaintenance } from '../../jobs/maintenance.js';
+import { createLogTransport, deliverOutbox } from '../../services/outbox.js';
+import { browser, buildApp, createPool, lastEmail, migrate, PASSWORD, resetData, signUpVerified } from './harness.js';
+
+const DAY = 24 * 3600e3;
+let pool, app, clock;
+beforeAll(() => { migrate(); pool = createPool(); });
+beforeEach(async () => { await resetData(pool); ({ app, clock } = buildApp(pool)); });
+afterAll(() => pool.end());
+
+const run = () => runMaintenance(app.locals.ctx);
+const n = async (sql) => (await pool.query(sql)).rows.length;
+
+describe('maintenance job (AC19)', () => {
+  test('expires invitations and purges expired tokens', async () => {
+    const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
+    await claire.post('/api/associations/troupe/invitations', { email: 'm@example.org' });
+    await (await browser(app)).post('/api/password-reset', { email: 'claire@example.org' });
+    clock.now += 7 * DAY + 1;
+    const counts = await run();
+    expect(counts).toMatchObject({ invitationsExpired: 1, tokensPurged: 1 });
+    expect(await n('SELECT 1 FROM invitation')).toBe(0);
+    expect(await n('SELECT 1 FROM auth_token')).toBe(0);
+  });
+
+  test('reminds at day 23 once, deletes at day 30 with UC6 effects', async () => {
+    const client = await browser(app);
+    await client.post('/api/signup', { email: 'late@example.org', password: PASSWORD, associationName: 'Late' });
+    clock.now += 22 * DAY;
+    expect((await run()).remindersQueued).toBe(0);
+    clock.now += DAY + 1;
+    expect((await run()).remindersQueued).toBe(1);
+    expect((await run()).remindersQueued).toBe(0);
+    expect((await lastEmail(pool, 'late@example.org', 'VERIFY_REMINDER')).payload.link).toContain('/verify-email#');
+    clock.now += 7 * DAY;
+    expect((await run()).unverifiedAccountsDeleted).toBe(1);
+    expect(await n('SELECT 1 FROM account')).toBe(0);
+    expect(await n("SELECT 1 FROM association WHERE status = 'CLOSED'")).toBe(1);
+    expect(await n("SELECT 1 FROM outbox_message WHERE recipient = 'late@example.org'")).toBe(0);
+  });
+
+  test('purges outbox failures after 30 days, activity after 12 months, closed associations after 30 days', async () => {
+    const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
+    await pool.query("INSERT INTO outbox_message (recipient, template, failed_at) VALUES ('x@example.org', 'RESET', $1)", [new Date(clock.now)]);
+    await claire.post('/api/associations', { name: 'Closing' });
+    await claire.post('/api/associations/closing/close', { confirm: true });
+    clock.now += 31 * DAY;
+    expect(await run()).toMatchObject({ outboxFailuresPurged: 1, closedAssociationsPurged: 1, activityPurged: 0 });
+    clock.now += 365 * DAY;
+    expect((await run()).activityPurged).toBeGreaterThan(0);
+  });
+});
+
+describe('outbox delivery (DF1)', () => {
+  test('the log transport writes the link and deletes the row', async () => {
+    await (await browser(app)).post('/api/signup', { email: 'o@example.org', password: PASSWORD, associationName: 'Out' });
+    const lines = [];
+    expect(await deliverOutbox(pool, createLogTransport({ production: false, write: (line) => lines.push(line) }))).toBe(1);
+    expect(lines[0]).toMatch(/^\[outbox\] VERIFY to o@example.org: .*verify-email#/);
+    expect(await n('SELECT 1 FROM outbox_message')).toBe(0);
+  });
+
+  test('failures are retried, then the payload is dropped after 5 attempts', async () => {
+    await (await browser(app)).post('/api/signup', { email: 'f@example.org', password: PASSWORD, associationName: 'Fail' });
+    const failing = { send: async () => { throw new Error('provider down'); } };
+    for (let i = 0; i < 5; i += 1) await deliverOutbox(pool, failing, { now: () => clock.now });
+    const { rows: [row] } = await pool.query('SELECT attempts, failed_at, payload FROM outbox_message');
+    expect(row).toMatchObject({ attempts: 5, payload: null });
+    expect(row.failed_at).not.toBeNull();
+    expect(await deliverOutbox(pool, failing)).toBe(0);
+  });
+
+  test('the log transport is refused in production', () => {
+    expect(() => createLogTransport({ production: true })).toThrow(/refused in production/);
+  });
+});
+
+describe('no token or password in logs (AC15, AC18)', () => {
+  test('a full flow writes nothing to the console', async () => {
+    const spies = ['log', 'info', 'warn', 'error'].map((level) => jest.spyOn(console, level).mockImplementation(() => {}));
+    const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
+    await claire.post('/api/associations/troupe/invitations', { email: 'm@example.org' });
+    await claire.post('/api/invitations/accept', { token: 'A'.repeat(43) });
+    await (await browser(app)).post('/api/password-reset/confirm', { token: 'A'.repeat(43), password: PASSWORD });
+    spies.forEach((spy) => expect(spy).not.toHaveBeenCalled());
+  });
+});
