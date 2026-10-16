@@ -20,8 +20,8 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   S1-C (415/500; B 400, A 370) against a pre-registration takeover: verification no longer
   signs in, sign-in requires a verified email, a password reset verifies the address (supersedes
   the "verification signs in" part of N1). The QA pass found and fixed a StrictMode bug that broke
-  every verification link in development, and a console error from unused Bootstrap JS. Gate
-  still red on SonarQube only (scanner token rejected, 403).
+  every verification link in development, and a console error from unused Bootstrap JS. SonarQube
+  quality gate passed on ba6542b once run with a global token on the local server. PR #276.
 - **Brick D conception — accounts and associations (UC1–UC8, UC10–UC12)** — owner decided by MCDA top scores
   ([spec](docs/architecture/specs/v1-brick-d-accounts-associations.md)): L1 data access `pg` (465/500; Kysely 415, Prisma 310), L2 migrations
   `node-pg-migrate` (465; Graphile 375, Kysely Migrator 335, custom 315), sessions on

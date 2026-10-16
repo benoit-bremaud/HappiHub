@@ -4,17 +4,17 @@
 - Commit: see the commit that adds this report (fixes in 7c5527f and the QA fix commit)
 - Scope: branch diff origin/main...feat/brick-d-accounts-associations
 - Checks run: design · docs · tests · security · correctness · QA pass
-- Verdict: Must Have resolved; merge still blocked by SonarQube · Must 0 open (7 fixed + 2 found in QA, fixed) · Should 10 · Nice 12
+- Verdict: Must Have resolved; gate green · Must 0 open (7 fixed + 2 found in QA, fixed) · Should 10 · Nice 12
 
 ## Pre-merge gate
 | Step | Result |
 |---|---|
 | 1 Tests | ✅ server 48 unit + 51 integration (disposable PostgreSQL) · ✅ client 36 · ✅ client build |
 | 2 Coverage | server 91.8 % stmts / 72.5 % branches / 96.8 % funcs / 93.8 % lines · client `src/accounts` 93.9 % stmts / 69.8 % branches / 96.8 % funcs / 97.1 % lines · docs: every exported function flagged by the doc audit now documented (no counter tool in this repo) |
-| 3 SonarQube | ⚠️ not run: scanner bootstrap rejected with HTTP 403 (token) — owner action |
+| 3 SonarQube | ✅ QUALITY GATE PASSED on ba6542b (local SonarQube 26.5, project `happihub`) |
 | 4 Secrets | ✅ gitleaks clean on origin/main..HEAD · no tracked .env (the ignored `server/.env.docker.local` is local only) · diff read: only the non-secret local compose credential |
 | 5 QA pass | ✅ full pass on the Docker stack: sign-up, sign-in refused before verification, verification link, sign-in, account page, invitation sent, invitation page as anonymous · network clean (lookup 200, verification 200) · screenshots in `docs/architecture/qa/2026-10-16-brick-d-*.jpg` |
-- Gate: **RED — SonarQube not run** (everything else green)
+- Gate: **GREEN — merge authorised pending owner approval**
 
 ## 🔴 Must Have (all fixed)
 - Emailed-link pages posted before the CSRF bootstrap → now wait for the session (7c5527f).
