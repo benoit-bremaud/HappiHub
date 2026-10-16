@@ -1,45 +1,34 @@
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SessionProvider, useSession } from './session';
-import Header from './components/Header/Header';
-import Home from './components/Home/Home';
-import { Register } from './components/Register/Register';
-import { Connexion } from './components/Connexion/Connexion';
-import { Profil } from './components/Profil/Profil';
-import { Event } from './components/Event/Event';
-import { Logout } from './components/Logout/Logout';
-import { EventCreate } from './components/Event/EventCreate';
-import { EventInfo } from './components/Event/EventInfo';
-
+import { Header } from './components/Header/Header';
+import { Home } from './components/Home/Home';
+import { ForgotPassword, ResetPassword, SignIn, SignUp, VerifyEmail } from './accounts/AuthPages';
+import { AccountPage } from './accounts/AccountPage';
+import { AssociationPage } from './accounts/AssociationPage';
+import { InvitationPage } from './accounts/InvitationPage';
 
 function AppContent() {
-  const { user, status, refresh } = useSession();
-  const isLoggedIn = status === 'authenticated';
-
+  const { account, status, refresh } = useSession();
   return (
     <div className="App">
       <Router>
-        <Header isLoggedIn={isLoggedIn} />
+        <Header />
         {status === 'loading' && <p role="status">Checking your session…</p>}
         {status === 'unavailable' && <div role="alert">Authentication unavailable. <button onClick={refresh}>Retry connection</button></div>}
-        <div className="background-video">
-          <video autoPlay muted loop className="video-background">
-            <source src="/assets/videos/vid.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-        <div className="content">
+        <main className="content">
           <Routes>
-            <Route path="/" element={<Home user={user} />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Connexion />} />
-            <Route path="/logout" element={<Logout/>}/>
-            <Route path="/profil" element={<Profil user={user}/>}/>
-            <Route path="/events" element={<Event/> }/>
-            <Route path="/events/create" element={<EventCreate/> }/>
-            <Route path="/events/:id" element={<EventInfo/>}/>
+            <Route path="/" element={<Home account={account} />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/associations/:slug" element={<AssociationPage />} />
+            <Route path="/invitations" element={<InvitationPage />} />
           </Routes>
-        </div>
+        </main>
       </Router>
     </div>
   );
