@@ -8,7 +8,7 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 ## 2026-10-16
 
 - **Brick D implementation — accounts and associations on PostgreSQL** — branch
-  `feat/brick-d-accounts-associations` (not pushed, no PR yet). Server: `pg`, SQL migration via
+  `feat/brick-d-accounts-associations`, merged into main as PR #276 (dd4ead9) after owner approval. Server: `pg`, SQL migration via
   `node-pg-migrate` (explicit `npm run migrate`), `connect-pg-simple` sessions, endpoints UC1–UC8
   and UC10–UC12, outbox with dev log transport, maintenance job (`npm run maintenance`); Mongo
   account code and dependencies removed, legacy `/events` and `/comments` answer 503 (S3);
