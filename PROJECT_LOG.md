@@ -7,6 +7,14 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-16
 
+- **Brick D conception — accounts and associations (UC1–UC8, UC10–UC12)** — proposed
+  ([spec](docs/architecture/specs/v1-brick-d-accounts-associations.md)), awaiting the owner's
+  decisions: L1 data access `pg` (465/500; Kysely 415, Prisma 310), L2 migrations
+  `node-pg-migrate` (465; Graphile 375, Kysely Migrator 335, custom 315), sessions on
+  `connect-pg-simple`; scope S1 (UC9 to the administration brick, logo to the image brick),
+  S2, S3; 06 amended for D3 tables and pseudonymous moderation targets (pending approval).
+  T11a still blocks real email delivery; brick D uses a dev-only log transport.
+  Branch `docs/brick-d-accounts-associations`.
 - **V1 data and migration study (#246)** — owner decided by MCDA top scores
   ([study](docs/architecture/specs/v1-data-migration.md), [ADR-0003](docs/architecture/decisions/0003-postgresql-primary-database.md)):
   D1 PostgreSQL self-hosted in the EU (435/500; fallback SQLite 385), D2 fresh start with an
