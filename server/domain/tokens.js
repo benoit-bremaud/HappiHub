@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 
+/** Link lifetimes from spec § 4: verification 24 h, reset 1 h, invitation 7 days. */
 export const TOKEN_TTL_MS = Object.freeze({ VERIFY: 24 * 3600e3, RESET: 3600e3, INVITATION: 7 * 24 * 3600e3 });
 
 /** 32 random bytes in base64url; only the SHA-256 hash is stored (spec § 5, DF3). */

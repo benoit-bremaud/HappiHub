@@ -28,16 +28,19 @@ export const updateAssociation = handle(async (req, res) => {
   return res.status(204).end();
 });
 
+/** UC8: explicit confirmation; only the last member may close (checked by the service). */
 export const closeAssociationHandler = handle(async (req, res) => {
   validate(Joi.object({ confirm: Joi.valid(true).required() }), req.body);
   await closeAssociation(req.app.locals.ctx, req.account.id, req.association);
   return res.status(204).end();
 });
 
+/** UC12: never leaves the association without a member; the removed person is emailed. */
 export const removeMember = handle(async (req, res) => {
   await endMembership(req.app.locals.ctx, req.account, req.association, idParam(req, 'accountId'));
   return res.status(204).end();
 });
+/** UC12: leaving follows the same last-member rule as removal. */
 export const leaveAssociation = handle(async (req, res) => {
   await endMembership(req.app.locals.ctx, req.account, req.association, req.account.id);
   return res.status(204).end();
@@ -63,8 +66,5 @@ export const lookupInvitationHandler = handle(async (req, res) =>
 /** UC11: by token (link) or by id (the "Join" choice after verification, UC11 4c). */
 export const acceptInvitationHandler = handle(async (req, res) => {
   const body = validate(Joi.object({ token: Joi.string().max(100), invitationId: uuid }).xor('token', 'invitationId'), req.body);
-  const result = await acceptInvitation(req.app.locals.ctx, req.account, body);
-  if (result.status === 'VERIFICATION_REQUIRED')
-    return res.status(202).json({ message: 'Verify your email address, then join from the list of invitations.', ...result });
-  return res.json(result);
+  return res.json(await acceptInvitation(req.app.locals.ctx, req.account, body));
 });

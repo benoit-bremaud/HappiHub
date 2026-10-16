@@ -4,6 +4,7 @@ import { useSession } from '../session';
 import { apiFetch } from '../api';
 import { PASSWORD_HINT, send } from './request';
 import { Message, useSubmit } from './AuthPages';
+import { JoinList } from './JoinList';
 import './accounts.css';
 
 /** UC4: display name, email (pending until verified) and password, with the current password when needed. */
@@ -119,6 +120,7 @@ export const AccountPage = () => {
   }, []);
   useEffect(() => { if (status === 'authenticated') load(); }, [status, load]);
   if (status === 'anonymous') return <Navigate to="/signin" state={{ from: '/account' }} replace />;
+  if (status === 'unavailable') return null;
   if (!account) return <section className="hh-page"><p role="status">Loading…</p></section>;
   if (account.failed) return <section className="hh-page"><p role="alert">{account.failed}</p></section>;
   return (
@@ -130,6 +132,7 @@ export const AccountPage = () => {
       <ul className="hh-list">
         {account.associations.map((a) => <li key={a.slug}><Link to={`/associations/${a.slug}`}>{a.name}</Link>{a.status === 'CLOSED' && ' (closed)'}</li>)}
       </ul>
+      <JoinList invitations={account.invitations} />
       <NewAssociation onCreated={load} />
       <h3>My data</h3>
       <Message message={exportMessage} />

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { send } from './request';
 
-/** Pending invitations for a verified email; joining stays an explicit choice (UC11 4c). */
+/** Pending invitations for the signed-in address; joining stays an explicit choice (UC11 4c). */
 export const JoinList = ({ invitations = [] }) => {
   const [joined, setJoined] = useState({});
   if (!invitations.length) return null;

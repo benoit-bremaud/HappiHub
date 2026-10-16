@@ -10,16 +10,19 @@ import {
   requestPasswordReset, resendVerification, signUp, soleMemberAssociations, updateAccount, verifyEmail,
 } from '../services/accounts.js';
 import { createAdditionalAssociation } from '../services/associations.js';
+import { pendingInvitationsFor } from '../services/invitations.js';
 import { DomainError } from '../services/errors.js';
 import { guardLimit, handle, validate } from './handle.js';
 
 const CHECK_INBOX = 'Check your inbox to continue.';
 const associationName = Joi.string().trim().min(2).max(100);
 
-const accountView = async (db, account) => ({
+/** Signed-in view; `invitations` are the pending ones for this address (UC11 4c "Join"). */
+const accountView = async (db, account, now) => ({
   id: account.id, email: account.email, emailVerified: Boolean(account.emailVerifiedAt),
   pendingEmail: account.pendingEmail, displayName: account.displayName,
   associations: await accountMemberships(db, account.id),
+  invitations: await pendingInvitationsFor(db, account.email, now),
 });
 
 /** Bootstrap a CSRF-protected visit without issuing a browser-readable credential. */
@@ -30,7 +33,7 @@ export const getSession = async (req, res) => {
     if (req.session.accountId) {
       const account = await findAccount(db, req.session.accountId);
       if (account && account.authVersion === req.session.authVersion)
-        return res.json({ account: await accountView(db, account), csrfToken: req.session.csrfToken });
+        return res.json({ account: await accountView(db, account, req.app.locals.now()), csrfToken: req.session.csrfToken });
       await sessionOperation(req.session, 'regenerate');
     }
     if (!req.session.csrfToken) {
@@ -49,9 +52,9 @@ export const signIn = async (req, res) => {
   if (error) return res.status(400).json({ message: 'Invalid request' });
   try {
     const account = await authenticate(req.app.locals.ctx, value.email, value.password);
-    if (!account) return res.status(401).json({ message: 'Invalid email or password' });
+    if (!account) return res.status(401).json({ message: 'Invalid email or password, or email not verified yet.' });
     await openAccountSession(req, account);
-    return res.json({ account: await accountView(req.app.locals.ctx.db, account), csrfToken: req.session.csrfToken });
+    return res.json({ account: await accountView(req.app.locals.ctx.db, account, req.app.locals.now()), csrfToken: req.session.csrfToken });
   } catch {
     req.session = null; clearSessionCookie(req, res);
     return res.status(503).json({ message: 'Unable to sign in' });
@@ -87,23 +90,22 @@ export const createAssociationHandler = handle(async (req, res) => {
 });
 
 const tokenSchema = Joi.object({ token: Joi.string().max(100).required() });
-/** UC2: a sign-up verification opens a regenerated session and lands in UC15 (N1). */
+/** UC2: verification never opens a session (S1-C); the user signs in next. */
 export const verifyEmailHandler = handle(async (req, res) => {
   const { token } = validate(tokenSchema, req.body);
-  const { account, signUpVerification, invitations } = await verifyEmail(req.app.locals.ctx, token);
-  const signedIn = signUpVerification || req.session.accountId === account.id;
-  if (signUpVerification) await openAccountSession(req, account);
-  return res.json({ signedIn, signUpVerification, invitations,
-    ...(signUpVerification && { csrfToken: req.session.csrfToken }) });
+  const account = await verifyEmail(req.app.locals.ctx, token);
+  return res.json({ signedIn: req.session.accountId === account.id });
 });
 
 const emailBody = Joi.object({ email: emailSchema.required() });
+/** UC2 1a: always the same 202, whether or not a matching account exists (N1). */
 export const resendVerificationHandler = handle(async (req, res) => {
   const { email } = validate(emailBody, req.body);
   await resendVerification(req.app.locals.ctx, email);
   return res.status(202).json({ message: CHECK_INBOX });
 });
 
+/** UC3 step 2: always the same 202, whether or not the email exists (N1). */
 export const requestResetHandler = handle(async (req, res) => {
   const { email } = validate(emailBody, req.body);
   await requestPasswordReset(req.app.locals.ctx, email);
@@ -121,7 +123,7 @@ export const confirmResetHandler = handle(async (req, res) => {
 });
 
 export const getAccount = handle(async (req, res) => res.json({
-  ...(await accountView(req.app.locals.ctx.db, req.account)),
+  ...(await accountView(req.app.locals.ctx.db, req.account, req.app.locals.now())),
   soleMemberOf: await soleMemberAssociations(req.app.locals.ctx.db, req.account.id),
 }));
 
@@ -151,7 +153,7 @@ export const updateAccountHandler = handle(async (req, res) => {
     req.session.authVersion = account.authVersion;
     await sessionOperation(req.session, 'save');
   }
-  return res.json(await accountView(req.app.locals.ctx.db, account));
+  return res.json(await accountView(req.app.locals.ctx.db, account, req.app.locals.now()));
 });
 
 /** UC5: a JSON download, limited to 3 per day per account. */

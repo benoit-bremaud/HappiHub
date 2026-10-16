@@ -20,14 +20,14 @@ Historical FAQ/GUIDE/tutorials do not define current behavior.
 | Method and path | Use case | Success | Notes |
 |---|---|---|---|
 | `GET /session` | — | 200 | Bootstrap; anonymous or signed-in |
-| `POST /session` | sign in | 200 | Neutral `401` for unknown email or wrong password; rate-limited |
+| `POST /session` | sign in | 200 | Neutral `401` for unknown email, wrong password or unverified email (S1-C); rate-limited |
 | `DELETE /session` | sign out | 204 | |
 | `POST /signup` | UC1 | 202 | `{email, password, associationName?}`; same answer whether or not the email exists, no session opened (N1). Without `associationName` it is an invitee sign-up (UC11 3a, amendment A-D1) |
-| `POST /email-verification` | UC2 | 200 | `{token}`; a sign-up verification opens a session and returns `invitations` to join (UC11 4c) |
+| `POST /email-verification` | UC2 | 200 | `{token}`; never opens a session (S1-C); returns `signedIn` for an email change made while signed in |
 | `POST /email-verification/resend` | UC2 | 202 | `{email}`; neutral |
 | `POST /password-reset` | UC3 | 202 | `{email}`; neutral |
-| `POST /password-reset/confirm` | UC3 | 200 | `{token, password}`; revokes every other session |
-| `GET /account` | UC4 | 200 | Includes memberships and `soleMemberOf` |
+| `POST /password-reset/confirm` | UC3 | 200 | `{token, password}`; revokes every other session and also verifies the email (S1-C) |
+| `GET /account` | UC4 | 200 | Includes memberships, pending `invitations` (UC11 4c) and `soleMemberOf` |
 | `PATCH /account` | UC4 | 200 | Email or password change needs `currentPassword` (per-account limit) |
 | `GET /account/export` | UC5 | 200 | JSON download, 3 per day per account |
 | `DELETE /account` | UC6 | 204 | `{password, confirm: true}` |

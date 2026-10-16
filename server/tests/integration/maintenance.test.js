@@ -76,12 +76,27 @@ describe('outbox delivery (DF1)', () => {
 });
 
 describe('no token or password in logs (AC15, AC18)', () => {
-  test('a full flow writes nothing to the console', async () => {
-    const spies = ['log', 'info', 'warn', 'error'].map((level) => jest.spyOn(console, level).mockImplementation(() => {}));
-    const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
-    await claire.post('/api/associations/troupe/invitations', { email: 'm@example.org' });
-    await claire.post('/api/invitations/accept', { token: 'A'.repeat(43) });
-    await (await browser(app)).post('/api/password-reset/confirm', { token: 'A'.repeat(43), password: PASSWORD });
-    spies.forEach((spy) => expect(spy).not.toHaveBeenCalled());
+  test('a full flow with real tokens writes no secret to the console or the process streams', async () => {
+    const output = [];
+    const capture = (...args) => { output.push(args.map(String).join(' ')); return true; };
+    const spies = [
+      ...['log', 'info', 'warn', 'error', 'debug'].map((level) => jest.spyOn(console, level).mockImplementation(capture)),
+      jest.spyOn(process.stdout, 'write').mockImplementation(capture),
+      jest.spyOn(process.stderr, 'write').mockImplementation(capture),
+    ];
+    try {
+      const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
+      const malik = await signUpVerified(app, pool, 'malik@example.org', 'Malik');
+      await claire.post('/api/associations/troupe/invitations', { email: 'malik@example.org' });
+      const { token: invitationToken } = await lastEmail(pool, 'malik@example.org', 'INVITATION');
+      expect((await malik.post('/api/invitations/accept', { token: invitationToken })).status).toBe(200);
+      const anonymous = await browser(app);
+      await anonymous.post('/api/password-reset', { email: 'claire@example.org' });
+      const { token: resetToken } = await lastEmail(pool, 'claire@example.org', 'RESET');
+      const newPassword = 'a secret sentence for the reset';
+      expect((await anonymous.post('/api/password-reset/confirm', { token: resetToken, password: newPassword })).status).toBe(200);
+      const secrets = [invitationToken, resetToken, PASSWORD, newPassword];
+      secrets.forEach((secret) => expect(output.join('\n')).not.toContain(secret));
+    } finally { spies.forEach((spy) => spy.mockRestore()); }
   });
 });

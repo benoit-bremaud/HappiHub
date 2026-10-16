@@ -1,3 +1,4 @@
+/** ADR-0001: 30 min idle expiry for every session, 8 h absolute cap once signed in. */
 export const IDLE_MS = 30 * 60 * 1000;
 export const ABSOLUTE_MS = 8 * 60 * 60 * 1000;
 /**

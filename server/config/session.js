@@ -15,8 +15,10 @@ export const sessionMiddleware = (config, store) => {
     cookie: { httpOnly: true, secure: config.production, sameSite: 'lax', path: '/' },
   });
 };
+/** Expire the browser cookie with the same attributes it was issued with. */
 export const clearSessionCookie = (req, res) => res.clearCookie(req.app.locals.config.cookieName,
   { httpOnly: true, secure: req.app.locals.config.production, sameSite: 'lax', path: '/' });
+/** Promise wrapper for express-session's callback methods (save, regenerate, destroy). */
 export const sessionOperation = (session, method) => new Promise((resolve, reject) =>
   session[method]((error) => error ? reject(error) : resolve()));
 

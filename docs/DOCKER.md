@@ -112,3 +112,11 @@ Stop the chosen stack with docker compose -p <project> stop (include the product
 ## Verification performed
 
 Local and production images built. Non-root app users, absence of environment files and omission of Jest in runtime image verified. Isolated local and production-baseline stacks tested with generated secrets and synthetic accounts. They do not attach existing volumes. Host ports 3000 and 8080 were occupied and left untouched; verification uses 3200/5200 and 3280.
+
+## Scheduled maintenance
+
+Run `npm run maintenance` from `server/` (or `docker compose exec server npm run maintenance`)
+every hour from an external scheduler (cron or a systemd timer). No compose service runs it. It
+sends verification reminders, deletes accounts never verified after 30 days, purges failed outbox
+rows, expired tokens, activity older than 12 months and associations closed for 30 days. Without
+it, none of these retention rules apply.

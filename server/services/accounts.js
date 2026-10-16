@@ -40,8 +40,8 @@ const consumeToken = async (client, ctx, token, purpose) => {
 
 /**
  * UC1 (decision N1): a new email gets account, association, membership and a verification
- * email in one transaction (an invitee, UC11 3a, gets no association); an existing email only gets ACCOUNT_EXISTS. Both paths hash once
- * and answer identically, without a session.
+ * email in one transaction; an invitee (UC11 3a) gets no association. An existing email only
+ * gets ACCOUNT_EXISTS. Both paths hash once and answer identically, without a session.
  */
 export const signUp = async (ctx, { email, password, associationName }) => {
   const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
@@ -62,24 +62,25 @@ export const signUp = async (ctx, { email, password, associationName }) => {
   return { similarAssociation };
 };
 
-/** Credential check for sign-in; an unknown email still costs one bcrypt comparison. */
+/**
+ * Credential check for sign-in; an unknown email still costs one bcrypt comparison. An
+ * unverified email cannot sign in (S1-C), so a pre-registered address never yields a session.
+ */
 export const authenticate = async (ctx, email, password) => {
   const { rows: [row] } = await ctx.db.query(`SELECT ${ACCOUNT_COLUMNS}, password_hash FROM account WHERE email = $1`, [email]);
   const valid = await bcrypt.compare(password, row?.password_hash ?? DUMMY_HASH);
-  return row && valid ? toAccount(row) : null;
+  return row && valid && row.email_verified_at ? toAccount(row) : null;
 };
 
 /**
  * UC2: mark the email verified, or promote a pending email after re-checking it is still free.
- * Returns whether this verified a sign-up (the caller then opens a session, N1) and the pending
- * invitations now joinable (UC11 4c).
+ * No session is opened here (S1-C); pending invitations are offered after sign-in (UC11 4c).
  */
 export const verifyEmail = (ctx, token) => withTransaction(ctx.db, async (client) => {
   const accountId = await consumeToken(client, ctx, token, 'VERIFY');
   if (!accountId) throw new DomainError(410, 'This link is expired or was already used. Ask for a new one.');
   const { rows: [row] } = await client.query(`SELECT ${ACCOUNT_COLUMNS} FROM account WHERE id = $1 FOR UPDATE`, [accountId]);
   const now = new Date(ctx.now());
-  let signUpVerification = false;
   if (row.pending_email) {
     const { rows: taken } = await client.query('SELECT 1 FROM account WHERE email = $1', [row.pending_email]);
     if (taken.length) {
@@ -89,11 +90,9 @@ export const verifyEmail = (ctx, token) => withTransaction(ctx.db, async (client
     await client.query('UPDATE account SET email = pending_email, pending_email = NULL, email_verified_at = $2 WHERE id = $1',
       [accountId, now]);
   } else {
-    signUpVerification = row.email_verified_at === null;
     await client.query('UPDATE account SET email_verified_at = COALESCE(email_verified_at, $2) WHERE id = $1', [accountId, now]);
   }
-  const account = await findAccount(client, accountId);
-  return { account, signUpVerification, invitations: await pendingInvitationsFor(client, account.email, ctx.now()) };
+  return findAccount(client, accountId);
 });
 
 /** UC2 1a/2a: neutral resend for an unverified account email or a pending new email. */
@@ -114,19 +113,25 @@ export const requestPasswordReset = (ctx, email) => withTransaction(ctx.db, asyn
   await queueEmail(client, ctx, { recipient: email, template: 'RESET', payload: { link: ctx.links.reset(token) } });
 });
 
-/** UC3 step 4: new hash and auth_version + 1, revoking every existing session (AC5). */
+/**
+ * UC3 step 4: new hash and auth_version + 1, revoking every existing session (AC5). The link
+ * proves control of the address, so it also verifies the email (S1-C: this is how a victim of a
+ * pre-registration takes the account back).
+ */
 export const confirmPasswordReset = async (ctx, token, password) => {
   const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
   return withTransaction(ctx.db, async (client) => {
     const accountId = await consumeToken(client, ctx, token, 'RESET');
     if (!accountId) throw new DomainError(410, 'This link is expired or was already used. Start again.');
     const { rows: [row] } = await client.query(
-      `UPDATE account SET password_hash = $2, auth_version = auth_version + 1 WHERE id = $1 RETURNING ${ACCOUNT_COLUMNS}`,
-      [accountId, passwordHash]);
+      `UPDATE account SET password_hash = $2, auth_version = auth_version + 1,
+         email_verified_at = COALESCE(email_verified_at, $3) WHERE id = $1 RETURNING ${ACCOUNT_COLUMNS}`,
+      [accountId, passwordHash, new Date(ctx.now())]);
     return toAccount(row);
   });
 };
 
+/** Resolves to true when the password matches; never throws on a mismatch. */
 export const checkPassword = async (db, accountId, password) => {
   const { rows: [row] } = await db.query('SELECT password_hash FROM account WHERE id = $1', [accountId]);
   return bcrypt.compare(password, row?.password_hash ?? DUMMY_HASH);
@@ -166,6 +171,7 @@ export const soleMemberAssociations = async (db, accountId) => {
   return rows;
 };
 
+/** Associations of the account as `{ name, slug, status, joinedAt }`, for the account view and the export. */
 export const accountMemberships = async (db, accountId) => {
   const { rows } = await db.query(
     `SELECT a.name, a.slug, a.status, m.joined_at FROM membership m JOIN association a ON a.id = m.association_id

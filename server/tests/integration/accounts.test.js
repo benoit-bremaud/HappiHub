@@ -42,6 +42,9 @@ describe('UC1 sign-up (AC1, AC2)', () => {
     const existing = await second.post('/api/signup', { email: 'a@example.org', password: PASSWORD, associationName: 'Beta' });
     expect(existing.status).toBe(fresh.status);
     expect(existing.body).toEqual({ ...fresh.body, similarAssociation: false });
+    // AC2: same headers apart from the per-response values.
+    const stable = ({ date, etag, 'set-cookie': cookie, 'ratelimit-reset': reset, 'ratelimit-remaining': left, ratelimit, ...rest }) => rest;
+    expect(stable(existing.headers)).toEqual(stable(fresh.headers));
     expect(sessionId(existing)).toBe(second.state.sessionId);
     expect((await pool.query("SELECT 1 FROM session WHERE sess->>'accountId' IS NOT NULL")).rows).toHaveLength(0);
     expect(await count('association')).toBe(1);
@@ -74,14 +77,18 @@ describe('UC1 sign-up (AC1, AC2)', () => {
   });
 });
 
-describe('UC2 verification (AC4, N1)', () => {
-  test('the link signs the new user in once; reuse changes nothing', async () => {
+describe('UC2 verification (AC4, N1, S1-C)', () => {
+  test('sign-in is refused before verification; the link verifies once without a session', async () => {
     const client = await browser(app);
     await client.post('/api/signup', { email: 'v@example.org', password: PASSWORD, associationName: 'Verif' });
+    const early = await client.post('/api/session', { email: 'v@example.org', password: PASSWORD });
+    const wrong = await client.post('/api/session', { email: 'v@example.org', password: `${PASSWORD}!` });
+    expect([early.status, early.body]).toEqual([401, wrong.body]);
     const { token } = await lastEmail(pool, 'v@example.org', 'VERIFY');
-    const verified = client.adopt(await client.post('/api/email-verification', { token }));
-    expect(verified.status).toBe(200);
-    expect(verified.body.signUpVerification).toBe(true);
+    const verified = await client.post('/api/email-verification', { token });
+    expect(verified.body).toEqual({ signedIn: false });
+    expect((await client.get('/api/account')).status).toBe(401);
+    client.adopt(await client.post('/api/session', { email: 'v@example.org', password: PASSWORD }));
     const account = await client.get('/api/account');
     expect(account.body.emailVerified).toBe(true);
     expect((await client.post('/api/email-verification', { token })).status).toBe(410);
@@ -159,7 +166,10 @@ describe('UC3 reset (AC5)', () => {
     const unknown = await client.post('/api/password-reset', { email: 'ghost@example.org' });
     expect(known.status).toBe(202); expect(known.body).toEqual(unknown.body);
     const { token } = await lastEmail(pool, 'p@example.org', 'RESET');
-    expect((await lastEmail(pool, 'p@example.org', 'RESET')).payload.link).toContain('/reset-password#');
+    // AC18: the token travels in the fragment only, never in the query string.
+    const { link } = (await lastEmail(pool, 'p@example.org', 'RESET')).payload;
+    expect(link).toMatch(/^http:\/\/localhost:3000\/reset-password#[A-Za-z0-9_-]{43}$/);
+    expect(new URL(link).search).toBe('');
     const confirmed = client.adopt(await client.post('/api/password-reset/confirm', { token, password: 'a brand new sentence here' }));
     expect(confirmed.status).toBe(200);
     expect((await client.get('/api/account')).status).toBe(200);
@@ -168,6 +178,18 @@ describe('UC3 reset (AC5)', () => {
     expect((await client.post('/api/password-reset/confirm', { token, password: 'another long sentence ok' })).status).toBe(410);
     const signIn = await (await browser(app)).post('/api/session', { email: 'p@example.org', password: 'a brand new sentence here' });
     expect(signIn.status).toBe(200);
+  });
+
+  test('S1-C: a pre-registered address is taken back by a reset, which also verifies it', async () => {
+    const attacker = await browser(app);
+    await attacker.post('/api/signup', { email: 'victim@example.org', password: PASSWORD, associationName: 'Squat' });
+    expect((await attacker.post('/api/session', { email: 'victim@example.org', password: PASSWORD })).status).toBe(401);
+    const victim = await browser(app);
+    await victim.post('/api/password-reset', { email: 'victim@example.org' });
+    const { token } = await lastEmail(pool, 'victim@example.org', 'RESET');
+    victim.adopt(await victim.post('/api/password-reset/confirm', { token, password: 'only the victim knows this' }));
+    expect((await victim.get('/api/account')).body.emailVerified).toBe(true);
+    expect((await attacker.post('/api/session', { email: 'victim@example.org', password: PASSWORD })).status).toBe(401);
   });
 
   test('a reset link expires after 1 h', async () => {
@@ -195,7 +217,7 @@ describe('UC4 account update (AC6)', () => {
     expect(await lastEmail(pool, 'old-mail@example.org', 'EMAIL_CHANGE_NOTICE')).toBeDefined();
     const { token } = await lastEmail(pool, 'new-mail@example.org', 'VERIFY');
     const verified = await client.post('/api/email-verification', { token });
-    expect(verified.body.signUpVerification).toBe(false);
+    expect(verified.body).toEqual({ signedIn: true });
     expect((await client.get('/api/account')).body).toMatchObject({ email: 'new-mail@example.org', pendingEmail: null });
   });
 

@@ -37,9 +37,11 @@ const sendInvitation = async (client, ctx, { actor, association, invitationId, e
   return { id: invitationId, email, expiresAt, link };
 };
 
-/** UC10: verified inviter, not an existing member, one pending invitation per email, 10 per day. */
+/**
+ * UC10: not an existing member, one pending invitation per email, 10 per day. The inviter is
+ * verified because only verified accounts can sign in (S1-C).
+ */
 export const createInvitation = (ctx, actor, association, email) => withTransaction(ctx.db, async (client) => {
-  if (!actor.emailVerifiedAt) throw new DomainError(403, 'Verify your email address before inviting.');
   await lockAndCheckQuota(client, ctx, association.id);
   const { rows: member } = await client.query(
     'SELECT 1 FROM membership m JOIN account a ON a.id = m.account_id WHERE m.association_id = $1 AND a.email = $2',
@@ -59,8 +61,8 @@ export const createInvitation = (ctx, actor, association, email) => withTransact
   return sendInvitation(client, ctx, { actor, association, invitationId: created.id, email });
 });
 
+/** UC10: a new token replaces the old one (the previous link stops) and counts in the daily quota. */
 export const resendInvitation = (ctx, actor, association, invitationId) => withTransaction(ctx.db, async (client) => {
-  if (!actor.emailVerifiedAt) throw new DomainError(403, 'Verify your email address before inviting.');
   await lockAndCheckQuota(client, ctx, association.id);
   const { rows: [invitation] } = await client.query(
     "SELECT id, email FROM invitation WHERE id = $1 AND association_id = $2 AND status = 'PENDING' FOR UPDATE",
@@ -106,7 +108,7 @@ export const pendingInvitationsFor = async (db, email, now) => {
 
 /**
  * UC11 per 02b: the invitation row is locked, so two parallel accepts admit once. Only the
- * invited, verified email joins. `invitationId` is the "Join" choice of UC11 4c, valid only for
+ * invited email joins; a signed-in account is always verified (S1-C). `invitationId` is the "Join" choice of UC11 4c, valid only for
  * the same signed-in, verified address.
  */
 export const acceptInvitation = (ctx, account, { token, invitationId }) => withTransaction(ctx.db, async (client) => {
@@ -123,7 +125,6 @@ export const acceptInvitation = (ctx, account, { token, invitationId }) => withT
   if (invitation.email !== account.email)
     throw new DomainError(403, `This invitation is for ${maskEmail(invitation.email)}. Ask the association to invite your address.`,
       { hint: maskEmail(invitation.email) });
-  if (!account.emailVerifiedAt) return { status: 'VERIFICATION_REQUIRED' };
   await client.query(
     'INSERT INTO membership (account_id, association_id, joined_at) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
     [account.id, invitation.association_id, new Date(ctx.now())]);

@@ -53,11 +53,12 @@ export const lastEmail = async (pool, recipient, template) => {
   return row && { ...row, token: row.payload?.link?.split('#')[1] };
 };
 
-/** Sign up, verify through the queued link (N1 signs in) and return the signed-in browser. */
+/** Sign up, verify through the queued link, sign in (S1-C) and return the signed-in browser. */
 export const signUpVerified = async (app, pool, email, associationName = 'Les Tréteaux') => {
   const client = await browser(app);
   await client.post('/api/signup', { email, password: PASSWORD, associationName });
   const { token } = await lastEmail(pool, email, 'VERIFY');
-  client.adopt(await client.post('/api/email-verification', { token }));
+  await client.post('/api/email-verification', { token });
+  client.adopt(await client.post('/api/session', { email, password: PASSWORD }));
   return client;
 };

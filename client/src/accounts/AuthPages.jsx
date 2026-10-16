@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from '../session';
 import { PASSWORD_HINT, send, takeFragmentToken } from './request';
-import { JoinList } from './JoinList';
 import './accounts.css';
 
 /** Submit-once form state shared by the account screens. */
@@ -70,7 +69,7 @@ export const SignIn = () => {
     event.preventDefault();
     run(async () => {
       const { ok, status, data } = await send('/session', 'POST', { email, password });
-      if (!ok) return { error: true, text: status === 401 ? 'Invalid email or password.' : data.message ?? 'Unable to sign in.' };
+      if (!ok) return { error: true, text: status === 401 ? 'Invalid email or password, or email not verified yet.' : data.message ?? 'Unable to sign in.' };
       acceptSession(data);
       navigate(state?.from ?? '/account');
       return null;
@@ -121,14 +120,14 @@ export const ForgotPassword = () => (
 export const ResetPassword = () => {
   const { refresh } = useSession();
   const navigate = useNavigate();
-  const token = useRef(null);
-  if (token.current === null) token.current = takeFragmentToken();
+  // Read once on mount (a lazy initializer survives StrictMode double renders).
+  const [token] = useState(takeFragmentToken);
   const [password, setPassword] = useState('');
   const { busy, message, run } = useSubmit();
   const submit = (event) => {
     event.preventDefault();
     run(async () => {
-      const { ok, status, data } = await send('/password-reset/confirm', 'POST', { token: token.current, password });
+      const { ok, status, data } = await send('/password-reset/confirm', 'POST', { token, password });
       setPassword('');
       if (ok) { await refresh(); navigate('/account'); return null; }
       return { error: true, text: status === 400 ? data.hint : data.message ?? 'Unable to reset the password.' };
@@ -148,22 +147,25 @@ export const ResetPassword = () => {
   );
 };
 
-/** UC2: verifying a sign-up signs in (N1) and offers pending invitations (UC11 4c). */
+/**
+ * UC2: verification opens no session (S1-C); the user signs in next and finds pending
+ * invitations on the account page. The POST waits for the session bootstrap (CSRF token).
+ */
 export const VerifyEmail = () => {
-  const { refresh } = useSession();
+  const { status, refresh } = useSession();
+  const [token] = useState(takeFragmentToken);
   const [result, setResult] = useState({ status: 'checking' });
   const started = useRef(false);
   useEffect(() => {
-    if (started.current) return;
+    if (started.current || status === 'loading') return;
     started.current = true;
-    const token = takeFragmentToken();
     (async () => {
       const { ok, data } = await send('/email-verification', 'POST', { token });
       if (!ok) { setResult({ status: 'failed', message: data.message }); return; }
       if (data.signedIn) await refresh();
       setResult({ status: 'verified', ...data });
     })();
-  }, [refresh]);
+  }, [status, token, refresh]);
   return (
     <section className="hh-page">
       <h2>Email verification</h2>
@@ -174,9 +176,9 @@ export const VerifyEmail = () => {
       </>)}
       {result.status === 'verified' && (<>
         <p role="status">Your email address is verified.</p>
-        {result.signUpVerification && <p>Next step: create your first event — event creation arrives with the events release.</p>}
-        <JoinList invitations={result.invitations} />
-        <p><Link to="/account">Go to my account</Link></p>
+        {result.signedIn
+          ? <p><Link to="/account">Go to my account</Link></p>
+          : <p><Link to="/signin">Sign in</Link> to continue.</p>}
       </>)}
     </section>
   );

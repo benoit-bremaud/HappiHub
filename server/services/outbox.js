@@ -1,3 +1,5 @@
+import { withTransaction } from '../db/transaction.js';
+
 const MAX_ATTEMPTS = 5;
 // Templates limited per recipient (quota "Verification / reset emails", 10 per hour).
 const CAPPED_TEMPLATES = new Set(['VERIFY', 'RESET', 'ACCOUNT_EXISTS']);
@@ -18,11 +20,9 @@ export const queueEmail = async (client, ctx, { recipient, template, payload }) 
  * Deliver due rows through the transport port. A sent row is deleted (DF1); after
  * MAX_ATTEMPTS failures the row keeps no payload (it holds the token link) and is purged by F25.
  */
-export const deliverOutbox = async (pool, transport, { now = Date.now, batch = 20 } = {}) => {
-  const client = await pool.connect();
-  let delivered = 0;
-  try {
-    await client.query('BEGIN');
+export const deliverOutbox = (pool, transport, { now = Date.now, batch = 20 } = {}) =>
+  withTransaction(pool, async (client) => {
+    let delivered = 0;
     const { rows } = await client.query(
       `SELECT id, recipient, template, payload, attempts FROM outbox_message
        WHERE failed_at IS NULL ORDER BY created_at LIMIT $1 FOR UPDATE SKIP LOCKED`, [batch]);
@@ -40,15 +40,8 @@ export const deliverOutbox = async (pool, transport, { now = Date.now, batch = 2
            WHERE id = $1`, [row.id, final, new Date(now())]);
       }
     }
-    await client.query('COMMIT');
     return delivered;
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
-};
+  });
 
 /**
  * Development transport: prints the email and its link on the local console (spec § 6).

@@ -60,8 +60,9 @@ Si vous rencontrez un problème ou avez une suggestion d'amélioration, veuillez
 3. **Créez un fichier `.env` dans le répertoire `server` avec le contenu suivant** :
    ```
    PORT=5000
-   MONGO_URI=mongodb://mongo:27018/happihub
+   DATABASE_URL_DEV=postgres://<user>:<password>@localhost:5432/happihub_local
    ```
+   Puis appliquez le schéma avec `npm run migrate` (voir [CONFIGURATION](CONFIGURATION.md)).
 4. **Créez un fichier `.env` dans le répertoire `client` avec le contenu suivant** :
    ```
    REACT_APP_API_URL=http://localhost:5000/api

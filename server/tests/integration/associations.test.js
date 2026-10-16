@@ -51,13 +51,6 @@ describe('UC8 closure (AC10)', () => {
 });
 
 describe('UC10 invitations (AC11)', () => {
-  test('requires a verified inviter', async () => {
-    const client = await browser(app);
-    await client.post('/api/signup', { email: 'u@example.org', password: PASSWORD, associationName: 'Unverified' });
-    client.adopt(await client.post('/api/session', { email: 'u@example.org', password: PASSWORD }));
-    expect((await client.post('/api/associations/unverified/invitations', { email: 'm@example.org' })).status).toBe(403);
-  });
-
   test('refuses existing members, offers resend for pending ones, enforces 10 per day', async () => {
     const { claire } = await twoMembers();
     expect((await claire.post('/api/associations/troupe/invitations', { email: 'malik@example.org' })).status).toBe(409);
@@ -108,7 +101,7 @@ describe('UC11 joining (AC12)', () => {
     expect(unknown.body).toEqual(expired.body);
   });
 
-  test('unverified gets 202 without membership; a different email gets 403 with a masked hint', async () => {
+  test('an invitee signs up, verifies, signs in and joins by id; a different email gets 403 with a masked hint', async () => {
     const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
     await claire.post('/api/associations/troupe/invitations', { email: 'malik@gmail.com' });
     const { token } = await lastEmail(pool, 'malik@gmail.com', 'INVITATION');
@@ -116,20 +109,18 @@ describe('UC11 joining (AC12)', () => {
     // UC11 3a: the invitee signs up without an association name.
     expect((await malik.post('/api/signup', { email: 'malik@gmail.com', password: PASSWORD })).status).toBe(202);
     expect((await pool.query("SELECT associations_created FROM account WHERE email = 'malik@gmail.com'")).rows[0].associations_created).toBe(0);
-    malik.adopt(await malik.post('/api/session', { email: 'malik@gmail.com', password: PASSWORD }));
-    const pending = await malik.post('/api/invitations/accept', { token });
-    expect(pending.status).toBe(202);
-    expect((await pool.query("SELECT 1 FROM membership m JOIN association a ON a.id = m.association_id WHERE a.slug = 'troupe'")).rows).toHaveLength(1);
+    expect((await malik.post('/api/session', { email: 'malik@gmail.com', password: PASSWORD })).status).toBe(401);
     const stranger = await signUpVerified(app, pool, 'other@example.org', 'Stranger');
     const foreign = await stranger.post('/api/invitations/accept', { token });
     expect(foreign.status).toBe(403);
     expect(foreign.body.hint).toBe('m•••@gmail.com');
-    // After verification the pending invitation is offered and joined by id (UC11 4c).
+    // After verification and sign-in the pending invitation is offered and joined by id (UC11 4c).
     const { token: verifyToken } = await lastEmail(pool, 'malik@gmail.com', 'VERIFY');
-    const verified = await malik.post('/api/email-verification', { token: verifyToken });
-    malik.adopt(verified);
-    expect(verified.body.invitations).toEqual([expect.objectContaining({ associationSlug: 'troupe' })]);
-    const joined = await malik.post('/api/invitations/accept', { invitationId: verified.body.invitations[0].id });
+    await malik.post('/api/email-verification', { token: verifyToken });
+    malik.adopt(await malik.post('/api/session', { email: 'malik@gmail.com', password: PASSWORD }));
+    const { invitations } = (await malik.get('/api/account')).body;
+    expect(invitations).toEqual([expect.objectContaining({ associationSlug: 'troupe' })]);
+    const joined = await malik.post('/api/invitations/accept', { invitationId: invitations[0].id });
     expect(joined.body).toEqual({ status: 'JOINED', associationSlug: 'troupe' });
     expect((await pool.query('SELECT 1 FROM invitation')).rows).toHaveLength(0);
     expect((await malik.get('/api/associations/troupe')).body.members).toHaveLength(2);

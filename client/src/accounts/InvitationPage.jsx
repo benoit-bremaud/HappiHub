@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../session';
 import { send, takeFragmentToken } from './request';
@@ -9,22 +9,25 @@ import './accounts.css';
 export const InvitationPage = () => {
   const { status } = useSession();
   const navigate = useNavigate();
-  const token = useRef(null);
-  if (token.current === null) token.current = sessionStorage.getItem('invitationToken') || takeFragmentToken();
+  // A fresh link wins over a token kept from an earlier visit; read once (StrictMode-safe).
+  const [token] = useState(() => takeFragmentToken() || sessionStorage.getItem('invitationToken') || '');
   const [invitation, setInvitation] = useState(null);
   const { busy, message, run } = useSubmit();
   useEffect(() => {
-    // Kept for this tab only, so the page still works after signing in or signing up.
-    if (token.current) sessionStorage.setItem('invitationToken', token.current);
+    // The POST needs the CSRF token from the session bootstrap.
+    if (status === 'loading' || invitation) return;
     (async () => {
-      const { ok, data } = await send('/invitations/lookup', 'POST', { token: token.current });
+      const { ok, data } = await send('/invitations/lookup', 'POST', { token });
+      // Kept for this tab only, so the page still works after signing in or signing up.
+      if (ok) sessionStorage.setItem('invitationToken', token);
+      else sessionStorage.removeItem('invitationToken');
       setInvitation(ok ? data : { gone: data.message ?? 'This invitation is no longer valid. Ask the association for a new one.' });
     })();
-  }, []);
+  }, [status, token, invitation]);
   const join = () => run(async () => {
-    const { ok, status: code, data } = await send('/invitations/accept', 'POST', { token: token.current });
-    if (ok && code === 200) { sessionStorage.removeItem('invitationToken'); navigate(`/associations/${data.associationSlug}`); return null; }
-    return { error: code !== 202, text: data.message };
+    const { ok, data } = await send('/invitations/accept', 'POST', { token });
+    if (ok) { sessionStorage.removeItem('invitationToken'); navigate(`/associations/${data.associationSlug}`); return null; }
+    return { error: true, text: data.message };
   });
   if (!invitation) return <section className="hh-page"><p role="status">Checking your invitation…</p></section>;
   if (invitation.gone) return <section className="hh-page"><p role="alert">{invitation.gone}</p></section>;
