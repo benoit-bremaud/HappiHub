@@ -7,6 +7,14 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-16
 
+- **CI flake fixed — server rate-limit tests timing out (PR #280, merge a161d7c)** — failed
+  sign-ins compare against a cost-12 dummy hash (~313 ms each in pure-JS bcryptjs). The tests run
+  20–21 sign-ins each and exceeded the 30 s Jest timeout on slow runners (run 38939962986). Benoît
+  validated option B (MCDA 480/500; env-var cost 345, raised timeout 300). B is a Jest-only setup
+  file `server/tests/fastBcrypt.js` that hashes at cost 4 in unit tests. No production change;
+  integration tests keep cost 12. Each test now takes under 0.3 s instead of ~7 s. The local
+  gate was green, including the SonarQube gate.
+
 - **Brick B conception merged** — PR #278 merged into main (8dd08ad) after green CI and owner
   approval; branch deleted. Next: brick B implementation on its own branch, within the spec.
 - **Brick B conception decided — event lifecycle backend (UC15–UC20)** — Benoît validated the
