@@ -7,6 +7,14 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-16
 
+- **Brick B conception proposed — event lifecycle backend (UC15–UC20)** —
+  [spec](docs/architecture/specs/v1-brick-b-event-lifecycle.md), branch
+  `docs/brick-b-event-lifecycle-spec`. MCDA recommendations awaiting owner validation: S backend
+  only, images and wizard client in later bricks (440/500; images 320, with client 280); A1
+  effective end = start + 24 h when no end (450); Q creation quota counted from `event` rows (410);
+  V static French commune list until T11c (450; Géoplateforme proxy 320); P six placeholder poster
+  styles. Server-side field merge under a row lock, publication guard G1–G4, UC8 closure hook,
+  maintenance archive and S2 draft cleanup, acceptance BC1–BC18. No code.
 - **Brick D implementation — accounts and associations on PostgreSQL** — branch
   `feat/brick-d-accounts-associations`, merged into main as PR #276 (dd4ead9) after owner approval. Server: `pg`, SQL migration via
   `node-pg-migrate` (explicit `npm run migrate`), `connect-pg-simple` sessions, endpoints UC1–UC8
