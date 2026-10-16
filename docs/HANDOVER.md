@@ -52,8 +52,8 @@ Raw earlier audit exports remain untracked and must not be bulk-staged.
 These are direction decisions. Since 2026-10-15 the V1 audience (cultural associations),
 first-release scope, organization model, publication destinations and partner API
 authorization are owner-validated in the [V1 product framing](architecture/specs/v1-product-framing.md)
-and [user journeys](architecture/specs/v1-user-journeys.md). Business model, hosting and
-final database technology are not approved decisions.
+and [user journeys](architecture/specs/v1-user-journeys.md). Business model and hosting
+are not approved decisions; the database is PostgreSQL (ADR-0003, 2026-10-16).
 
 ## Implemented local baseline
 
@@ -131,8 +131,11 @@ have occurred. Do not interpret candidate folders as an approved implementation 
    T1–T9 resolved, T10–T11 open). Implementation gate approved 2026-10-16 for `798b323`
    ([gate](architecture/specs/v1-implementation-gate.md)); first brick: #246 data/migration study,
    then accounts/associations, event lifecycle backend, partner API.
-   Open preconditions: legacy migration (#246, T10); email provider, hosting/backups and
-   Géoplateforme quota (T11). Backup retention is decided with hosting.
+   Done 2026-10-16: #246 data/migration study ([study](architecture/specs/v1-data-migration.md),
+   ADR-0003): PostgreSQL, fresh start, frozen features as two tables; T10 resolved.
+   Next brick: D accounts/associations conception (data access library and migration tool
+   by MCDA), plus 06 update for the frozen tables. Open: email provider, hosting/backups
+   (must provide EU PostgreSQL) and Géoplateforme quota (T11). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.
 
 Technical migration and demo-tooling studies may be prepared alongside framing, but their
