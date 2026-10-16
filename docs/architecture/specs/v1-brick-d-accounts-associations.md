@@ -272,10 +272,10 @@ reference until DF5 purges them. [02b](../diagrams/v1-events/02b-sequence-invite
 keeps its flow; its endpoint paths are superseded by section 5 (token in the body). Diagrams
 04 and 03 need no change.
 
-## 11. Implementation amendments awaiting owner revalidation
+## 11. Implementation amendments (validated 2026-10-16)
 
-Gaps found while implementing brick D. The code follows the "Implemented" column; each line
-needs Benoît's validation or a change request before merge.
+Gaps found while implementing brick D. Benoît validated the "Implemented" column on
+2026-10-16.
 
 | # | Gap | Implemented | Alternative |
 | --- | --- | --- | --- |
