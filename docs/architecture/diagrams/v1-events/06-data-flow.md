@@ -10,7 +10,9 @@
 > [ADR-0002](../../decisions/0002-normalize-client-address-at-ingress.md) (ingress)
 
 Status: validated by the owner on 2026-10-15 (conception workshop 6), DF4–DF5 and the
-local-review fixes included.
+local-review fixes included. Amendment for the frozen D3 tables and pseudonymous moderation
+references proposed by [brick D](../../specs/v1-brick-d-accounts-associations.md) § 10,
+approved by the owner on 2026-10-16.
 
 ## Context
 
@@ -40,6 +42,8 @@ Source: [06-data-flow.puml](06-data-flow.puml).
 | Client IP — technical logs (ingress access, API errors) | Security incident investigation | Legitimate interest | 14 days (DF3); never an email, password, token or request body |
 | API keys: name, SHA-256 hash, `createdBy`, `lastUsedAt` | Partner access requested by members | Contract | Revoked after 180 days unused, 14-day notice (I1); deleted with the association |
 | Images and logos (EXIF stripped) | Event presentation | Contract | Deleted with their draft, event or association; images before data (02d) |
+| Frozen participation (`event_participation`: event, account) and comments (`event_comment`: event, account, text, date) — D3, F28 | Existing behavior kept, not extended | Contract | Deleted with the event or the account (cascade); never in public projections or the partner API |
+| `target_id` of a deleted account in reports, decisions and suspensions (pseudonymised identifier, still personal data; the record's free-text `reason`/`comment` stays with it) | Moderation accountability | Legitimate interest | Kept after account deletion until DF5 purges the record |
 
 No consent-based processing exists in V1: no analytics, no third-party script, only strictly
 necessary cookies (session, CSRF), so no consent banner.
@@ -52,7 +56,8 @@ necessary cookies (session, CSRF), so no consent banner.
   member IP, no account identifier.
 - **Partner API** (F18): public event projection; never owner, member or participant
   identifiers.
-- **Export** (F22, UC5): the requester's own data as JSON (rights of access and portability).
+- **Export** (F22, UC5): the requester's own data as JSON (rights of access and portability),
+  including its own participations and comments (D3).
 
 ## Account deletion (UC6, A5) and its effects (F26)
 
@@ -60,11 +65,13 @@ Immediate, after the current password and confirmation:
 
 - Deleted: account data, sessions, pending verification/reset tokens, pending invitations
   addressed to its email, own removal and moderation disputes (releasing their SQ4 link),
-  pending outbox messages to its address.
+  pending outbox messages to its address, its participations and comments (D3, cascade).
 - Kept with the association, shown as "former member": events (`createdBy`, `lastEditedBy`),
   activity entries, invitations it sent while still pending, API keys it created.
 - Kept for moderation accountability, shown as "former member": decisions it took
   (`decidedBy`) and disputes it resolved (`resolvedBy`), until DF5 expires them.
+- Kept as a pseudonymous reference: the account's id as `target_id` of reports, decisions and
+  suspensions that targeted it (no foreign key, schema study § 3), until DF5 expires them.
 - Memberships end; an association left without member is closed (UC8, 30 days then deleted).
 - Technical logs expire on their own 14-day cycle; backups follow their rotation (see below).
 

@@ -23,7 +23,8 @@ rectangle "Trust boundary: HappiHub (EU hosting)" {
     collections "Invitations (invitee email,\ntoken hash, invitedBy)\ndeleted once not pending" as D_INV
     collections "Memberships, events,\nassociation profile" as D_ASSO
     collections "Activity log\n(no IP, 12 months)" as D_LOG
-    collections "Reports, decisions, suspensions,\ndisputes (12 months after closure)" as D_MOD
+    collections "Reports, decisions, suspensions,\ndisputes (12 months after closure;\ndeleted account kept as pseudonymous target id)" as D_MOD
+    collections "Frozen features (D3):\nevent_participation, event_comment\n(account id, comment text)" as D_FRZ
     collections "Outbox (recipient, template, link)\ndeleted once sent; failures 30 days" as D_OUT
     collections "API keys\n(name, SHA-256 hash, lastUsedAt)" as D_KEY
   }
@@ -67,4 +68,5 @@ MJ --> D_ACC : F24 delete unverified\naccounts after 30 days
 MJ --> D_OUT : F25 notices and reminders;\ndelete failures > 30 days
 API --> M : F22 export (UC5, JSON)
 API --> D_ACC : F26 account deletion cascade (UC6)
+API --> D_FRZ : F28 participation, comments\n(existing behavior only; never in public projections)
 @enduml

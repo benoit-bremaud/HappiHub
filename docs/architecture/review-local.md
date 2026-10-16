@@ -1,43 +1,49 @@
-# Local review — HappiHub (branch docs/246-data-migration-study vs main)
+# Local review — HappiHub (branch docs/brick-d-accounts-associations vs main)
 
 - Date: 2026-10-16
-- Commit: 5d1d252 + review fixes
-- Scope: v1-data-migration.md, ADR-0003, PROJECT_LOG.md, docs/HANDOVER.md (documentation only)
-- Checks run: design · docs · correctness (MCDA arithmetic, links, facts vs models); tests and security code passes not applicable to a docs-only diff (GDPR/secret concerns reviewed under design)
-- Verdict: ship after fixes · Must 3 (fixed) · Should 6 (fixed) · Nice 2 (1 fixed, 1 disagree)
+- Commit: c2b5be5 + review fixes
+- Scope: brick D spec, 06-data-flow (md/puml/svg), UC1 and J1 D1 amendments, PROJECT_LOG.md,
+  docs/HANDOVER.md (documentation only)
+- Checks run: design · docs · security · correctness (MCDA arithmetic, consistency with
+  UC1–UC12, schema study, 02b, 04, ADR-0001/0003); test-quality pass not applicable to a docs-only diff
+- Verdict: ship after fixes · Must 2 (fixed with owner decisions) · Should 9 (fixed) · Nice 5 (3 fixed, 2 disagree)
 
 ## 🔴 Must Have
-- `v1-data-migration.md` §3 `removal_dispute`, `moderation_dispute` `[design|docs]` · CASCADE on account/association deletion wiped disputes kept 12 months (F19b, DF5) · Fixed: FK `SET NULL`, stored `association_name`, retention paragraph.
-- `v1-data-migration.md` §3 `[design]` · purges in 06 had no supporting indexes · Fixed: indexes on expiry/failure/decision dates and unverified accounts.
-- `v1-data-migration.md` §3 moderation tables `[design]` · polymorphic target unconstrained, no lookup index, retained pseudonymous id unlisted · Fixed: CHECK, (`target_kind`, `target_id`) index, 06 follow-up noted.
+- `specs/v1-brick-d-accounts-associations.md` §4/§9 S2 `[correctness|design]` · "ACTIVE only" contradicted UC1 1b, quotas and 04 `0..5`, and allowed create-then-close bypass · Fixed: owner revised S2 to "5 in total" (440 vs 240), enforced by `account.associations_created`.
+- `specs/v1-brick-d-accounts-associations.md` §5 UC1 `[security]` · sign-in on sign-up revealed existing emails (cookie, timing) · Fixed: owner decision N1 "verify first" (335 vs 330); same 202 without cookie, dummy bcrypt, link signs in; UC1 and J1 D1 amended; AC2 strengthened.
 
 ## 🟡 Should Have
-- §3 `event`, `association` `[docs|design]` · image FKs missing from owner rows · Fixed, with `SET NULL` and F21 deletion order.
-- §3 `session` `[docs]` · revocation path unstated · Fixed: `auth_version` (ADR-0001).
-- §3 account deletion `[docs|design]` · cascade claim hid non-FK deletes and the last-member rule · Fixed: explicit transaction per UC6 2a.
-- §3 `outbox_message` `[design]` · token link at rest for 30 days on failure · Fixed: payload cleared on final failure.
-- §3 `event` price CHECK `[design]` · one-directional · Fixed: equivalence CHECK.
-- §2 sensitivity `[correctness]` · omitted D (370) and unsupported 3:1 claim · Fixed.
+- §2 sensitivity `[correctness]` · TypeScript-flip claim false · Fixed.
+- §1 scope `[design]` · maintenance job tasks F19–F25 missing; accept ignored `expires_at` · Fixed: scope row, §4 expiry rule, AC19.
+- §1/§5 `[docs]` · dead UC13 dispute link, template name mismatch · Fixed: UC13 out of scope, `MEMBER_REMOVED` without link.
+- §6 log transport `[correctness]` · marked rows sent instead of deleting (DF1) · Fixed.
+- §5 tokens `[security]` · invitation token in URL path reached access logs; `target_ref` content unspecified · Fixed: token in fragment and request bodies, AC18, `target_ref` never an email.
+- §1 `[docs]` · client and API contract scope missing · Fixed.
+- §8 `[docs]` · stale S3 sentence · Fixed.
+- §7 `[tests]` · ACs missing UC11 2a, rate limits, token lifetimes · Fixed: AC12, AC17, token lifetimes in §5.
+- `06-data-flow.md` `[security]` · "pseudonymous, no other data" overstated · Fixed: personal data, free text stays until DF5.
 
 ## 🔵 Nice to Have
-- §4 sensitivity wording `[docs]` · Fixed: B dominates every criterion.
+- §3 session store `[design]` · absolute cap and per-account revocation · Fixed: stated in code via `auth_version`.
+- §10 02b paths `[docs]` · Fixed: §5 supersedes 02b paths.
+- Title vs scope `[docs]` · Fixed: UC1–UC8, UC10–UC12.
 
 ## ⚪ Disagree / Intentional
-- §3 `invitation.status` `[design]` · redundant since DF4 deletes non-pending rows · Kept for fidelity to the validated 04 `InvitationStatus`; simplification belongs in brick D.
+- `docs/HANDOVER.md` long line `[docs]` · consistent with the existing list style.
+- `docs/WORK_PLAN.md` not updated `[docs]` · HANDOVER and PROJECT_LOG carry brick status; WORK_PLAN holds direction only.
 
-## Pre-merge gate (local, head `e2c1f98`, 2026-10-16)
+## Pre-merge gate (local, 2026-10-16)
 
 | Step | Result |
 | --- | --- |
-| 1 Tests | Server 93/93 unit, 14/14 real-Mongo integration; client 18/18; client build OK |
-| 2 Coverage | Server 83.2 % statements (≥ 80); **client 58.5 % (< 80 floor), pre-existing, no Jest threshold configured**; doc coverage not measured (no JSDoc tooling); this diff touches no code |
-| 3 SonarQube | **Not run**: the SonarQube server is unreachable from this session |
-| 4 Secrets | gitleaks: branch range and full history clean; only `.env.example` files tracked; manual diff read clean |
-| 5 QA smoke | Docker local stack healthy; `/events` renders, `GET /api/users/session` and `/api/events/public` 200 ([screenshot](qa/2026-10-16-246-smoke-events.jpg)). Pre-existing console error: Bootstrap JS loaded from CDN without jQuery (`client/public/index.html:43`); video range requests aborted by design |
+| 1 Tests | Server 93/93 unit; diff touches no code |
+| 2 Coverage | Unchanged from `main` (server 83.2 %; client 58.5 % pre-existing, #272); docs diff only |
+| 3 SonarQube | Not run: pre-existing unavailability, #274 |
+| 4 Secrets | gitleaks `origin/main..HEAD` clean; no tracked `.env`; manual diff read clean |
+| 5 QA | Not applicable to the product: diff is documentation; 06 SVG re-rendered with PlantUML and checked |
 
-Gate verdict: docs-only diff is safe; the red items (client coverage, Bootstrap/jQuery error,
-SonarQube unavailable) predate this branch. Owner decision 2026-10-16 (MCDA 410/500): merge
-with a recorded waiver; tracked in #272 (client coverage), #273 (Bootstrap/jQuery), #274 (SonarQube).
+Gate: docs-only diff is safe; red items are the pre-existing ones under the owner's waiver of
+2026-10-16 (#272–#274).
 
 ## Per-dimension summary
-- Design: schema retention/cascade and index gaps fixed · Docs: links and 04 coverage verified · Tests: n/a · Security: outbox secret fixed · Correctness: all MCDA totals verified.
+- Design: scope gaps (jobs, UC13, client) closed · Docs: links resolve, statuses current · Tests: AC set completed · Security: enumeration and token logging fixed · Correctness: all MCDA totals verified.

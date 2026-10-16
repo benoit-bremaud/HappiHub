@@ -203,14 +203,17 @@ and never reveal whether an address has an account.
 - **Minimal guarantee**: no account or association is half-created; the response never
   reveals whether the email already has an account.
 - **Success guarantee**: an unverified account and an association with Claire as its only
-  member exist; a verification email is sent; Claire is signed in and lands in UC15.
+  member exist; a verification email is sent; Claire is signed in by opening its link and
+  lands in UC15 (amended 2026-10-16, brick D decision N1: signing in before verification
+  revealed existing emails).
 - **Main success scenario**:
   1. Claire chooses "Create my association".
   2. The system shows one screen: email, password (policy A2), association name.
   3. Claire submits.
   4. The system validates, creates the account and the association with a readable slug,
-     sends the verification email and signs Claire in.
-  5. The system opens "Create your first event" (UC15).
+     sends the verification email and shows "Check your inbox" (same answer for any email).
+  5. Claire opens the link (UC2); the system signs her in and opens "Create your first
+     event" (UC15).
 - **Extensions**:
   - 3a. Invalid field: explained inline, input kept (password excepted).
   - 4a. The email already has an account: the system shows the same neutral message and
