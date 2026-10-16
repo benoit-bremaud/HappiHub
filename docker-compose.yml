@@ -33,14 +33,14 @@ services:
       - ./server/.env.docker.local
     environment:
       NODE_ENV: development
-      MONGO_URI_DEV: mongodb://mongo:27017/happihub_local
+      DATABASE_URL_DEV: postgres://happihub:happihub-local@postgres:5432/happihub_local
       PORT_DEV: "5000"
       APP_URL_DEV: "http://localhost:${HAPPIHUB_LOCAL_WEB_PORT:-3200}"
     ports:
       - "127.0.0.1:${HAPPIHUB_LOCAL_API_PORT:-5200}:5000"
     networks: [frontend, database]
     depends_on:
-      mongo:
+      postgres:
         condition: service_healthy
     init: true
     security_opt:
@@ -50,18 +50,23 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
-  mongo:
+  postgres:
     networks: [database]
-    image: mongo:7.0.40@sha256:b6421fd6d1c5ded6377b397d8983e2f82e2100dc5123332dcfda2065a472be5b
+    image: postgres:17.6-alpine@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+    environment:
+      POSTGRES_USER: happihub
+      # Local, non-secret development credential on an internal network only.
+      POSTGRES_PASSWORD: happihub-local
+      POSTGRES_DB: happihub_local
     volumes:
-      - local_mongo_data:/data/db
+      - local_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.adminCommand({ping:1}).ok ? 0 : 1)"]
+      test: ["CMD", "pg_isready", "-U", "happihub", "-d", "happihub_local"]
       interval: 5s
       timeout: 5s
       retries: 12
 volumes:
-  local_mongo_data:
+  local_postgres_data:
 
 networks:
   frontend:
