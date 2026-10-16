@@ -7,6 +7,8 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-16
 
+- **Brick B conception merged** — PR #278 merged into main (8dd08ad) after green CI and owner
+  approval; branch deleted. Next: brick B implementation on its own branch, within the spec.
 - **Brick B conception decided — event lifecycle backend (UC15–UC20)** — Benoît validated the
   weights and top scores of S, A1, Q, V and P on 2026-10-16; 05a and 02a notes applied.
   Local review ([report](docs/architecture/review-local-brick-b-spec.md)): 3 Must fixed — sliding-window
