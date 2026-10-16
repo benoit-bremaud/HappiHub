@@ -57,7 +57,7 @@ With the default local Compose file, services listen on loopback only:
 - Frontend: `http://localhost:3200` (override with `HAPPIHUB_LOCAL_WEB_PORT`)
 - Backend readiness: `http://localhost:5200/ready` (override with `HAPPIHUB_LOCAL_API_PORT`)
 
-MongoDB is not published on the host. For full checks and troubleshooting, see [Docker setup and verification](docs/DOCKER.md).
+PostgreSQL is not published on the host. Apply the schema once with `docker compose exec server npm run migrate`. For full checks and troubleshooting, see [Docker setup and verification](docs/DOCKER.md).
 
 
 ## Contribution
@@ -92,7 +92,7 @@ Pour une documentation détaillée de l'API de HappiHub, veuillez consulter le f
 
 ## Authentication
 
-HappiHub now uses server-managed MongoDB sessions and HttpOnly cookies. Browser bearer
+HappiHub now uses server-managed PostgreSQL sessions and HttpOnly cookies. Browser bearer
 JWT authentication and JWT refresh examples are historical. See the current
 [API contract](docs/API_DOCUMENTATION.md), [configuration](docs/CONFIGURATION.md), and
 [cookie-session specification](docs/architecture/specs/cookie-sessions.md).

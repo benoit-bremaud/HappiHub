@@ -7,6 +7,16 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-16
 
+- **Brick D implementation — accounts and associations on PostgreSQL** — branch
+  `feat/brick-d-accounts-associations` (not pushed, no PR yet). Server: `pg`, SQL migration via
+  `node-pg-migrate` (explicit `npm run migrate`), `connect-pg-simple` sessions, endpoints UC1–UC8
+  and UC10–UC12, outbox with dev log transport, maintenance job (`npm run maintenance`); Mongo
+  account code and dependencies removed, legacy `/events` and `/comments` answer 503 (S3);
+  compose files on PostgreSQL 17.6. Client: new account, association and invitation screens.
+  Tests: server unit + integration against disposable PostgreSQL (line coverage ~98 %), client
+  suite and build green. Design gaps A-D1–A-D5 recorded in spec § 11 and **awaiting owner
+  revalidation** (invitee sign-up without association, join by invitation id, 409 for the
+  5-association cap, 30-day purge of closed associations, member emails visible).
 - **Brick D conception — accounts and associations (UC1–UC8, UC10–UC12)** — owner decided by MCDA top scores
   ([spec](docs/architecture/specs/v1-brick-d-accounts-associations.md)): L1 data access `pg` (465/500; Kysely 415, Prisma 310), L2 migrations
   `node-pg-migrate` (465; Graphile 375, Kysely Migrator 335, custom 315), sessions on

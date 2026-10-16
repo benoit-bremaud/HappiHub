@@ -1,10 +1,10 @@
 # HappiHub Docker workflows
 
-Dockerfiles and Compose describe the current implementation. MongoDB will be reconsidered during conception. Neither this baseline nor passing tests authorizes production deployment.
+Dockerfiles and Compose describe the current implementation. Brick D moved the database to PostgreSQL. Neither this baseline nor passing tests authorizes production deployment.
 
 ## Images and contexts
 
-Node 22.23.3, MongoDB 7.0.40 and unprivileged Nginx images are pinned by manifest digest. Review and refresh those digests for future security patches; pinning does not eliminate image vulnerabilities. npm ci uses committed lockfiles with lifecycle scripts disabled. Node application targets run as node (UID 1000); static Nginx runs as UID 101. Production server installs only production dependencies and excludes test sources.
+Node 22.23.3, PostgreSQL 17.6 (alpine) and unprivileged Nginx images are pinned by manifest digest. Review and refresh those digests for future security patches; pinning does not eliminate image vulnerabilities. npm ci uses committed lockfiles with lifecycle scripts disabled. Node application targets run as node (UID 1000); static Nginx runs as UID 101. Production server installs only production dependencies and excludes test sources.
 
 Both build contexts exclude environment files, host node_modules, output and test artifacts. Client API URL is public build configuration, never a secret. Production client uses /api and Nginx proxies to the internal server, preserving SPA fallback for direct links.
 
@@ -23,16 +23,16 @@ Client source/public directories are read-only bind mounts. Server currently use
 
 ## Production baseline
 
-Use only docker-compose.prod.yml, not an override of the local file. Choose a different Compose project name; local_mongo_data and prod_mongo_data are distinct named volumes.
+Use only docker-compose.prod.yml, not an override of the local file. Choose a different Compose project name; local_postgres_data and prod_postgres_data are distinct named volumes.
 
 Supply a private HAPPIHUB_SECRETS_DIR with files:
 
 - session_key: fresh session signing key (independent of former JWT keys).
-- mongo_root_user and mongo_root_password: database bootstrap administration identity.
-- mongo_app_user and mongo_app_password: separate application identity.
-- mongo_uri: URI for the application identity, mongodb://<app-user>:<encoded-app-password>@mongo:27017/happihub?authSource=happihub.
+- postgres_user and postgres_password: database bootstrap identity.
+- database_url: URL the API uses, postgres://<user>:<encoded-password>@postgres:5432/happihub.
+  A least-privilege application role separate from the bootstrap identity is a follow-up.
 
-Secret files must be readable by their container users. With file-backed Compose secrets, source-file permissions apply: do not assume uid/gid/mode remap the source. A tested local setup uses a mode-0700 host directory with mode-0444 files; only the needed files are mounted read-only into each service. Alternatively arrange explicit ownership/ACLs for UID 1000 (Node) and the Mongo image runtime user. Never put these files in the repository or build contexts.
+Secret files must be readable by their container users. With file-backed Compose secrets, source-file permissions apply: do not assume uid/gid/mode remap the source. A tested local setup uses a mode-0700 host directory with mode-0444 files; only the needed files are mounted read-only into each service. Alternatively arrange explicit ownership/ACLs for UID 1000 (Node) and the PostgreSQL image runtime user. Never put these files in the repository or build contexts.
 
 ```sh
 export HAPPIHUB_SECRETS_DIR=/absolute/private/path
@@ -43,7 +43,7 @@ docker compose -f docker-compose.prod.yml -p happihub-prod build
 docker compose -f docker-compose.prod.yml -p happihub-prod config --quiet
 ```
 
-Startup resolves mounted signing/database files at the server boundary. The API receives readWrite access only to happihub, not Mongo root credentials. Application-user bootstrap runs on first initialization only. Changing files does not rotate existing database users; use an explicit coordinated rotation procedure. No existing volume is migrated automatically.
+Startup resolves mounted signing/database files at the server boundary. Run `npm run migrate` inside the API container before first use; schema changes are never applied at start. Changing files does not rotate existing database users; use an explicit coordinated rotation procedure. No existing volume is migrated automatically.
 
 Only the static web service publishes a loopback port. API and database are internal. Database is on a separate internal network; client cannot directly reach it. Production requires an external HTTPS gateway in front of the loopback web port. Runtime Nginx overwrites X-Forwarded-Proto with https and the API trusts only Nginx's explicit IP. This is an ingress contract: never publish the HTTP web port directly. Secure cookies cannot authenticate an HTTP browser visit.
 
@@ -96,7 +96,7 @@ python3 tools/ingress/test_ingress.py \
 Docker and OpenSSL are required. The test resolves image IDs once, mounts the current
 application modules and production nginx.conf read-only, and uses an internal dual-stack
 network without published ports. It creates an ephemeral TLS certificate, synthetic
-sessions and an injected in-memory session store; no MongoDB or real credentials are used.
+sessions and an injected in-memory session store; no database or real credentials are used; `npm run test:integration` starts a disposable PostgreSQL container.
 Only its labelled fixture resources are removed during cleanup. The fixture checks both
 proxy hops, IPv4/IPv6 provenance, quota isolation, forged headers, Secure cookies and trust
 file failures. It is separate from ordinary Jest/collector tests and is not a deployment test.
@@ -105,7 +105,7 @@ Backups/restores, resource limits, image scanning and deployment operations rema
 
 ## Health and lifecycle
 
-Mongo health uses a ping. API /ready reports established Mongoose connection state, not an active query probe. Client health verifies HTTP serving. Compose waits for healthy dependencies before starting consumers. APIs and local client use init to forward signals.
+PostgreSQL health uses pg_isready. API /ready runs a `SELECT 1` probe. Client health verifies HTTP serving. Compose waits for healthy dependencies before starting consumers. APIs and local client use init to forward signals.
 
 Stop the chosen stack with docker compose -p <project> stop (include the production file where appropriate). Data volumes remain. Never use down -v against real data; deletion requires explicit approval.
 

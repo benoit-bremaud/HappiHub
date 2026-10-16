@@ -271,3 +271,21 @@ records that moderation records keep the deleted account's `target_id` as a pseu
 reference until DF5 purges them. [02b](../diagrams/v1-events/02b-sequence-invite-and-join.md)
 keeps its flow; its endpoint paths are superseded by section 5 (token in the body). Diagrams
 04 and 03 need no change.
+
+## 11. Implementation amendments awaiting owner revalidation
+
+Gaps found while implementing brick D. The code follows the "Implemented" column; each line
+needs Benoît's validation or a change request before merge.
+
+| # | Gap | Implemented | Alternative |
+| --- | --- | --- | --- |
+| A-D1 | UC11 3a needs an invitee sign-up, but `POST /signup` required an association name | `associationName` optional; without it no association is created. Client hides the field when coming from an invitation | Separate `/signup/invitee` endpoint |
+| A-D2 | UC11 4c "Join" after verification has no token to send | `POST /invitations/accept` also takes `{invitationId}`, valid only for the same signed-in, verified invited address | Re-send each invitation email and require the link |
+| A-D3 | AC17 says every quota answers 429 + Retry-After; the 5-association cap is permanent | `409` for the 5-in-total cap (no retry time exists) | `429` without `Retry-After` |
+| A-D4 | Closed associations are kept forever (slug reserved) | Maintenance deletes closed associations 30 days after closing (UC8 notice); the slug becomes free again | Keep closed rows indefinitely |
+| A-D5 | Members see each other's email in the member list | Kept (needed to identify co-organizers) | Display names only |
+
+Follow-ups outside brick D: a real password blocklist (current list is a short placeholder),
+running `npm run test:integration` in CI (`quality-tests.yml` needs owner authorization), a
+least-privilege PostgreSQL application role, and the T11a email transport (production start is
+refused until then).
