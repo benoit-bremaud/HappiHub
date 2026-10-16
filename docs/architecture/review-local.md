@@ -36,7 +36,8 @@
 | 5 QA smoke | Docker local stack healthy; `/events` renders, `GET /api/users/session` and `/api/events/public` 200 ([screenshot](qa/2026-10-16-246-smoke-events.jpg)). Pre-existing console error: Bootstrap JS loaded from CDN without jQuery (`client/public/index.html:43`); video range requests aborted by design |
 
 Gate verdict: docs-only diff is safe; the red items (client coverage, Bootstrap/jQuery error,
-SonarQube unavailable) predate this branch and need owner decision before merge.
+SonarQube unavailable) predate this branch. Owner decision 2026-10-16 (MCDA 410/500): merge
+with a recorded waiver; tracked in #272 (client coverage), #273 (Bootstrap/jQuery), #274 (SonarQube).
 
 ## Per-dimension summary
 - Design: schema retention/cascade and index gaps fixed · Docs: links and 04 coverage verified · Tests: n/a · Security: outbox secret fixed · Correctness: all MCDA totals verified.
