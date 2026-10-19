@@ -1,4 +1,4 @@
-> Historical guide: use the current [root contribution guide](../CONTRIBUTING.md).
+> Historical guide: use the current [root contribution guide](../../CONTRIBUTING.md).
 > Environment, JWT and npm instructions below are legacy and are not the current runtime contract.
 
 # Contribuer à HappiHub
@@ -21,7 +21,7 @@ Merci de votre intérêt pour contribuer à HappiHub ! Ce document vous guidera 
 
 ## Code de Conduite
 
-Ce projet adhère au [Code de Conduite](CODE_OF_CONDUCT.md). En participant, vous vous engagez à respecter ses termes.
+Ce projet adhère au [Code de Conduite](../CODE_OF_CONDUCT.md). En participant, vous vous engagez à respecter ses termes.
 
 ## Signaler un Problème
 
@@ -62,7 +62,7 @@ Si vous rencontrez un problème ou avez une suggestion d'amélioration, veuillez
    PORT=5000
    DATABASE_URL_DEV=postgres://<user>:<password>@localhost:5432/happihub_local
    ```
-   Puis appliquez le schéma avec `npm run migrate` (voir [CONFIGURATION](CONFIGURATION.md)).
+   Puis appliquez le schéma avec `npm run migrate` (voir [CONFIGURATION](../CONFIGURATION.md)).
 4. **Créez un fichier `.env` dans le répertoire `client` avec le contenu suivant** :
    ```
    REACT_APP_API_URL=http://localhost:5000/api
