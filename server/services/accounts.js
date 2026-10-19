@@ -3,6 +3,7 @@ import { withTransaction } from '../db/transaction.js';
 import { canDeleteAccount } from '../domain/rules.js';
 import { hashToken, isTokenShaped, newToken, TOKEN_TTL_MS } from '../domain/tokens.js';
 import { closeAssociationRow, createAssociation, similarAssociationExists } from './associations.js';
+import { exportEvents } from './events.js';
 import { pendingInvitationsFor } from './invitations.js';
 import { queueEmail } from './outbox.js';
 import { DomainError } from './errors.js';
@@ -179,21 +180,23 @@ export const accountMemberships = async (db, accountId) => {
   return rows.map((row) => ({ name: row.name, slug: row.slug, status: row.status, joinedAt: row.joined_at }));
 };
 
-/** UC5: only the requester's own data (AC7). Events, participation and comments join with their bricks. */
+/** UC5: only the requester's own data (AC7). Participation and comments join with their brick. */
 export const exportAccount = async (ctx, accountId) => {
   const account = await findAccount(ctx.db, accountId);
   const { rows: invitations } = await ctx.db.query(
     `SELECT a.slug AS association, i.email, i.expires_at FROM invitation i JOIN association a ON a.id = i.association_id
      WHERE i.invited_by = $1 ORDER BY i.expires_at`, [accountId]);
   const { rows: activity } = await ctx.db.query(
-    `SELECT a.slug AS association, e.action, e.target_ref, e.occurred_at FROM activity_entry e
+    `SELECT a.slug AS association, e.action, e.target_ref, e.detail, e.occurred_at FROM activity_entry e
      JOIN association a ON a.id = e.association_id WHERE e.actor_id = $1 ORDER BY e.occurred_at`, [accountId]);
   return {
     account: { email: account.email, emailVerifiedAt: account.emailVerifiedAt, pendingEmail: account.pendingEmail,
       displayName: account.displayName },
     memberships: await accountMemberships(ctx.db, accountId),
     invitationsSent: invitations.map((i) => ({ association: i.association, email: i.email, expiresAt: i.expires_at })),
-    activity: activity.map((e) => ({ association: e.association, action: e.action, targetRef: e.target_ref, occurredAt: e.occurred_at })),
+    activity: activity.map((e) => ({ association: e.association, action: e.action, targetRef: e.target_ref,
+      detail: e.detail, occurredAt: e.occurred_at })),
+    events: await exportEvents(ctx.db, accountId),
   };
 };
 

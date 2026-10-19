@@ -51,6 +51,59 @@ describe('maintenance job (AC19)', () => {
   });
 });
 
+describe('event tasks (brick B BC13, C1)', () => {
+  const EVENTS = '/api/associations/troupe/events';
+  const status = async (id) => (await pool.query('SELECT status FROM event WHERE id = $1', [id])).rows[0]?.status;
+  const publishable = () => ({ title: 'Concert', type: 'CONCERT', shortDescription: 'Live', venueLabel: 'Salle',
+    venueCity: '69123', startsAt: new Date(clock.now + DAY).toISOString() });
+
+  test('archives published and cancelled events after their effective end (A1), never drafts', async () => {
+    const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
+    const ids = [];
+    for (let i = 0; i < 3; i += 1) ids.push((await claire.post(EVENTS, publishable())).body.id);
+    const [noEnd, withEnd, cancelled] = ids;
+    for (const id of ids) await claire.post(`${EVENTS}/${id}/publish`, { baseVersion: 1 });
+    await claire.post(`${EVENTS}/${cancelled}/cancel`, { baseVersion: 2, confirm: true });
+    await pool.query('UPDATE event SET ends_at = starts_at + interval \'3 hours\' WHERE id = ANY($1)', [[withEnd, cancelled]]);
+    const draft = (await claire.post(EVENTS, publishable())).body.id;
+    clock.now += 2 * DAY - 1000; // noEnd still within start + 24 h
+    expect((await run()).eventsArchived).toBe(2);
+    expect([await status(noEnd), await status(withEnd), await status(cancelled), await status(draft)])
+      .toEqual(['PUBLISHED', 'ARCHIVED', 'ARCHIVED', 'DRAFT']);
+    clock.now += 2000;
+    expect((await run()).eventsArchived).toBe(1);
+    expect((await run()).eventsArchived).toBe(0);
+  });
+
+  test('notifies members of a draft untouched for 12 months once, deletes it 14 days later unless edited', async () => {
+    const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
+    const kept = (await claire.post(EVENTS, { title: 'Kept', type: 'TALK' })).body.id;
+    const dropped = (await claire.post(EVENTS, { title: 'Dropped', type: 'TALK' })).body.id;
+    await pool.query("UPDATE event SET updated_at = $1::timestamptz - interval '13 months'", [new Date(clock.now)]);
+    expect((await run()).draftNoticesSent).toBe(2);
+    expect((await run()).draftNoticesSent).toBe(0);
+    expect((await lastEmail(pool, 'claire@example.org', 'DRAFT_CLEANUP_NOTICE')).payload)
+      .toMatchObject({ associationName: 'Troupe' });
+    expect(await claire.patch(`${EVENTS}/${kept}`, { baseVersion: 1, changes: { title: 'Still wanted' } }))
+      .toMatchObject({ status: 200 });
+    clock.now += 14 * DAY + 1000;
+    expect((await run()).draftsDeleted).toBe(1);
+    expect([await status(kept), await status(dropped)]).toEqual(['DRAFT', undefined]);
+  });
+
+  test('drafts of a closed association leave only with the 30-day association purge (C1)', async () => {
+    const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
+    const draft = (await claire.post(EVENTS, { title: 'Draft', type: 'TALK' })).body.id;
+    await claire.post('/api/associations/troupe/close', { confirm: true });
+    clock.now += 29 * DAY;
+    await run();
+    expect(await status(draft)).toBe('DRAFT');
+    clock.now += 2 * DAY;
+    await run();
+    expect(await status(draft)).toBeUndefined();
+  });
+});
+
 describe('outbox delivery (DF1)', () => {
   test('the log transport writes the link and deletes the row', async () => {
     await (await browser(app)).post('/api/signup', { email: 'o@example.org', password: PASSWORD, associationName: 'Out' });

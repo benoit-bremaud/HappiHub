@@ -1,6 +1,7 @@
 import { withTransaction } from '../db/transaction.js';
 import { newToken, TOKEN_TTL_MS } from '../domain/tokens.js';
 import { deleteAccountRow } from '../services/accounts.js';
+import { runEventMaintenance } from '../services/events.js';
 import { queueEmail } from '../services/outbox.js';
 
 const DAY_MS = 24 * 3600e3;
@@ -9,7 +10,8 @@ const DAY_MS = 24 * 3600e3;
  * Hourly maintenance for brick D tables (AC19): F20 expired invitations, F24/DF2 reminder at
  * day 23 and deletion at day 30 of never-verified accounts (UC6 effects), F25 outbox failures
  * older than 30 days, expired auth tokens, F19 activity entries older than 12 months, and
- * closed associations after their 30-day notice (UC8). Returns counts for the operator log.
+ * closed associations after their 30-day notice (UC8), then the brick B event tasks (archive,
+ * draft cleanup notice and deletion). Returns counts for the operator log.
  */
 export const runMaintenance = async (ctx) => {
   const now = ctx.now();
@@ -45,5 +47,5 @@ export const runMaintenance = async (ctx) => {
     "DELETE FROM activity_entry WHERE occurred_at <= $1::timestamptz - interval '12 months'", [at(0)])).rowCount;
   counts.closedAssociationsPurged = (await ctx.db.query(
     "DELETE FROM association WHERE status = 'CLOSED' AND closed_at <= $1", [at(30 * DAY_MS)])).rowCount;
-  return counts;
+  return { ...counts, ...(await runEventMaintenance(ctx)) };
 };

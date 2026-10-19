@@ -64,6 +64,9 @@ export const createApp = (config, { store, db, now = Date.now } = {}) => {
     signInPerIp: ipLimiter(15 * MINUTE, 20, { skipSuccessfulRequests: true }),
     signInPerPair: ipLimiter(15 * MINUTE, 5, { skipSuccessfulRequests: true, keyGenerator: pairKey }),
     emails: ipLimiter(HOUR, 5),
+    // Brick B: bounds create–delete loops beside the quota Q while leaving room for autosave.
+    eventWrites: ipLimiter(15 * MINUTE, 600),
+    publicReads: ipLimiter(15 * MINUTE, 600),
   }));
 
   app.get('/ready', async (_req, res) => {

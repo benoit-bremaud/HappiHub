@@ -16,7 +16,7 @@ export const migrate = (direction = 'up', extra = []) => execFileSync('node', ['
 export const createPool = () => new pg.Pool({ connectionString: process.env.TEST_DATABASE_URL, max: 10 });
 
 export const resetData = (pool) => pool.query(
-  'TRUNCATE account, association, membership, invitation, auth_token, outbox_message, activity_entry, session CASCADE');
+  'TRUNCATE account, association, membership, event, invitation, auth_token, outbox_message, activity_entry, session CASCADE');
 
 /** Fresh app per test with a controllable clock and the real PostgreSQL session store. */
 export const buildApp = (pool, clock = { now: Date.now() }, overrides = {}) => {

@@ -170,9 +170,9 @@ describe('UC12 removal and leaving (AC13)', () => {
 });
 
 describe('legacy routes (S3)', () => {
-  test('event and comment routes are disabled', async () => {
+  test('comment routes stay disabled; legacy event paths are gone', async () => {
     const client = await browser(app);
-    expect((await client.get('/api/events/public')).status).toBe(503);
+    expect((await client.get('/api/events/public')).status).toBe(404);
     expect((await client.post('/api/comments/add', {})).status).toBe(503);
   });
 });
