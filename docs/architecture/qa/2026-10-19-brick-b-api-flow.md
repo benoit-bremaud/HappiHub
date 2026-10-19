@@ -1,6 +1,6 @@
 # Brick B QA — API flow on the running server
 
-Date: 2026-10-19T08:01:01.724Z. Server: `npm start` on a disposable PostgreSQL 17.6, migrations applied by `npm run migrate`. Accounts are synthetic. Set-up calls (sign-up, verification, invitation) are omitted; every event call is shown.
+Date: 2026-10-19T08:56:18.847Z. Server: `npm start` on a disposable PostgreSQL 17.6, migrations applied by `npm run migrate`. Accounts are synthetic. Set-up calls (sign-up, verification, invitation) are omitted; every event call is shown.
 
 ## 1. Create a draft (UC15)
 
@@ -19,7 +19,7 @@ Response 201:
 
 ```json
 {
-  "id": "f85dc015-1749-4b2b-ba55-f14978d136f4",
+  "id": "f2c42697-267b-4270-b625-c70fe20f0f3f",
   "status": "DRAFT",
   "title": "Concert de printemps",
   "type": "CONCERT",
@@ -39,14 +39,14 @@ Response 201:
   "scheduleChangedAt": null,
   "version": 1,
   "lastEditedBy": "Claire",
-  "createdAt": "2026-10-19T08:01:18.715Z",
-  "updatedAt": "2026-10-19T08:01:18.715Z"
+  "createdAt": "2026-10-19T08:56:37.835Z",
+  "updatedAt": "2026-10-19T08:56:37.835Z"
 }
 ```
 
 ## 2. Edits from two sessions on different fields merge (UC16 2a)
 
-### Claire: PATCH /api/associations/troupe-qa/events/f85dc015-1749-4b2b-ba55-f14978d136f4
+### Claire: PATCH /api/associations/troupe-qa/events/f2c42697-267b-4270-b625-c70fe20f0f3f
 
 Request:
 
@@ -55,7 +55,7 @@ Request:
   "baseVersion": 1,
   "changes": {
     "shortDescription": "Chorale et orchestre",
-    "startsAt": "2026-11-02T08:01:18.713Z"
+    "startsAt": "2026-11-02T08:56:37.832Z"
   }
 }
 ```
@@ -64,13 +64,13 @@ Response 200:
 
 ```json
 {
-  "id": "f85dc015-1749-4b2b-ba55-f14978d136f4",
+  "id": "f2c42697-267b-4270-b625-c70fe20f0f3f",
   "status": "DRAFT",
   "title": "Concert de printemps",
   "type": "CONCERT",
   "shortDescription": "Chorale et orchestre",
   "longDescription": null,
-  "startsAt": "2026-11-02T08:01:18.713Z",
+  "startsAt": "2026-11-02T08:56:37.832Z",
   "endsAt": null,
   "ended": false,
   "venueLabel": null,
@@ -84,12 +84,12 @@ Response 200:
   "scheduleChangedAt": null,
   "version": 2,
   "lastEditedBy": "Claire",
-  "createdAt": "2026-10-19T08:01:18.715Z",
-  "updatedAt": "2026-10-19T08:01:18.723Z"
+  "createdAt": "2026-10-19T08:56:37.835Z",
+  "updatedAt": "2026-10-19T08:56:37.842Z"
 }
 ```
 
-### Malik: PATCH /api/associations/troupe-qa/events/f85dc015-1749-4b2b-ba55-f14978d136f4
+### Malik: PATCH /api/associations/troupe-qa/events/f2c42697-267b-4270-b625-c70fe20f0f3f
 
 Request:
 
@@ -111,13 +111,13 @@ Response 200:
 
 ```json
 {
-  "id": "f85dc015-1749-4b2b-ba55-f14978d136f4",
+  "id": "f2c42697-267b-4270-b625-c70fe20f0f3f",
   "status": "DRAFT",
   "title": "Concert de printemps",
   "type": "CONCERT",
   "shortDescription": "Chorale et orchestre",
   "longDescription": null,
-  "startsAt": "2026-11-02T08:01:18.713Z",
+  "startsAt": "2026-11-02T08:56:37.832Z",
   "endsAt": null,
   "ended": false,
   "venueLabel": "Salle Molière",
@@ -134,14 +134,14 @@ Response 200:
   "scheduleChangedAt": null,
   "version": 3,
   "lastEditedBy": "Malik",
-  "createdAt": "2026-10-19T08:01:18.715Z",
-  "updatedAt": "2026-10-19T08:01:18.730Z"
+  "createdAt": "2026-10-19T08:56:37.835Z",
+  "updatedAt": "2026-10-19T08:56:37.853Z"
 }
 ```
 
 ## 3. Same field from a stale version: conflict, nothing written (UC17)
 
-### Claire: PATCH /api/associations/troupe-qa/events/f85dc015-1749-4b2b-ba55-f14978d136f4
+### Claire: PATCH /api/associations/troupe-qa/events/f2c42697-267b-4270-b625-c70fe20f0f3f
 
 Request:
 
@@ -177,7 +177,7 @@ Response 409:
 }
 ```
 
-### Claire: PATCH /api/associations/troupe-qa/events/f85dc015-1749-4b2b-ba55-f14978d136f4
+### Claire: PATCH /api/associations/troupe-qa/events/f2c42697-267b-4270-b625-c70fe20f0f3f
 
 Request:
 
@@ -194,13 +194,13 @@ Response 200:
 
 ```json
 {
-  "id": "f85dc015-1749-4b2b-ba55-f14978d136f4",
+  "id": "f2c42697-267b-4270-b625-c70fe20f0f3f",
   "status": "DRAFT",
   "title": "Concert de printemps",
   "type": "CONCERT",
   "shortDescription": "Chorale et orchestre",
   "longDescription": null,
-  "startsAt": "2026-11-02T08:01:18.713Z",
+  "startsAt": "2026-11-02T08:56:37.832Z",
   "endsAt": null,
   "ended": false,
   "venueLabel": "Théâtre des Célestins",
@@ -217,14 +217,14 @@ Response 200:
   "scheduleChangedAt": null,
   "version": 4,
   "lastEditedBy": "Claire",
-  "createdAt": "2026-10-19T08:01:18.715Z",
-  "updatedAt": "2026-10-19T08:01:18.737Z"
+  "createdAt": "2026-10-19T08:56:37.835Z",
+  "updatedAt": "2026-10-19T08:56:37.861Z"
 }
 ```
 
 ## 4. Publish (UC18): stale version, then success
 
-### Claire: POST /api/associations/troupe-qa/events/f85dc015-1749-4b2b-ba55-f14978d136f4/publish
+### Claire: POST /api/associations/troupe-qa/events/f2c42697-267b-4270-b625-c70fe20f0f3f/publish
 
 Request:
 
@@ -246,7 +246,7 @@ Response 409:
 }
 ```
 
-### Claire: POST /api/associations/troupe-qa/events/f85dc015-1749-4b2b-ba55-f14978d136f4/publish
+### Claire: POST /api/associations/troupe-qa/events/f2c42697-267b-4270-b625-c70fe20f0f3f/publish
 
 Request:
 
@@ -260,13 +260,13 @@ Response 200:
 
 ```json
 {
-  "id": "f85dc015-1749-4b2b-ba55-f14978d136f4",
+  "id": "f2c42697-267b-4270-b625-c70fe20f0f3f",
   "status": "PUBLISHED",
   "title": "Concert de printemps",
   "type": "CONCERT",
   "shortDescription": "Chorale et orchestre",
   "longDescription": null,
-  "startsAt": "2026-11-02T08:01:18.713Z",
+  "startsAt": "2026-11-02T08:56:37.832Z",
   "endsAt": null,
   "ended": false,
   "venueLabel": "Théâtre des Célestins",
@@ -279,30 +279,30 @@ Response 200:
   "priceAmountCents": null,
   "posterStyle": "classic",
   "cancellationReason": null,
-  "publishedAt": "2026-10-19T08:01:18.745Z",
+  "publishedAt": "2026-10-19T08:56:37.868Z",
   "scheduleChangedAt": null,
   "version": 5,
   "lastEditedBy": "Claire",
-  "createdAt": "2026-10-19T08:01:18.715Z",
-  "updatedAt": "2026-10-19T08:01:18.745Z"
+  "createdAt": "2026-10-19T08:56:37.835Z",
+  "updatedAt": "2026-10-19T08:56:37.868Z"
 }
 ```
 
 ## 5. Public read without a session
 
-### Anonymous: GET /api/events/f85dc015-1749-4b2b-ba55-f14978d136f4
+### Anonymous: GET /api/events/f2c42697-267b-4270-b625-c70fe20f0f3f
 
 Response 200:
 
 ```json
 {
-  "id": "f85dc015-1749-4b2b-ba55-f14978d136f4",
+  "id": "f2c42697-267b-4270-b625-c70fe20f0f3f",
   "status": "PUBLISHED",
   "title": "Concert de printemps",
   "type": "CONCERT",
   "shortDescription": "Chorale et orchestre",
   "longDescription": null,
-  "startsAt": "2026-11-02T08:01:18.713Z",
+  "startsAt": "2026-11-02T08:56:37.832Z",
   "endsAt": null,
   "ended": false,
   "venueLabel": "Théâtre des Célestins",
@@ -315,7 +315,7 @@ Response 200:
   "priceAmountCents": null,
   "posterStyle": "classic",
   "cancellationReason": null,
-  "publishedAt": "2026-10-19T08:01:18.745Z",
+  "publishedAt": "2026-10-19T08:56:37.868Z",
   "scheduleChangedAt": null,
   "association": {
     "name": "Troupe QA",
@@ -337,7 +337,7 @@ Response 404:
 
 ## 6. Cancel (UC19), then every write is refused
 
-### Malik: POST /api/associations/troupe-qa/events/f85dc015-1749-4b2b-ba55-f14978d136f4/cancel
+### Malik: POST /api/associations/troupe-qa/events/f2c42697-267b-4270-b625-c70fe20f0f3f/cancel
 
 Request:
 
@@ -359,7 +359,7 @@ Response 400:
 }
 ```
 
-### Malik: POST /api/associations/troupe-qa/events/f85dc015-1749-4b2b-ba55-f14978d136f4/cancel
+### Malik: POST /api/associations/troupe-qa/events/f2c42697-267b-4270-b625-c70fe20f0f3f/cancel
 
 Request:
 
@@ -375,13 +375,13 @@ Response 200:
 
 ```json
 {
-  "id": "f85dc015-1749-4b2b-ba55-f14978d136f4",
+  "id": "f2c42697-267b-4270-b625-c70fe20f0f3f",
   "status": "CANCELLED",
   "title": "Concert de printemps",
   "type": "CONCERT",
   "shortDescription": "Chorale et orchestre",
   "longDescription": null,
-  "startsAt": "2026-11-02T08:01:18.713Z",
+  "startsAt": "2026-11-02T08:56:37.832Z",
   "endsAt": null,
   "ended": false,
   "venueLabel": "Théâtre des Célestins",
@@ -394,16 +394,16 @@ Response 200:
   "priceAmountCents": null,
   "posterStyle": "classic",
   "cancellationReason": "Salle indisponible",
-  "publishedAt": "2026-10-19T08:01:18.745Z",
+  "publishedAt": "2026-10-19T08:56:37.868Z",
   "scheduleChangedAt": null,
   "version": 6,
   "lastEditedBy": "Malik",
-  "createdAt": "2026-10-19T08:01:18.715Z",
-  "updatedAt": "2026-10-19T08:01:18.754Z"
+  "createdAt": "2026-10-19T08:56:37.835Z",
+  "updatedAt": "2026-10-19T08:56:37.878Z"
 }
 ```
 
-### Claire: PATCH /api/associations/troupe-qa/events/f85dc015-1749-4b2b-ba55-f14978d136f4
+### Claire: PATCH /api/associations/troupe-qa/events/f2c42697-267b-4270-b625-c70fe20f0f3f
 
 Request:
 
@@ -425,19 +425,19 @@ Response 409:
 }
 ```
 
-### Anonymous: GET /api/events/f85dc015-1749-4b2b-ba55-f14978d136f4
+### Anonymous: GET /api/events/f2c42697-267b-4270-b625-c70fe20f0f3f
 
 Response 200:
 
 ```json
 {
-  "id": "f85dc015-1749-4b2b-ba55-f14978d136f4",
+  "id": "f2c42697-267b-4270-b625-c70fe20f0f3f",
   "status": "CANCELLED",
   "title": "Concert de printemps",
   "type": "CONCERT",
   "shortDescription": "Chorale et orchestre",
   "longDescription": null,
-  "startsAt": "2026-11-02T08:01:18.713Z",
+  "startsAt": "2026-11-02T08:56:37.832Z",
   "endsAt": null,
   "ended": false,
   "venueLabel": "Théâtre des Célestins",
@@ -450,7 +450,7 @@ Response 200:
   "priceAmountCents": null,
   "posterStyle": "classic",
   "cancellationReason": "Salle indisponible",
-  "publishedAt": "2026-10-19T08:01:18.745Z",
+  "publishedAt": "2026-10-19T08:56:37.868Z",
   "scheduleChangedAt": null,
   "association": {
     "name": "Troupe QA",
@@ -469,13 +469,13 @@ Response 200:
 {
   "events": [
     {
-      "id": "f85dc015-1749-4b2b-ba55-f14978d136f4",
+      "id": "f2c42697-267b-4270-b625-c70fe20f0f3f",
       "title": "Concert de printemps",
       "type": "CONCERT",
       "status": "CANCELLED",
-      "startsAt": "2026-11-02T08:01:18.713Z",
+      "startsAt": "2026-11-02T08:56:37.832Z",
       "ended": false,
-      "updatedAt": "2026-10-19T08:01:18.754Z",
+      "updatedAt": "2026-10-19T08:56:37.878Z",
       "lastEditedBy": "Malik"
     }
   ]

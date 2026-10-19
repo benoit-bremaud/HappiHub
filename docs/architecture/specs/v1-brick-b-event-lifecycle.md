@@ -279,7 +279,8 @@ fixes `posterStyle` as a closed value.
 - All SQL is constant text with `$n` parameters (brick D AC15 static test extended).
 - `PATCH` accepts only an allow-list of field names; `status`, `version`, ids and timestamps
   cannot be set through `changes`.
-- Rate limits: creation quota (Q) plus the existing per-IP write limiter.
+- Rate limits: creation quota (Q) plus per-IP limiters on event writes and the public read
+  (amendment A-B4).
 
 ## 8. Acceptance criteria
 
@@ -357,3 +358,4 @@ Design gaps found when implementation started, decided by Benoît on 2026-10-19 
 | A-B1 | `activity_entry` has no place for the edited field names (M step 6) or the deleted draft's title (UC20) | The brick B migration adds `activity_entry.detail jsonb NULL`; only two shapes are written, `{fields: [allow-listed names]}` and `{title}` — never field values (J4 D4, DF4) | A 485 vs table 405, `target_ref` text 280 |
 | A-B2 | Decision V names a bundled commune list but no source | Full INSEE COG 2026 (`v_commune_2026.csv`, current communes only, 34 875), stored as `server/domain/data/communes.json` with provenance in its README | A 460 vs subset 290, fixture only 205 |
 | A-B3 | PostgreSQL refuses the § 3 expression index: `timestamptz + interval` is not IMMUTABLE | Technical, no alternative scored: indexes `(status, ends_at)` and `(status, starts_at)`; the A1 rule is written `ends_at < t OR (ends_at IS NULL AND starts_at < t − 24 h)` with `t − 24 h` computed by the caller. Behavior unchanged | — |
+| A-B4 | § 7 relies on "the existing per-IP write limiter", which brick D does not have; the public read had no limit | Two process-local per-IP limiters, 600 requests per 15 minutes each (40/min, room for two autosaving editors behind one NAT): `eventWrites` on every event write, `publicReads` on `GET /api/events/:id` | A 390 vs 300/15 min 360, none 315 |
