@@ -5,6 +5,26 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-10-19
+
+- **Brick B merged — event lifecycle backend UC15–UC20 (PR #282, merge 47b8cde)** — server
+  only, within spec BC1–BC19. Owner decisions recorded as spec § 12 amendments: A-B1
+  `activity_entry.detail` jsonb (485/500), A-B2 full INSEE COG 2026 commune list (460), A-B3
+  plain indexes because `timestamptz + interval` is not IMMUTABLE (technical), A-B4 per-IP
+  limiters 600/15 min on event writes and the public read (390). Local gate (review-local.md) green on
+  4a1059c: 65 unit + 97 integration server tests, 36 client, new-code coverage 87.7 %,
+  SonarQube passed, gitleaks clean, API QA transcript; after the PR-review fixes (27e1135)
+  the test suites, SonarQube and gitleaks were rerun green and PR CI passed. Review fixes: membership locked on every write,
+  strict dates/uuids, hidden Unicode refused, order-free edit coalescing (removed a flaky
+  BC18), and from PR review a publish/account-deletion deadlock (account now locked first)
+  and an end-without-start CHECK gap.
+- **Local QA pass of the whole application** — browser walk of every client flow on a
+  disposable PostgreSQL. Ten issues filed to the Project #6 backlog, #283–#292; #283 (P1)
+  leave association and resend invitation always answer 415 from the browser.
+- **Owner vision recorded** — persona-based scenarios (private run with 10 places, themed
+  birthday, concert, hike, car-boot sale, fair, theatre) on #20/#251; external API clients
+  (Brasse-Bouillon, theatre company sites, flyers) on #244. Conception first.
+
 ## 2026-10-16
 
 - **CI flake fixed — server rate-limit tests timing out (PR #280, merge a161d7c)** — failed
