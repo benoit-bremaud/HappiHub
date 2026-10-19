@@ -16,6 +16,11 @@ history and [handover](../HANDOVER.md) for the current state.
 - Session conception, explicit runtime configuration, isolated local/production container
   workflows and disposable real-database regression coverage.
 - Prioritized work plan, operational journal and portable contributor/agent handover.
+- Brick B event lifecycle API on PostgreSQL (UC15–UC20): drafts with a per-association
+  creation quota, optimistic editing with field-level merge and conflict answers,
+  publication guard, cancellation, draft deletion, a minimal public read, association-closure
+  and account export effects, and maintenance archiving/draft cleanup. Legacy event routes
+  are removed.
 
 ### Changed
 

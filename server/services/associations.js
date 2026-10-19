@@ -2,6 +2,7 @@ import { withTransaction } from '../db/transaction.js';
 import { nextFreeSlug, slugify } from '../domain/slug.js';
 import { canCreateAssociation, canLoseMember } from '../domain/rules.js';
 import { recordActivity } from './activity.js';
+import { cancelUpcomingEvents } from './events.js';
 import { queueEmail } from './outbox.js';
 import { DomainError } from './errors.js';
 
@@ -40,13 +41,15 @@ export const createAdditionalAssociation = (ctx, accountId, name) =>
   withTransaction(ctx.db, (client) => createAssociation(client, ctx, accountId, name));
 
 /**
- * Apply UC8 on a locked association: status CLOSED, pending invitations dropped, logged.
- * Event cancellation and API key revocation hooks are added by bricks B and C.
+ * Apply UC8 on a locked association: status CLOSED, pending invitations dropped, upcoming
+ * published events cancelled (brick B, C1: drafts stay until the purge), logged.
+ * The API key revocation hook is added by brick C.
  */
 export const closeAssociationRow = async (client, ctx, association, actorId) => {
   await client.query("UPDATE association SET status = 'CLOSED', closed_at = $2 WHERE id = $1",
     [association.id, new Date(ctx.now())]);
   await client.query('DELETE FROM invitation WHERE association_id = $1', [association.id]);
+  await cancelUpcomingEvents(client, ctx, association.id, actorId);
   await recordActivity(client, ctx, { associationId: association.id, actorId,
     action: 'ASSOCIATION_CLOSED', targetRef: association.slug });
 };

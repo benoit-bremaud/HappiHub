@@ -9,8 +9,12 @@ import {
   listInvitationsHandler, lookupInvitationHandler, removeMember, resendInvitationHandler, revokeInvitationHandler,
   updateAssociation,
 } from '../controllers/associationController.js';
+import {
+  cancelEventHandler, createEventHandler, deleteEventHandler, editEventHandler, listEventsHandler, publishEventHandler,
+  readEventHandler, readPublicEventHandler,
+} from '../controllers/eventController.js';
 
-/** Brick D endpoints (spec § 5); `limits` are the per-IP limiters created by the app. */
+/** Brick D and brick B endpoints (specs § 5); `limits` are the per-IP limiters created by the app. */
 export const apiRoutes = (limits) => {
   const router = express.Router();
   router.get('/session', limits.bootstrap, getSession);
@@ -42,8 +46,18 @@ export const apiRoutes = (limits) => {
   router.post('/invitations/lookup', lookupInvitationHandler);
   router.post('/invitations/accept', auth, acceptInvitationHandler);
 
-  // Legacy event and comment routes are disabled until brick B rebuilds events (decision S3).
-  router.all(['/events', '/events/*', '/comments', '/comments/*'], (_req, res) =>
-    res.status(503).json({ message: 'Events are temporarily unavailable.' }));
+  const events = '/associations/:slug/events';
+  router.get(events, auth, member, listEventsHandler);
+  router.post(events, limits.eventWrites, auth, member, createEventHandler);
+  router.get(`${events}/:id`, auth, member, readEventHandler);
+  router.patch(`${events}/:id`, limits.eventWrites, auth, member, editEventHandler);
+  router.post(`${events}/:id/publish`, limits.eventWrites, auth, member, publishEventHandler);
+  router.post(`${events}/:id/cancel`, limits.eventWrites, auth, member, cancelEventHandler);
+  router.post(`${events}/:id/delete`, limits.eventWrites, auth, member, deleteEventHandler);
+  router.get('/events/:id', limits.publicReads, readPublicEventHandler);
+
+  // Legacy comment routes stay disabled until the participation/comment brick (D3, decision S3).
+  router.all(['/comments', '/comments/*'], (_req, res) =>
+    res.status(503).json({ message: 'Comments are temporarily unavailable.' }));
   return router;
 };
