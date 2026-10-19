@@ -136,8 +136,7 @@ have occurred. Do not interpret candidate folders as an approved implementation 
    Brick D conception decided 2026-10-16 ([spec](architecture/specs/v1-brick-d-accounts-associations.md)):
    `pg` + `node-pg-migrate` + `connect-pg-simple`, scope S1–S3 and the 06 amendment approved
    by Benoît (§ 9). Done 2026-10-16: brick D merged (PR #276, dd4ead9); amendments A-D1–A-D5
-   and S1-C validated. Brick B (event lifecycle backend, UC15–UC20) conception decided 2026-10-16 ([spec](architecture/specs/v1-brick-b-event-lifecycle.md)): Benoît validated S, A1, Q, V, P (top scores). Spec merged as PR #278 (8dd08ad). Next: brick B implementation on its own branch. Open Should items in
-   [review-local](architecture/review-local.md). Database setup: `npm run migrate` from `server/`. T11a blocks deployment. Open: email provider, hosting/backups
+   and S1-C validated. Brick B (event lifecycle backend, UC15–UC20) conception decided 2026-10-16 ([spec](architecture/specs/v1-brick-b-event-lifecycle.md)): Benoît validated S, A1, Q, V, P (top scores). Spec merged as PR #278 (8dd08ad). Done 2026-10-19: brick B implemented and merged (PR #282, 47b8cde), server only; amendments A-B1–A-B4 in spec § 12; local gate green ([review-local](architecture/review-local.md)). QA on 2026-10-19 filed client/compose bugs #283–#292 (backlog; #283 P1: leave/resend fail with 415). Owner vision for persona scenarios and external API clients (Brasse-Bouillon, theatre sites) recorded on #20, #251, #244. Next: event client (#252) or persona scenario study, each after conception approval. Database setup: `npm run migrate` from `server/`. T11a blocks deployment. Open: email provider, hosting/backups
    (must provide EU PostgreSQL) and Géoplateforme quota (T11). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.
 
