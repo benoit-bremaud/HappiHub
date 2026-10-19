@@ -11,9 +11,10 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   only, within spec BC1–BC19. Owner decisions recorded as spec § 12 amendments: A-B1
   `activity_entry.detail` jsonb (485/500), A-B2 full INSEE COG 2026 commune list (460), A-B3
   plain indexes because `timestamptz + interval` is not IMMUTABLE (technical), A-B4 per-IP
-  limiters 600/15 min on event writes and the public read (390). Local gate green on 27e1135:
-  65 unit + 97 integration server tests, 36 client, new-code coverage 87.7 %, SonarQube
-  passed, gitleaks clean, API QA transcript. Review fixes: membership locked on every write,
+  limiters 600/15 min on event writes and the public read (390). Local gate (review-local.md) green on
+  4a1059c: 65 unit + 97 integration server tests, 36 client, new-code coverage 87.7 %,
+  SonarQube passed, gitleaks clean, API QA transcript; after the PR-review fixes (27e1135)
+  the test suites, SonarQube and gitleaks were rerun green and PR CI passed. Review fixes: membership locked on every write,
   strict dates/uuids, hidden Unicode refused, order-free edit coalescing (removed a flaky
   BC18), and from PR review a publish/account-deletion deadlock (account now locked first)
   and an end-without-start CHECK gap.
