@@ -129,9 +129,10 @@ export const listEvents = async (ctx, association, status) => {
 export const readEvent = async (ctx, association, id) => memberView(await findEvent(ctx.db, association, id), ctx.now());
 
 /**
- * EVENT_EDITED coalescing (§ 5 M step 6): when the latest entry on this event is an edit by the
- * same actor within 15 minutes, it absorbs the new field names instead of adding a row; any
- * other entry in between (publish, another editor) starts a new one, so the log keeps its order.
+ * EVENT_EDITED coalescing (§ 5 M step 6): the actor's latest edit entry on this event within
+ * 15 minutes absorbs the new field names instead of adding a row, unless a later entry exists on
+ * the event (publish, another editor), which starts a new one so the log keeps its order. Entries
+ * at the same instant do not count as later: ids are random, so they carry no order.
  */
 const recordEdit = async (client, ctx, association, accountId, eventId, fields) => {
   if (!fields.length) return;
@@ -139,12 +140,13 @@ const recordEdit = async (client, ctx, association, accountId, eventId, fields) 
   const { rowCount } = await client.query(
     `UPDATE activity_entry SET occurred_at = $5, detail = jsonb_build_object('fields',
        (SELECT jsonb_agg(DISTINCT name ORDER BY name) FROM jsonb_array_elements_text(detail -> 'fields' || $4::jsonb) AS name))
-     WHERE id = (SELECT id FROM activity_entry WHERE association_id = $1 AND target_ref = $3
-         ORDER BY occurred_at DESC, id DESC LIMIT 1)
-       AND actor_id = $2 AND action = 'EVENT_EDITED' AND occurred_at > $6`,
+     WHERE id = (SELECT id FROM activity_entry WHERE association_id = $1 AND target_ref = $3 AND actor_id = $2
+         AND action = 'EVENT_EDITED' AND occurred_at > $6 ORDER BY occurred_at DESC LIMIT 1)
+       AND NOT EXISTS (SELECT 1 FROM activity_entry later WHERE later.association_id = $1 AND later.target_ref = $3
+         AND later.occurred_at > activity_entry.occurred_at)`,
     [association.id, accountId, eventId, JSON.stringify(fields), new Date(now), new Date(now - COALESCE_MS)]);
   if (!rowCount) await recordActivity(client, ctx, { associationId: association.id, actorId: accountId,
-    action: 'EVENT_EDITED', targetRef: eventId, detail: { fields: [...fields].sort() } });
+    action: 'EVENT_EDITED', targetRef: eventId, detail: { fields: [...fields].sort((a, b) => a.localeCompare(b)) } });
 };
 
 /**

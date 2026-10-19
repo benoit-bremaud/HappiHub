@@ -342,9 +342,13 @@ describe('activity (BC18)', () => {
     const { claire, malik } = await twoMembers();
     const event = await create(claire);
     const path = `${EVENTS}/${event.id}`;
+    const tick = () => { clock.now += 1000; };
     await claire.patch(path, { baseVersion: 1, changes: { title: 'One' } });
+    tick();
     await malik.patch(path, { baseVersion: 2, changes: { title: 'Two' } });
+    tick();
     await claire.post(`${path}/publish`, { baseVersion: 3 });
+    tick();
     await claire.patch(path, { baseVersion: 4, changes: { title: 'Three' } });
     await claire.patch(path, { baseVersion: 5, changes: { title: 'Three' } }); // no change: no entry
     expect((await activity('EVENT_EDITED')).map((e) => e.detail)).toEqual([{ fields: ['title'] }, { fields: ['title'] },

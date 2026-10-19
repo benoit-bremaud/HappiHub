@@ -6,10 +6,15 @@ import { DomainError } from './errors.js';
 // merge M (§ 5), publication guard G1/G3 (§ 4), lifecycle transitions, effective end A1 and
 // the creation quota window Q. Pure functions: persistence and locking live in services/events.js.
 
+/** One day in milliseconds (A1 fallback end, quota window Q). */
 export const DAY_MS = 24 * 3600e3;
+/** Allowed `type` values (§ 7); mirrored by the migration CHECK. */
 export const EVENT_TYPES = ['THEATRE', 'CONCERT', 'EXHIBITION', 'WORKSHOP', 'DANCE', 'CINEMA', 'TALK', 'OTHER'];
+/** Poster presets; the first one is the creation default. */
 export const POSTER_STYLES = ['classic', 'bold', 'paper', 'night', 'pastel', 'minimal'];
+/** `priceKind` values; only AMOUNT carries `priceAmountCents`. */
 export const PRICE_KINDS = ['FREE', 'AMOUNT', 'PAY_WHAT_YOU_WANT'];
+/** Lifecycle statuses, also the member list filter values. */
 export const EVENT_STATUSES = ['DRAFT', 'PUBLISHED', 'CANCELLED', 'ARCHIVED'];
 /** Q: creations per association within a sliding 24 h window. */
 export const CREATION_QUOTA = 20;
@@ -45,8 +50,8 @@ export const cancellationReasonSchema = optionalText(500);
 const ISO_DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
 const isoDateTime = Joi.string().custom((value, helpers) => {
   const [, year, month, day] = ISO_DATE_TIME.exec(value) ?? [];
-  const calendar = year && new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
-  if (!calendar || calendar.getUTCDate() !== Number(day) || Number.isNaN(Date.parse(value)))
+  const calendar = year ? new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))) : null;
+  if (calendar?.getUTCDate() !== Number(day) || Number.isNaN(Date.parse(value)))
     return helpers.error('any.invalid');
   return new Date(value).toISOString();
 });
@@ -68,6 +73,7 @@ const FIELD_SCHEMAS = {
   priceAmountCents: Joi.number().integer().min(1).max(100_000_000).allow(null).default(null),
   posterStyle: Joi.string().valid(...POSTER_STYLES).required(),
 };
+/** BC16 allow-list: the only fields a create or edit may carry. */
 export const EDITABLE_FIELDS = Object.keys(FIELD_SCHEMAS);
 
 /**
@@ -81,6 +87,7 @@ export const parseField = (field, value) => {
   return parsed;
 };
 
+/** Parse every field of a partial body. @throws as parseField. */
 export const parseFields = (values) =>
   Object.fromEntries(Object.entries(values).map(([field, value]) => [field, parseField(field, value)]));
 
@@ -104,6 +111,7 @@ export const newDraft = (body) => {
   return draft;
 };
 
+/** G1: required fields still null, in REQUIRED_FIELDS order. */
 export const missingFields = (event) => REQUIRED_FIELDS.filter((field) => event[field] === null);
 
 /** A1: effective end in ms; `starts_at` + 24 h without an end; null for a draft without start. */
@@ -112,6 +120,7 @@ export const effectiveEnd = (event) => {
   return event.startsAt ? Date.parse(event.startsAt) + DAY_MS : null;
 };
 
+/** True once the effective end (A1) is past; a draft without start never ends. */
 export const hasEnded = (event, now) => {
   const end = effectiveEnd(event);
   return end !== null && end < now;

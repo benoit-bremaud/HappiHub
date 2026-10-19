@@ -37,22 +37,27 @@ const eventId = (req) => {
 
 const ctxOf = (req) => req.app.locals.ctx;
 
+/** UC15: 201 with the new draft. */
 export const createEventHandler = handle(async (req, res) =>
   res.status(201).json(await createEvent(ctxOf(req), req.account.id, req.association, envelope(SCHEMAS.create, req.body))));
 
+/** UC16 step 1: member list, optional `?status=` filter. */
 export const listEventsHandler = handle(async (req, res) => {
   const { status } = envelope(SCHEMAS.list, req.query);
   return res.json({ events: await listEvents(ctxOf(req), req.association, status) });
 });
 
+/** UC16: editor view with `version` for the next save. */
 export const readEventHandler = handle(async (req, res) =>
   res.json(await readEvent(ctxOf(req), req.association, eventId(req))));
 
+/** UC16/UC17: `{baseVersion, changes, base?}` merged under lock. */
 export const editEventHandler = handle(async (req, res) => {
   const id = eventId(req);
   return res.json(await editEvent(ctxOf(req), req.account.id, req.association, id, envelope(SCHEMAS.edit, req.body)));
 });
 
+/** UC18: `{baseVersion}`; guard failures answer 422. */
 export const publishEventHandler = handle(async (req, res) => {
   const id = eventId(req);
   const body = envelope(SCHEMAS.publish, req.body);
@@ -73,4 +78,5 @@ export const deleteEventHandler = handle(async (req, res) => {
   return res.status(204).end();
 });
 
+/** Public read without a session; every hidden case is the same 404. */
 export const readPublicEventHandler = handle(async (req, res) => res.json(await readPublicEvent(ctxOf(req), eventId(req))));
