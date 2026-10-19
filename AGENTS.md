@@ -40,9 +40,8 @@ root package.json or root build command. Architecture documentation lives under
 UML sources in diagrams/. Current plan/status lives in docs/WORK_PLAN.md and HANDOVER.md.
 
 Dedicated branches start from main. Follow root CONTRIBUTING.md for current setup and PR metadata.
-Existing recovery work is on
-`fix/security-boundaries`: do not discard it or create a new feature implementation
-before conception approval. Never commit directly to main. Use Conventional Commits.
+The recovery work (formerly `fix/security-boundaries`) is merged to main. Do not start a
+feature implementation before its conception is approved. Never commit directly to main. Use Conventional Commits.
 Run appropriate checks before pushing; the human triggers the actual push. PR creation,
 merge, deletion, force-push, external messages and CI/CD modification require explicit
 owner authorization under the applicable project/session rules.
@@ -50,7 +49,8 @@ owner authorization under the applicable project/session rules.
 ## Verified commands
 
 From server/: `npm ci --ignore-scripts`, `npm test -- --runInBand`,
-`npm run test:integration`, `npm start` (private runtime configuration and Mongo required).
+`npm run test:integration`, `npm start` (private runtime configuration and PostgreSQL required;
+run `npm run migrate` first).
 From client/: `npm ci --ignore-scripts`, `CI=true npm test -- --watchAll=false --runInBand`,
 `npm run build`, `npm start` (configure the public API URL).
 There is no dedicated lint or typecheck npm script. Do not invent one or treat absence
@@ -59,11 +59,10 @@ as a successful check. See Docker/configuration docs for isolated local executio
 ## Implementation and documentation pitfalls
 
 - Current browser authentication uses HttpOnly sessions and CSRF, not bearer JWTs.
-  Historical FAQ/GUIDE/tutorials do not define current API behavior.
+  Historical tutorials in docs/archive/ do not define current API behavior.
 - Role authorization and community ranks are distinct and their future model is unresolved.
 - Event moderation pending/approved/rejected is not the proposed publication lifecycle.
-- Current models use MongoDB/Mongoose; the final database decision remains open.
-- Event titles currently have a unique index. Changing that needs conception and migration.
+- Persistence is PostgreSQL (ADR-0003) with SQL migrations in server/migrations.
 - Protected event identity comes from authenticated accounts, never caller-supplied author IDs.
 - Do not expose owner/participant identifiers through public projections.
 - Do not commit private environment files, real credentials, cookies or tokens.

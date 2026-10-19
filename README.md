@@ -70,7 +70,7 @@ Les contributions sont les bienvenues. Pour commencer :
 4. Push la branche (`git push origin feature/fooBar`).
 5. Créez une nouvelle Pull Request.
 
-Pour plus d'informations, veuillez lire le fichier [CONTRIBUTING](docs/CONTRIBUTING.md).
+Pour plus d'informations, veuillez lire le fichier [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Code de Conduite
 
@@ -100,26 +100,26 @@ JWT authentication and JWT refresh examples are historical. See the current
 
 ## Guide Général
 
-Pour des directives supplémentaires et des informations spécifiques sur le projet HappiHub, veuillez consulter le fichier [GUIDE.md](./docs/GUIDE.md). Ce guide fournit des conseils sur les bonnes pratiques de développement, l'utilisation des fonctionnalités avancées, ainsi que des astuces et des ressources utiles.
+The former general guide (JWT, MongoDB, role/rank model) is obsolete and kept in [docs/archive](docs/archive/). Current state and plan: [HANDOVER](docs/HANDOVER.md) and [WORK_PLAN](docs/WORK_PLAN.md).
 
 ## FAQ
 
-Pour répondre aux questions fréquemment posées, nous avons créé un fichier [FAQ.md](./docs/FAQ.md). Vous y trouverez des réponses détaillées sur l'installation, l'utilisation et la contribution au projet HappiHub. Si vous avez des questions supplémentaires, n'hésitez pas à consulter ce fichier avant de nous contacter.
+The former FAQ described an obsolete MongoDB/JWT setup and is kept in [docs/archive](docs/archive/). Current setup: [CONTRIBUTING.md](CONTRIBUTING.md), [configuration](docs/CONFIGURATION.md) and [Docker workflows](docs/DOCKER.md).
 
 ## Licence
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
-## Start Manually Server
+## Start manually
+
+There is no root package.json. Start each part from its own directory:
 
 ```bash
-npm start
+cd server && npm ci --ignore-scripts && npm run migrate && npm start
 ```
 
-## Start Manually Client
-
 ```bash
-npm run start
+cd client && npm ci --ignore-scripts && npm start
 ```
 
 ---

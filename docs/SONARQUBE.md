@@ -15,11 +15,9 @@ never use each commit SHA as a new version and reset the new-code window every p
 
 Both local credentials were issued with owner confirmation and expire October 13, 2027.
 Their authentication/read checks passed without displaying values. The dedicated scanner
-network is configured and isolation probes passed. No analysis or automatic activation
-is claimed while the workflow and recovered source are absent from main.
-
-The integration branch starts from main and depends on recovery PR #257. The recovered
-Jest configuration and integration tests must reach main before this workflow activates.
+network is configured and isolation probes passed. The workflow and the
+recovered source are on main (PR #257). The pre-merge gate scans locally with every lcov
+report (server unit, `server/coverage/integration`, client); see `review-local` reports.
 No push, merge or deployment is implied by configuration approval.
 
 ## Credentials — owner-controlled, never in chat
