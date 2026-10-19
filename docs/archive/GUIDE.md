@@ -1,8 +1,8 @@
 # GUIDE - HappiHub
 
 > Legacy guidance: role/rank descriptions and JWT/setup examples below may describe
-> historical intentions rather than current behavior. Use [current API contracts](API_DOCUMENTATION.md),
-> [configuration](CONFIGURATION.md) and [handover](HANDOVER.md) for the verified baseline.
+> historical intentions rather than current behavior. Use [current API contracts](../API_DOCUMENTATION.md),
+> [configuration](../CONFIGURATION.md) and [handover](../HANDOVER.md) for the verified baseline.
 
 ## Introduction
 
@@ -28,7 +28,7 @@ Avant de commencer, assurez-vous d'avoir les outils suivants installés sur votr
 
 ## Installation et Configuration
 
-Pour installer et configurer HappiHub, suivez les étapes détaillées dans le [README](../README.md). Assurez-vous de configurer correctement les fichiers `.env` pour le frontend et le backend.
+Pour installer et configurer HappiHub, suivez les étapes détaillées dans le [README](../../README.md). Assurez-vous de configurer correctement les fichiers `.env` pour le frontend et le backend.
 
 ## Bonnes Pratiques de Développement
 

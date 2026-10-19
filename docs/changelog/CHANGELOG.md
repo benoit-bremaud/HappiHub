@@ -6,8 +6,8 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ## [Unreleased]
 
-The following recovery changes are local to fix/security-boundaries and have not been
-released or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
+The following changes are merged to main (recovery PR #257, bricks D #276 and B #282) and
+have not been released or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
 history and [handover](../HANDOVER.md) for the current state.
 
 ### Added
@@ -16,6 +16,9 @@ history and [handover](../HANDOVER.md) for the current state.
 - Session conception, explicit runtime configuration, isolated local/production container
   workflows and disposable real-database regression coverage.
 - Prioritized work plan, operational journal and portable contributor/agent handover.
+- Brick D accounts and associations on PostgreSQL: signup with email verification,
+  sign-in, profile, account export and deletion, associations with invitations and
+  memberships, and SQL migrations (`npm run migrate`). MongoDB is removed (ADR-0003).
 - Brick B event lifecycle API on PostgreSQL (UC15–UC20): drafts with a per-association
   creation quota, optimistic editing with field-level merge and conflict answers,
   publication guard, cancellation, draft deletion, a minimal public read, association-closure

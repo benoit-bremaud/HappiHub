@@ -1,7 +1,8 @@
 # HappiHub handover
 
-Updated: 2026-10-16. The backlog is reconciled and the recovery branch is published for review.
-No further application code is authorized without the owner's completed UML approval gate.
+Updated: 2026-10-19. The recovery work and V1 bricks D (accounts/associations) and B (event
+lifecycle backend) are merged to main. No further application code is authorized without the
+owner's completed UML approval gate for that increment.
 
 ## Read in order
 
@@ -13,14 +14,10 @@ for current behavior, not historical tutorials or old issue titles.
 
 Repository: benoit-bremaud/HappiHub. On the current machine the working checkout is
 `/home/vev/Documents/02_personal/HappiHub`; the chat's default directory may differ.
-At this check GitHub main and origin/main both resolve to
-`e3e90078920ee00c776c916ac7ede45e4e22cfc0`.
-Recovery branch: fix/security-boundaries. Latest implementation commit: c831c6b;
-accepted session-design commit: 45b5c15. The authorized recovery work is pushed and submitted as
-[PR #257](https://github.com/benoit-bremaud/HappiHub/pull/257), with clement-machtelinckx requested as reviewer.
-The PR is attached to HappiHub Project #6 as In review/P1. Existing repairs have not been
-merged or deployed. Documentation updates may appear as working-tree
-changes or later documentation commits: inspect git status/log at resumption.
+At this update origin/main resolves to `47b8cde` (brick B merge, PR #282). The recovery
+branch fix/security-boundaries was merged through PR #257 (`c831c6b` is in main). Open
+documentation PRs at this update: #264 (recovery merge record) and #293 (brick B log).
+Inspect `git status`/`git log` and open PRs at resumption rather than trusting these SHAs.
 
 Owner: Benoît (benoit-bremaud). Retained collaborator: Clément/Yazii
 (clement-machtelinckx). See the dated cleanup evidence for permission changes; verify live
@@ -29,16 +26,15 @@ independently verified. The owning Project is
 [HappiHub Project #6](https://github.com/users/benoit-bremaud/projects/6), with
 [framing epic #58](https://github.com/benoit-bremaud/HappiHub/issues/58).
 
-## Backlog and publication status
+## Backlog status
 
-The authorized second cleanup audited all 121 previously open issues: 38 retained,
-83 closed as superseded/not_planned and archived, 15 new studies/delivery tasks (#242–#256).
-Fresh verification found 53 open issues/cards, 38 Backlog and 15 In review, all prioritized,
-with obsolete dates removed. See the [full reconciliation](architecture/roadmap-backlog-reconciliation-2026-10-12.md)
-and [publication review](architecture/recovery-publication-review-2026-10-12.md).
-The Project additionally contains PR #257 (54 active cards: 53 issues plus the PR).
-Restoration #256 awaits PR acceptance; no feature code is authorized by these issue updates.
-Raw earlier audit exports remain untracked and must not be bulk-staged.
+The 2026-10-12 cleanup audited all 121 then-open issues (38 retained, 83 closed, 15 new studies
+#242–#256); see the [reconciliation](architecture/roadmap-backlog-reconciliation-2026-10-12.md),
+which is dated evidence. At this update 54 issues are open on
+[Project #6](https://github.com/users/benoit-bremaud/projects/6). The 2026-10-19 QA pass filed
+#283–#292 and the repository audit filed #294–#296 (documentation refresh, code/config
+leftovers, status notes on approved architecture documents). Issue updates never authorize
+feature code. Raw earlier audit exports remain untracked and must not be bulk-staged.
 
 ## Current accepted directions
 
@@ -57,21 +53,19 @@ are not approved decisions; the database is PostgreSQL (ADR-0003, 2026-10-16).
 
 ## Implemented local baseline
 
-React 18/CRA client, Express 4 API, Mongoose 8/MongoDB. The application has public approved
-non-private event reads, owner boundaries, ordinary signup/login, profile changes,
-comment creation/listing and participation. HttpOnly cookie sessions use express-session
-and connect-mongo. CSRF applies to all writes, login regenerates identifiers, logout revokes
-the stored session and password changes invalidate existing authenticated sessions.
+React 18/CRA client; Node 22 ESM Express 4 API on PostgreSQL (`pg`, `node-pg-migrate`
+migrations in `server/migrations`, `npm run migrate`). HttpOnly cookie sessions use
+express-session with `connect-pg-simple`; CSRF applies to all writes. Implemented: accounts
+(signup, email verification, sign-in, profile, export, deletion), associations with
+invitations and memberships (brick D), and the event lifecycle backend UC15–UC20 (drafts,
+concurrent edit merge, publish, cancel, delete, public read, maintenance job; brick B).
 
-A complete event editor, event-content update route, draft/publication lifecycle,
-external integration authentication, organization collaboration, booking/payment system,
-logo and expanded demo dataset have not been implemented.
+Not implemented: the event client (#252), partner/external API authentication, booking or
+payment, logo and expanded demo dataset. Compose files on main use PostgreSQL; #292 needs re-checking (stale local containers).
 
-Latest recorded verification: 86 fast server tests, 14 disposable real-Mongo tests,
-18 client tests, client build, local/HTTPS Docker browser flows and persistence across
-an API process restart. Fast server, Mongo integration, client tests and client build were rerun for publication
-and passed. Earlier container/browser/restart checks remain recorded evidence.
-The [session report](architecture/session-migration-2026-10-12.md) contains limits.
+Latest recorded verification (brick B gate, 2026-10-19): 65 unit and 97 PostgreSQL
+integration server tests, 36 client tests, SonarQube gate passed, gitleaks clean, API QA
+transcript. Note: the CI coverage globs miss `domain`, `services`, `db` and `jobs` (#295).
 
 Last recorded dependency audit: runtime server zero findings, full server tree 33 affected
 entries, client 104. Counts are dated and include dependency chains. CRA/Jest migration,
@@ -84,12 +78,13 @@ open. Do not represent the whole project as security-complete.
 | --- | --- |
 | WORK_PLAN.md | Current prioritized sequencing, approval boundaries and unresolved scope |
 | PROJECT_LOG.md | Operational decisions and verified historical integrations |
-| API_DOCUMENTATION.md | Actual API behavior on the local recovery branch |
-| architecture/specs/cookie-sessions.md and ADR-0001 | Accepted session conception |
+| API_DOCUMENTATION.md | Actual API behavior on main |
+| architecture/specs/cookie-sessions.md and ADR-0001 | Accepted session conception (store superseded by ADR-0003) |
+| architecture/specs/v1-*.md and ADR-0003 | Approved V1 conception and brick specifications |
 | architecture/specs/event-platform-resumption.md | Earlier proposal, not an approved feature specification |
 | Dated architecture audit/remediation reports | Evidence at the time of each activity |
 | changelog/CHANGELOG.md | Unreleased product changes and retained legacy version notes |
-| FAQ.md, GUIDE.md, JWT tutorial | Legacy guidance, not current runtime authority |
+| archive/ | Legacy tutorials (FAQ, GUIDE, Express, Joi, JWT), not current runtime authority |
 
 The backlog audit snapshot contains historical remote metadata, not live issue statuses.
 Do not silently promote proposals to implementation-ready tasks or mark issues Done based
@@ -115,9 +110,9 @@ feature-usage ranking. Keep sample, date, segment and confidence attached to con
 The owner reinforced folder organization, Clean/SOLID, anti-pattern checks and removal
 of unjustified duplication. A [read-only folder audit](architecture/folder-architecture-audit-2026-10-12.md)
 records verified CSS/request duplication, responsibility boundaries and stale configuration.
-#41 must include the responsibility/path map and dependency UML; #248/#25 cover the later
-quality-tooling study. SonarQube is deferred; no scanner/setup or structural code changes
-have occurred. Do not interpret candidate folders as an approved implementation plan.
+#41 must include the responsibility/path map and dependency UML. A local SonarQube server
+is in use for the pre-merge gate ([SONARQUBE](SONARQUBE.md)). Do not interpret candidate
+folders as an approved implementation plan.
 
 ## Next actions
 
@@ -136,8 +131,9 @@ have occurred. Do not interpret candidate folders as an approved implementation 
    Brick D conception decided 2026-10-16 ([spec](architecture/specs/v1-brick-d-accounts-associations.md)):
    `pg` + `node-pg-migrate` + `connect-pg-simple`, scope S1–S3 and the 06 amendment approved
    by Benoît (§ 9). Done 2026-10-16: brick D merged (PR #276, dd4ead9); amendments A-D1–A-D5
-   and S1-C validated. Brick B (event lifecycle backend, UC15–UC20) conception decided 2026-10-16 ([spec](architecture/specs/v1-brick-b-event-lifecycle.md)): Benoît validated S, A1, Q, V, P (top scores). Spec merged as PR #278 (8dd08ad). Done 2026-10-19: brick B implemented and merged (PR #282, 47b8cde), server only; amendments A-B1–A-B4 in spec § 12; local gate green ([review-local](architecture/review-local.md)). QA on 2026-10-19 filed client/compose bugs #283–#292 (backlog; #283 P1: leave/resend fail with 415). Owner vision for persona scenarios and external API clients (Brasse-Bouillon, theatre sites) recorded on #20, #251, #244. Next: event client (#252) or persona scenario study, each after conception approval. Database setup: `npm run migrate` from `server/`. T11a blocks deployment. Open: email provider, hosting/backups
-   (must provide EU PostgreSQL) and Géoplateforme quota (T11). Backup retention is decided with hosting.
+   and S1-C validated. Brick B (event lifecycle backend, UC15–UC20) conception decided 2026-10-16 ([spec](architecture/specs/v1-brick-b-event-lifecycle.md)): Benoît validated S, A1, Q, V, P (top scores). Spec merged as PR #278 (8dd08ad). Done 2026-10-19: brick B implemented and merged (PR #282, 47b8cde), server only; amendments A-B1–A-B4 in spec § 12; local gate green ([review-local](architecture/review-local.md)). QA on 2026-10-19 filed client/compose bugs #283–#292 (backlog; #283 P1: leave/resend fail with 415). Owner vision for persona scenarios and external API clients (Brasse-Bouillon, theatre sites) recorded on #20, #251, #244. Repository audit 2026-10-19 filed #294–#296.
+   Next: event client (#252) or persona scenario study, each after conception approval.
+   T11a blocks deployment. Open: email provider, hosting/backups (must provide EU PostgreSQL) and Géoplateforme quota (T11). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.
 
 Technical migration and demo-tooling studies may be prepared alongside framing, but their
@@ -147,10 +143,10 @@ not a consultation already conducted or permission to contact him.
 
 ## Local runtime and safe resumption
 
-Last retained previews: standalone web http://localhost:3100/events with API 5100,
-and Docker local web http://localhost:3200/events with API 5200. Check that these services
-still exist and match the checkout before using them. The standalone preview launcher was
-temporary and is not a repository-supported seed/start command.
+No preview is guaranteed to be running. Local run used for the 2026-10-19 QA: a disposable
+PostgreSQL container, `npm run migrate` then `npm start` in `server/` (API 5000) and
+`npm start` in `client/` with `REACT_APP_API_URL=http://localhost:5000/api` (web 3000).
+In development, emails (verification, invitations) are printed in the server log.
 
 Follow [configuration](CONFIGURATION.md) and [Docker workflows](DOCKER.md) for reproducible
 startup on another machine. Supply a new private session key and a designated local database.

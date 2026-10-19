@@ -1,8 +1,8 @@
 # FAQ - HappiHub
 
 > Legacy guidance: role/rank descriptions and JWT/setup examples below may describe
-> historical intentions rather than current behavior. Use [current API contracts](API_DOCUMENTATION.md),
-> [configuration](CONFIGURATION.md) and [handover](HANDOVER.md) for the verified baseline.
+> historical intentions rather than current behavior. Use [current API contracts](../API_DOCUMENTATION.md),
+> [configuration](../CONFIGURATION.md) and [handover](../HANDOVER.md) for the verified baseline.
 
 ## Installation et Configuration
 
@@ -85,17 +85,17 @@ Les contributions sont les bienvenues. Pour commencer :
 
 ### Où puis-je trouver le guide de contribution ?
 
-Le guide de contribution se trouve dans le fichier [CONTRIBUTING](./CONTRIBUTING.md).
+Le guide de contribution se trouve dans le fichier [CONTRIBUTING](CONTRIBUTING-legacy.md).
 
 ### Comment signaler une vulnérabilité de sécurité ?
 
-Pour signaler une vulnérabilité de sécurité, veuillez lire notre [Politique de Sécurité](./SECURITY.md).
+Pour signaler une vulnérabilité de sécurité, veuillez lire notre [Politique de Sécurité](../SECURITY.md).
 
 ## Questions Diverses
 
 ### Où puis-je trouver la documentation complète de l'API ?
 
-La documentation complète de l'API est disponible dans le fichier [API_DOCUMENTATION](API_DOCUMENTATION.md).
+La documentation complète de l'API est disponible dans le fichier [API_DOCUMENTATION](../API_DOCUMENTATION.md).
 
 ### Comment puis-je obtenir de l'aide si j'ai des questions supplémentaires ?
 

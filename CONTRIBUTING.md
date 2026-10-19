@@ -2,7 +2,7 @@
 
 Read [AGENTS.md](AGENTS.md), [handover](docs/HANDOVER.md), [work plan](docs/WORK_PLAN.md)
 and the relevant accepted conception before making changes. This root guide is the
-current contributor and pull-request authority. The older docs/CONTRIBUTING.md is historical.
+current contributor and pull-request authority. The older guide in docs/archive/CONTRIBUTING-legacy.md is historical.
 
 ## Design and approval
 
@@ -15,7 +15,7 @@ Roadmap agreement does not authorize implementation.
 ## Local setup and configuration
 
 Clone https://github.com/benoit-bremaud/HappiHub.git and work from its root.
-Use a dedicated branch from main; the existing recovery branch is fix/security-boundaries.
+Use a dedicated branch from main.
 There is no root package.json. Install server and client packages separately with
 `npm ci --ignore-scripts` from each directory. Follow [configuration](docs/CONFIGURATION.md)
 and [Docker workflows](docs/DOCKER.md) for the supported runtime and exact settings.
@@ -23,8 +23,7 @@ and [Docker workflows](docs/DOCKER.md) for the supported runtime and exact setti
 Copy server/.env.example to a private ignored server/.env.local using `cp` on Linux/macOS
 or `Copy-Item` in Windows PowerShell. For standalone local startup, set the DEV database,
 port and exact browser origin values plus a newly generated private SESSION_SECRET_DEV
-of at least 32 random bytes. Configure the active DEV keys and add SESSION_SECRET_DEV privately; do not copy historical
-JWT keys or use unrelated PROD/TEST settings for local mode. For local Docker use the separate
+of at least 32 random bytes. Configure the active DEV keys and add SESSION_SECRET_DEV privately; do not use unrelated PROD/TEST settings for local mode. For local Docker use the separate
 ignored server/.env.docker.local described in the Docker guide. The browser API URL
 includes /api and must match the chosen local topology. Never put secrets in client configuration.
 

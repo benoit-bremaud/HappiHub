@@ -7,6 +7,15 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-19
 
+- **Repository audit and documentation refresh (#294)** — read-only audit of every tracked
+  file (root/docs, docs/architecture, code/config). Owner chose option A (four sequential
+  lots, 460/500). Lots 1–2 in this change: HANDOVER, WORK_PLAN, AGENTS, CONTRIBUTING, README,
+  SONARQUBE, DOCKER, CHANGELOG and server/tests/README now describe PostgreSQL, the merged
+  bricks D and B and the real commands; MERN/JWT tutorials moved to docs/archive/ with an
+  index (`.gitleaksignore` working-tree path updated, commit-scoped fingerprints kept).
+  Follow-ups: #295 code/config leftovers (CI coverage globs miss domain/services/db/jobs;
+  needs a mini-spec), #296 dated status notes on approved architecture documents (owner
+  decision). Compose files already use PostgreSQL, so #292 needs re-checking.
 - **Brick B merged — event lifecycle backend UC15–UC20 (PR #282, merge 47b8cde)** — server
   only, within spec BC1–BC19. Owner decisions recorded as spec § 12 amendments: A-B1
   `activity_entry.detail` jsonb (485/500), A-B2 full INSEE COG 2026 commune list (460), A-B3

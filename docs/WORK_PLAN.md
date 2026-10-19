@@ -1,6 +1,6 @@
 # HappiHub prioritized work plan
 
-Updated: 2026-10-12. This plan orders the work; it does not approve implementation.
+Updated: 2026-10-19. This plan orders the work; it does not approve implementation.
 Owner: Benoît. Clément/Yazii contributes to product and visual-design review.
 
 ## Product direction and decision status
@@ -21,7 +21,8 @@ HappiHub's website and external integrations must share authoritative event rule
 | Revisit visual design and obtain Clément's feedback | Requested; review not held |
 | Original logo, about ten demo events, dedicated local test credentials | Requested; implementation plan not approved |
 | Target audience and first-release scope | Validated 2026-10-15 (V1 product framing) |
-| Business model, hosting and final database choice | Unresolved |
+| Database | PostgreSQL (ADR-0003, 2026-10-16) |
+| Business model and hosting | Unresolved |
 
 The existing [resumption specification](architecture/specs/event-platform-resumption.md)
 is an earlier proposal, not the final product specification. Its historical baseline must
@@ -85,8 +86,8 @@ No delivery dates are committed before scope and effort are established.
 - Detailed API contracts, integration authentication/access scopes, validation/errors,
   compatibility policy, quotas, duplicate-request protection and change notifications
   where selected. Server-to-server access is not automatically authorized by browser sessions.
-- Database comparison and an explicit decision: MongoDB is the existing implementation,
-  not a pre-approved final choice. Include migration/rollback if the study selects changes.
+- Database decision: done, PostgreSQL with a fresh start (ADR-0003,
+  [data/migration study](architecture/specs/v1-data-migration.md)).
 - Requirement/use-case/diagram/API/test traceability, security rules, acceptance scenarios,
   unresolved assumptions and concrete module responsibilities.
 
@@ -102,10 +103,9 @@ placement. Preserve proportionality: no speculative layers or generic frameworks
 See the [current folder audit](architecture/folder-architecture-audit-2026-10-12.md) for
 verified duplication/coupling/configuration findings and the planned design gate.
 
-SonarQube setup is deferred. Study quality scope, coverage reports, new-code baseline and
-privacy of credentials alongside #25/#248; assess complementary lint/dependency/clone checks
-only where useful. Architecture review remains semantic as well as automated. No tool
-installation, file moves, pipeline change or code refactoring is authorized by this request.
+A local SonarQube server runs the pre-merge quality gate ([SONARQUBE](SONARQUBE.md)).
+Architecture review remains semantic as well as automated. File moves, pipeline changes
+and refactoring still need their own approved conception (see #295).
 
 ## Feature selection method
 
@@ -143,20 +143,15 @@ target a designated demo database, preserve unrelated data and be safe to rerun.
 
 ## Established baseline and remaining readiness
 
-The security/configuration/dependency/Docker/session work has been implemented and
-verified locally on fix/security-boundaries. This is not a deployed release.
+Merged to main (not a deployed release): the security/configuration/Docker/session recovery
+(PR #257), V1 brick D accounts and associations (PR #276) and brick B event lifecycle
+backend UC15–UC20 (PR #282), on PostgreSQL.
 
-- Latest recorded verification: 86 fast server tests, 14 real-Mongo integration tests,
-  18 client tests, client build, local/HTTPS container workflows and session persistence
-  across an actual API process restart.
-- Last recorded server production dependency audit: zero known vulnerabilities.
-  Full server tree: 33 affected entries; client: 104. These are dated audit counts,
-  not counts of independent exploitable defects. CRA/Jest migration remains outstanding.
-- Public event reads, owner boundaries, ordinary accounts, comments and participation
-  exist. A complete editor, event-update/publication lifecycle and external integration
-  authorization have not been implemented.
-- Review pending source/documentation alignment and existing local commits before any
-  human-triggered push. PR creation, merge and CI/CD changes require explicit approval.
+- Latest recorded verification (2026-10-19): 65 unit and 97 PostgreSQL integration server
+  tests, 36 client tests, SonarQube gate passed, gitleaks clean, API QA transcript.
+- Not implemented: the event client (#252), partner/external API authentication, booking
+  or payment, logo and demo dataset. QA bugs #283–#292 and audit follow-ups #294–#296 are open.
+- PR creation, merge and CI/CD changes require explicit approval.
 - Prepare deployment topology, image/security checks, private configuration, backup/restore
   and recovery before real external use. No production rollout is authorized by this plan.
 
@@ -185,11 +180,6 @@ identify implemented behavior, proposals and missing approvals without chat hist
 
 ## Immediate next work
 
-Framing, scope and journeys were validated on 2026-10-15. Author the full conception only against that settled
-scope, review it, and obtain explicit approval before any further code implementation.
-
-The owner subsequently authorized mapping this plan into GitHub Project #6 and auditing
-the old backlog, then publishing the existing recovery branch with Clement as reviewer.
-Design studies remain Backlog and unvalidated ideas are not implementation-ready.
-See the [roadmap reconciliation](architecture/roadmap-backlog-reconciliation-2026-10-12.md)
-for issue-by-issue dispositions.
+V1 conception is approved (implementation gate 2026-10-16); bricks D and B are merged.
+Next: the event client (#252) or the persona scenario study, each after its own conception
+is approved; fix the P1 QA bug #283. See [HANDOVER](HANDOVER.md) for the live state.
