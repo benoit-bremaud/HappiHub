@@ -37,6 +37,12 @@ test('missing origin/referrer fails and exact referrer fallback succeeds', async
 });
 test('writes reject form content even with valid CSRF', async () => {
   expect((await post('/api/session').type('form').send('a=b')).status).toBe(415);
+  expect((await post('/api/session').type('text/plain').send('a=b')).status).toBe(415);
+});
+test('bodiless writes sent with Content-Length: 0 pass the content-type check (#283)', async () => {
+  const response = await request(app).delete('/api/session').set('Origin', origin).set('Cookie', fixtureCookie())
+    .set('X-CSRF-Token', csrf).set('Content-Length', '0');
+  expect(response.status).toBe(204);
 });
 test('sign-out revokes the stored identifier and clears its cookie', async () => {
   const response = await request(app).delete('/api/session').set('Origin', origin).set('Cookie', fixtureCookie()).set('X-CSRF-Token', csrf);

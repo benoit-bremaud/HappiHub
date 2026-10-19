@@ -40,7 +40,7 @@ describe('UC8 closure (AC10)', () => {
   test('refused while other members remain; afterwards the slug stays reserved', async () => {
     const { claire, malik } = await twoMembers();
     expect((await claire.post('/api/associations/troupe/close', { confirm: true })).status).toBe(409);
-    expect((await malik.post('/api/associations/troupe/leave')).status).toBe(204);
+    expect((await malik.postEmpty('/api/associations/troupe/leave')).status).toBe(204);
     expect((await claire.post('/api/associations/troupe/close', { confirm: true })).status).toBe(204);
     expect((await claire.patch('/api/associations/troupe', { city: 'X' })).status).toBe(409);
     const other = await browser(app);
@@ -72,7 +72,7 @@ describe('UC10 invitations (AC11)', () => {
     const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
     const created = (await claire.post('/api/associations/troupe/invitations', { email: 'm@example.org' })).body;
     expect((await claire.get('/api/associations/troupe/invitations')).body.invitations.map((i) => i.email)).toEqual(['m@example.org']);
-    const resent = (await claire.post(`/api/associations/troupe/invitations/${created.id}/resend`)).body;
+    const resent = (await claire.postEmpty(`/api/associations/troupe/invitations/${created.id}/resend`)).body;
     expect(resent.link).not.toBe(created.link);
     const visitor = await browser(app);
     expect((await visitor.post('/api/invitations/lookup', { token: created.link.split('#')[1] })).status).toBe(410);

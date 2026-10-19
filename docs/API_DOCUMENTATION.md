@@ -11,7 +11,7 @@ Historical FAQ/GUIDE/tutorials do not define current behavior.
   idle expiry 30 min, absolute cap 8 h. No bearer token is accepted.
 - `GET /api/session` returns `{ account | null, csrfToken }`. Every write sends the token in
   `X-CSRF-Token` and must come from the exact configured Origin, otherwise `403`.
-- A write with a body must be `application/json`, otherwise `415`. Bodiless writes are allowed.
+- A write with a body must be `application/json`, otherwise `415`. Bodiless writes (no `Transfer-Encoding`, `Content-Length` absent or `0`) are allowed.
 - Every response carries `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
 - Email links carry their token in the URL fragment; the client sends it in a JSON body only.
   Only a SHA-256 hash of each token is stored.
