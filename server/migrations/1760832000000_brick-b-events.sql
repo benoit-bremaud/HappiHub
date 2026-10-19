@@ -29,7 +29,7 @@ CREATE TABLE event (
   last_edited_by uuid REFERENCES account (id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (ends_at IS NULL OR ends_at >= starts_at),
+  CHECK (ends_at IS NULL OR (starts_at IS NOT NULL AND ends_at >= starts_at)),
   CHECK ((price_kind = 'AMOUNT') = (price_amount_cents IS NOT NULL AND price_amount_cents > 0)),
   CHECK (cancellation_reason IS NULL OR status IN ('CANCELLED', 'ARCHIVED')),
   CHECK ((status = 'DRAFT') = (published_at IS NULL)),

@@ -56,17 +56,23 @@ const assertActive = (locked) => {
 };
 
 /**
- * Open a member write (06, T6; G4): association status re-read under lock (exclusive for
- * creation, which counts the quota; shared otherwise), then the actor's membership under lock,
- * so a member removed while the request was in flight cannot write.
+ * Open a member write (06, T6; G4). Lock order account → association → membership, the same
+ * as account deletion (UC6), so the two cannot deadlock: the actor's account under a shared
+ * lock, the association status re-read under lock (exclusive for creation, which counts the
+ * quota), then the membership, so a member removed while the request was in flight cannot
+ * write. Returns the locked account (`email_verified_at` for the publication guard).
  */
 const lockMemberWrite = async (client, accountId, association, { exclusive = false } = {}) => {
+  const { rows: [account] } = await client.query(
+    'SELECT email_verified_at FROM account WHERE id = $1 FOR SHARE', [accountId]);
+  if (!account) throw notFound();
   assertActive(exclusive
     ? (await client.query('SELECT status FROM association WHERE id = $1 FOR UPDATE', [association.id])).rows[0]
     : (await client.query('SELECT status FROM association WHERE id = $1 FOR SHARE', [association.id])).rows[0]);
   const { rows: [membership] } = await client.query(
     'SELECT 1 FROM membership WHERE account_id = $1 AND association_id = $2 FOR SHARE', [accountId, association.id]);
   if (!membership) throw notFound();
+  return account;
 };
 
 /** An event of this association, locked for the transaction; another association's id is 404 (BC19). */
@@ -175,13 +181,11 @@ export const editEvent = (ctx, accountId, association, id, request) =>
  */
 export const publishEvent = (ctx, accountId, association, id, baseVersion) =>
   withTransaction(ctx.db, async (client) => {
-    await lockMemberWrite(client, accountId, association);
+    const account = await lockMemberWrite(client, accountId, association);
     const event = await lockEvent(client, association, id);
     const now = ctx.now();
     assertTransition(event, 'publish', baseVersion, now);
-    const { rows: [account] } = await client.query(
-      'SELECT email_verified_at FROM account WHERE id = $1 FOR SHARE', [accountId]);
-    const failures = publicationFailures(event, { emailVerified: Boolean(account?.email_verified_at), now });
+    const failures = publicationFailures(event, { emailVerified: Boolean(account.email_verified_at), now });
     if (failures.length) throw eventError(422, 'PUBLICATION_REFUSED', 'The event cannot be published yet.', { failures });
     await client.query(
       `UPDATE event SET status = 'PUBLISHED', published_at = $2, version = version + 1, last_edited_by = $3,

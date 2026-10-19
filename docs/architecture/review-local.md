@@ -4,12 +4,12 @@
 - Commit: 4a1059c plus the commit that adds this report (feature 13e2654, fixes 3270cb4 and 4a1059c)
 - Scope: branch diff origin/main...feat/brick-b-event-lifecycle (server only, spec v1-brick-b-event-lifecycle)
 - Checks run: design · docs · tests · security · correctness · QA pass (API)
-- Verdict: Must Have resolved; gate green · Must 0 open (2 fixed) · Should 0 open (fixed) · Nice 5 deferred
+- Verdict: Must Have resolved; gate green · Must 0 open (4 fixed) · Should 0 open (fixed) · Nice 5 deferred
 
 ## Pre-merge gate
 | Step | Result |
 |---|---|
-| 1 Tests | ✅ server 65 unit + 95 integration (disposable PostgreSQL 17.6, three consecutive green runs) · ✅ client 36 |
+| 1 Tests | ✅ server 65 unit + 97 integration (disposable PostgreSQL 17.6, three consecutive green runs) · ✅ client 36 |
 | 2 Coverage | server integration 93.5 % stmts / 76.3 % branches / 97.8 % funcs / 95.1 % lines · `domain/event.js` 100 % lines · SonarQube new code 87.7 % · docs: 45/45 exports of the brick B modules documented (no counter tool in this repo) |
 | 3 SonarQube | ✅ QUALITY GATE PASSED on 4a1059c (local SonarQube, project `happihub`, server unit + integration and client lcov reports) |
 | 4 Secrets | ✅ gitleaks clean on origin/main..HEAD · no tracked .env · diff read: only synthetic QA accounts and the INSEE open data file (Etalab 2.0) |
@@ -19,6 +19,9 @@
 ## 🔴 Must Have (all fixed)
 - `server/tests/integration/events.test.js` BC15 `[tests]` · export order of two events created at the same fixed instant was random → order-free assertion plus row checks (3270cb4).
 - `server/services/events.js` recordEdit `[correctness|tests]` · coalescing picked "the latest entry" by random uuid when entries shared an instant (BC18 flaked about one run in two) → coalesce into the actor's latest edit unless a strictly later entry exists (4a1059c).
+
+- `server/services/events.js` lockMemberWrite `[correctness]` · publish locked association then account while UC6 deletion locks account then association (deadlock, 500) → every event write now locks the account first; race regression test. Found on PR #282, verified against `deleteAccountRow`.
+- `server/migrations/1760832000000_brick-b-events.sql` `[correctness]` · `ends_at` with a null `starts_at` passed the CHECK (NULL result) → `starts_at IS NOT NULL` required; BC17 row added.
 
 ## 🟡 Should Have (all fixed in 3270cb4 / 4a1059c)
 - `server/services/events.js` `[security]` · membership re-checked under lock on every write, not only publish; regression test for a member removed mid-flight.

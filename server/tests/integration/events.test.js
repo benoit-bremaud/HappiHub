@@ -328,6 +328,16 @@ describe('security (BC16, BC19)', () => {
 });
 
 describe('membership under lock', () => {
+  test('publication racing the publisher\'s account deletion never deadlocks (lock order account first)', async () => {
+    const claire = await claireOnly();
+    const event = await create(claire);
+    const [published, deleted] = await Promise.all([
+      claire.post(`${EVENTS}/${event.id}/publish`, { baseVersion: 1 }),
+      claire.del('/api/account', { confirm: true, password: 'a quiet walk by the river' })]);
+    expect(deleted.status).toBe(204);
+    expect([200, 401, 403, 404, 409]).toContain(published.status);
+  });
+
   test('a member removed after loading the association can no longer write', async () => {
     const { claire, malik } = await twoMembers();
     const event = await create(claire);

@@ -55,6 +55,7 @@ describe('event constraints (BC17)', () => {
     ['long venue label', { venue_label: 'x'.repeat(201) }],
     ['malformed city code', { venue_normalized_city: 'Lyon' }],
     ['end before start', { starts_at: new Date('2026-11-02Z'), ends_at: new Date('2026-11-01Z') }],
+    ['end without start', { ends_at: new Date('2026-11-01Z') }],
     ['amount without AMOUNT', { price_amount_cents: 500 }],
     ['AMOUNT without amount', { price_kind: 'AMOUNT' }],
     ['zero amount', { price_kind: 'AMOUNT', price_amount_cents: 0 }],
