@@ -234,7 +234,8 @@ describe('reads (BC12, member list)', () => {
     const hidden = await published(claire);
     await pool.query('UPDATE event SET hidden_by_moderation = true WHERE id = $1', [hidden.id]);
     const anonymous = await browser(app);
-    const answers = await Promise.all([draft.id, hidden.id, '7d9f2c56-1d6e-4c43-9b55-0a1c2d3e4f5a', 'not-a-uuid']
+    const answers = await Promise.all([draft.id, hidden.id, '7d9f2c56-1d6e-4c43-9b55-0a1c2d3e4f5a', 'not-a-uuid',
+      `{${draft.id}}`]
       .map((id) => anonymous.get(`/api/events/${id}`)));
     for (const response of answers)
       expect([response.status, response.body]).toEqual([404, { message: 'Event not found', code: 'EVENT_NOT_FOUND' }]);
@@ -258,7 +259,7 @@ describe('reads (BC12, member list)', () => {
 });
 
 describe('cross-brick effects (BC14, BC15)', () => {
-  test('closure cancels upcoming published events only, in the same transaction (BC14)', async () => {
+  test('closure cancels upcoming published events only and blocks later writes (BC14)', async () => {
     const claire = await claireOnly();
     const upcoming = await published(claire);
     const past = await published(claire);
@@ -281,13 +282,17 @@ describe('cross-brick effects (BC14, BC15)', () => {
     await claire.patch(`${EVENTS}/${edited.id}`, { baseVersion: 1, changes: { title: 'Edited by Claire' } });
     await create(malik, { title: 'Not mine', type: 'TALK' });
     const exported = (await claire.get('/api/account/export')).body;
-    expect(exported.events).toEqual([
+    // Same created_at under the fixed clock: the export order between the two is not specified.
+    expect(exported.events).toHaveLength(2);
+    expect(exported.events).toEqual(expect.arrayContaining([
       expect.objectContaining({ association: 'troupe', id: mine.id, title: 'Mine', createdByYou: true, lastEditedByYou: true }),
       expect.objectContaining({ id: edited.id, title: 'Edited by Claire', createdByYou: false, lastEditedByYou: true }),
-    ]);
+    ]));
     expect(JSON.stringify(exported.events)).not.toContain(await accountId('malik@example.org'));
     expect((await claire.del('/api/account', { confirm: true, password: 'a quiet walk by the river' })).status).toBe(204);
     expect(await row(mine.id)).toMatchObject({ created_by: null, last_edited_by: null, title: 'Mine' });
+    expect((await row(edited.id)).last_edited_by).toBeNull();
+    expect((await row(edited.id)).created_by).not.toBeNull();
   });
 });
 
@@ -300,6 +305,8 @@ describe('security (BC16, BC19)', () => {
       expect((await patch({ [field]: 'x' })).body).toMatchObject({ code: 'UNKNOWN_FIELD', details: { field } });
     expect((await patch({ title: 'x'.repeat(121) })).body).toMatchObject({ code: 'INVALID_FIELD', details: { field: 'title' } });
     expect((await patch({ shortDescription: 'tab\u0009inside' })).status).toBe(400);
+    expect((await patch({ title: 'bidi\u202Eoverride' })).body).toMatchObject({ code: 'INVALID_FIELD' });
+    expect((await patch({ startsAt: 1234 })).body).toMatchObject({ code: 'INVALID_FIELD', details: { field: 'startsAt' } });
     expect((await claire.post(EVENTS, { title: 'T', type: 'TALK', status: 'PUBLISHED' })).body.code).toBe('UNKNOWN_FIELD');
     expect((await claire.patch(`${EVENTS}/${event.id}`, { baseVersion: 1, changes: {} })).body.code).toBe('INVALID_REQUEST');
     expect(await row(event.id)).toMatchObject({ version: 1, status: 'DRAFT' });
@@ -320,7 +327,30 @@ describe('security (BC16, BC19)', () => {
   });
 });
 
+describe('membership under lock', () => {
+  test('a member removed after loading the association can no longer write', async () => {
+    const { claire, malik } = await twoMembers();
+    const event = await create(claire);
+    await pool.query("DELETE FROM membership WHERE account_id = (SELECT id FROM account WHERE email = 'malik@example.org')");
+    expect((await malik.patch(`${EVENTS}/${event.id}`, { baseVersion: 1, changes: { title: 'X' } })).status).toBe(404);
+    expect((await row(event.id)).version).toBe(1);
+  });
+});
+
 describe('activity (BC18)', () => {
+  test('an edit after another entry or by another member starts a new EVENT_EDITED entry', async () => {
+    const { claire, malik } = await twoMembers();
+    const event = await create(claire);
+    const path = `${EVENTS}/${event.id}`;
+    await claire.patch(path, { baseVersion: 1, changes: { title: 'One' } });
+    await malik.patch(path, { baseVersion: 2, changes: { title: 'Two' } });
+    await claire.post(`${path}/publish`, { baseVersion: 3 });
+    await claire.patch(path, { baseVersion: 4, changes: { title: 'Three' } });
+    await claire.patch(path, { baseVersion: 5, changes: { title: 'Three' } }); // no change: no entry
+    expect((await activity('EVENT_EDITED')).map((e) => e.detail)).toEqual([{ fields: ['title'] }, { fields: ['title'] },
+      { fields: ['title'] }]);
+  });
+
   test('one entry per lifecycle write; edits within 15 minutes coalesce field names only', async () => {
     const claire = await claireOnly();
     const event = await create(claire);
@@ -341,6 +371,7 @@ describe('activity (BC18)', () => {
       expect((await activity(action)).length).toBe(action === 'EVENT_CREATED' ? 2 : 1);
     expect((await activity('EVENT_DELETED'))[0]).toMatchObject({ target_ref: draft.id, detail: { title: 'To delete' } });
     const { rows } = await pool.query('SELECT detail::text FROM activity_entry WHERE detail IS NOT NULL');
+    expect((await activity('EVENT_EDITED')).length).toBe(2);
     expect(rows.map((r) => r.detail).join()).not.toMatch(/Secret|Hidden|Text"/);
   });
 });

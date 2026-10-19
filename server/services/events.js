@@ -1,7 +1,8 @@
 import { withTransaction } from '../db/transaction.js';
 import { findCommune } from '../domain/communes.js';
 import {
-  assertTransition, COALESCE_MS, DAY_MS, eventError, hasEnded, mergeEdit, newDraft, publicationFailures, quotaRetryAfter,
+  assertTransition, COALESCE_MS, DAY_MS, DRAFT_NOTICE_GRACE_MS, eventError, hasEnded, mergeEdit, newDraft,
+  publicationFailures, quotaError, quotaRetryAfter,
 } from '../domain/event.js';
 import { recordActivity } from './activity.js';
 import { queueEmail } from './outbox.js';
@@ -13,6 +14,7 @@ const EVENT_COLUMNS = `e.id, e.association_id, e.type, e.title, e.short_descript
   e.ends_at, e.venue_label, e.venue_address, e.venue_normalized_city, e.price_kind, e.price_amount_cents, e.poster_style,
   e.status, e.cancellation_reason, e.published_at, e.schedule_changed_at, e.version, e.created_at, e.updated_at,
   editor.display_name AS last_edited_by_name`;
+const EVENT_SOURCE = 'event e LEFT JOIN account editor ON editor.id = e.last_edited_by';
 
 const iso = (value) => (value ? value.toISOString() : null);
 
@@ -49,43 +51,57 @@ const contentParams = (event) => [event.type, event.title, event.shortDescriptio
 
 const notFound = () => eventError(404, 'EVENT_NOT_FOUND', 'Event not found');
 
-/** Re-read the association status under lock; writes stop once it is CLOSED (06, T6; G4). */
-const lockActiveAssociation = async (client, association, forUpdate) => {
-  const { rows: [locked] } = forUpdate
-    ? await client.query('SELECT status FROM association WHERE id = $1 FOR UPDATE', [association.id])
-    : await client.query('SELECT status FROM association WHERE id = $1 FOR SHARE', [association.id]);
+const assertActive = (locked) => {
   if (locked?.status !== 'ACTIVE') throw eventError(409, 'ASSOCIATION_CLOSED', 'This association is closed.');
+};
+
+/**
+ * Open a member write (06, T6; G4): association status re-read under lock (exclusive for
+ * creation, which counts the quota; shared otherwise), then the actor's membership under lock,
+ * so a member removed while the request was in flight cannot write.
+ */
+const lockMemberWrite = async (client, accountId, association, { exclusive = false } = {}) => {
+  assertActive(exclusive
+    ? (await client.query('SELECT status FROM association WHERE id = $1 FOR UPDATE', [association.id])).rows[0]
+    : (await client.query('SELECT status FROM association WHERE id = $1 FOR SHARE', [association.id])).rows[0]);
+  const { rows: [membership] } = await client.query(
+    'SELECT 1 FROM membership WHERE account_id = $1 AND association_id = $2 FOR SHARE', [accountId, association.id]);
+  if (!membership) throw notFound();
 };
 
 /** An event of this association, locked for the transaction; another association's id is 404 (BC19). */
 const lockEvent = async (client, association, id) => {
   const { rows: [row] } = await client.query(
-    `SELECT ${EVENT_COLUMNS} FROM event e LEFT JOIN account editor ON editor.id = e.last_edited_by
-     WHERE e.id = $1 AND e.association_id = $2 FOR UPDATE OF e`, [id, association.id]);
+    `SELECT ${EVENT_COLUMNS} FROM ${EVENT_SOURCE} WHERE e.id = $1 AND e.association_id = $2 FOR UPDATE OF e`,
+    [id, association.id]);
   if (!row) throw notFound();
   return toEvent(row);
 };
 
 const findEvent = async (db, association, id) => {
   const { rows: [row] } = await db.query(
-    `SELECT ${EVENT_COLUMNS} FROM event e LEFT JOIN account editor ON editor.id = e.last_edited_by
-     WHERE e.id = $1 AND e.association_id = $2`, [id, association.id]);
+    `SELECT ${EVENT_COLUMNS} FROM ${EVENT_SOURCE} WHERE e.id = $1 AND e.association_id = $2`, [id, association.id]);
   if (!row) throw notFound();
   return toEvent(row);
 };
 
-/** UC15: first save creates the draft, within 20 creations per association per 24 h (Q). */
+/** Member view of the event as written by this transaction. */
+const viewAfterWrite = async (client, ctx, association, id) => memberView(await findEvent(client, association, id), ctx.now());
+
+/**
+ * UC15: first save creates the draft, within 20 creations per association per 24 h (Q).
+ * Returns the member view. @throws 429 EVENT_QUOTA (Retry-After), 409 ASSOCIATION_CLOSED, field 400s.
+ */
 export const createEvent = async (ctx, accountId, association, body) => {
   const draft = newDraft(body);
-  const id = await withTransaction(ctx.db, async (client) => {
-    await lockActiveAssociation(client, association, true);
+  return withTransaction(ctx.db, async (client) => {
+    await lockMemberWrite(client, accountId, association, { exclusive: true });
     const now = ctx.now();
     const { rows: [window] } = await client.query(
       'SELECT count(*)::int AS count, min(created_at) AS oldest FROM event WHERE association_id = $1 AND created_at > $2',
       [association.id, new Date(now - DAY_MS)]);
     const retryAfter = quotaRetryAfter({ count: window.count, oldest: window.oldest?.getTime() }, now);
-    if (retryAfter) throw eventError(429, 'EVENT_QUOTA', 'This association has created 20 events in the last 24 hours.',
-      undefined, retryAfter);
+    if (retryAfter) throw quotaError(retryAfter);
     const { rows: [created] } = await client.query(
       `INSERT INTO event (association_id, type, title, short_description, long_description, starts_at, ends_at,
          venue_label, venue_address, venue_normalized_city, price_kind, price_amount_cents, poster_style,
@@ -94,15 +110,14 @@ export const createEvent = async (ctx, accountId, association, body) => {
       [association.id, ...contentParams(draft), accountId, new Date(now)]);
     await recordActivity(client, ctx, { associationId: association.id, actorId: accountId,
       action: 'EVENT_CREATED', targetRef: created.id });
-    return created.id;
+    return viewAfterWrite(client, ctx, association, created.id);
   });
-  return memberView(await findEvent(ctx.db, association, id), ctx.now());
 };
 
 /** Member list (UC16 step 1), optionally filtered by status, most recently edited first. */
 export const listEvents = async (ctx, association, status) => {
   const { rows } = await ctx.db.query(
-    `SELECT ${EVENT_COLUMNS} FROM event e LEFT JOIN account editor ON editor.id = e.last_edited_by
+    `SELECT ${EVENT_COLUMNS} FROM ${EVENT_SOURCE}
      WHERE e.association_id = $1 AND ($2::text IS NULL OR e.status = $2) ORDER BY e.updated_at DESC, e.id`,
     [association.id, status ?? null]);
   const now = ctx.now();
@@ -110,28 +125,35 @@ export const listEvents = async (ctx, association, status) => {
     startsAt: event.startsAt, ended: hasEnded(event, now), updatedAt: event.updatedAt, lastEditedBy: event.lastEditedBy }));
 };
 
+/** Editor read; an event of another association is 404 EVENT_NOT_FOUND (BC19). */
 export const readEvent = async (ctx, association, id) => memberView(await findEvent(ctx.db, association, id), ctx.now());
 
 /**
- * EVENT_EDITED coalescing (§ 5 M step 6): an entry by the same actor on the same event within
- * 15 minutes absorbs the new field names instead of adding a row.
+ * EVENT_EDITED coalescing (§ 5 M step 6): when the latest entry on this event is an edit by the
+ * same actor within 15 minutes, it absorbs the new field names instead of adding a row; any
+ * other entry in between (publish, another editor) starts a new one, so the log keeps its order.
  */
 const recordEdit = async (client, ctx, association, accountId, eventId, fields) => {
+  if (!fields.length) return;
   const now = ctx.now();
   const { rowCount } = await client.query(
     `UPDATE activity_entry SET occurred_at = $5, detail = jsonb_build_object('fields',
        (SELECT jsonb_agg(DISTINCT name ORDER BY name) FROM jsonb_array_elements_text(detail -> 'fields' || $4::jsonb) AS name))
-     WHERE id = (SELECT id FROM activity_entry WHERE association_id = $1 AND actor_id = $2 AND action = 'EVENT_EDITED'
-       AND target_ref = $3 AND occurred_at > $6 ORDER BY occurred_at DESC LIMIT 1)`,
+     WHERE id = (SELECT id FROM activity_entry WHERE association_id = $1 AND target_ref = $3
+         ORDER BY occurred_at DESC, id DESC LIMIT 1)
+       AND actor_id = $2 AND action = 'EVENT_EDITED' AND occurred_at > $6`,
     [association.id, accountId, eventId, JSON.stringify(fields), new Date(now), new Date(now - COALESCE_MS)]);
   if (!rowCount) await recordActivity(client, ctx, { associationId: association.id, actorId: accountId,
     action: 'EVENT_EDITED', targetRef: eventId, detail: { fields: [...fields].sort() } });
 };
 
-/** UC16/UC17: merge M under the event row lock; any edit cancels a pending cleanup notice (S2). */
-export const editEvent = async (ctx, accountId, association, id, request) => {
-  await withTransaction(ctx.db, async (client) => {
-    await lockActiveAssociation(client, association, false);
+/**
+ * UC16/UC17: merge M under the event row lock; any edit cancels a pending cleanup notice (S2).
+ * Returns the member view. @throws the mergeEdit refusals, 409 ASSOCIATION_CLOSED, 404.
+ */
+export const editEvent = (ctx, accountId, association, id, request) =>
+  withTransaction(ctx.db, async (client) => {
+    await lockMemberWrite(client, accountId, association);
     const event = await lockEvent(client, association, id);
     const { merged, fields, scheduleChanged } = mergeEdit(event, request);
     const now = new Date(ctx.now());
@@ -142,52 +164,50 @@ export const editEvent = async (ctx, accountId, association, id, request) => {
          cleanup_notice_at = NULL, schedule_changed_at = CASE WHEN $16 THEN $15 ELSE schedule_changed_at END
        WHERE id = $1`, [id, ...contentParams(merged), accountId, now, scheduleChanged]);
     await recordEdit(client, ctx, association, accountId, id, fields);
+    return viewAfterWrite(client, ctx, association, id);
   });
-  return readEvent(ctx, association, id);
-};
 
-/** UC18: guard G1–G4 with the email and the membership re-read under lock. */
-export const publishEvent = async (ctx, accountId, association, id, baseVersion) => {
-  await withTransaction(ctx.db, async (client) => {
-    await lockActiveAssociation(client, association, false);
-    const { rows: [membership] } = await client.query(
-      'SELECT 1 FROM membership WHERE account_id = $1 AND association_id = $2 FOR SHARE', [accountId, association.id]);
-    if (!membership) throw notFound();
+/**
+ * UC18: guard G1–G4 with the email and the membership re-read under lock. Returns the member view.
+ * @throws 422 PUBLICATION_REFUSED (`details.failures`), the assertTransition 409s, 404.
+ */
+export const publishEvent = (ctx, accountId, association, id, baseVersion) =>
+  withTransaction(ctx.db, async (client) => {
+    await lockMemberWrite(client, accountId, association);
     const event = await lockEvent(client, association, id);
-    assertTransition(event, 'publish', baseVersion, ctx.now());
+    const now = ctx.now();
+    assertTransition(event, 'publish', baseVersion, now);
     const { rows: [account] } = await client.query(
       'SELECT email_verified_at FROM account WHERE id = $1 FOR SHARE', [accountId]);
-    const failures = publicationFailures(event, { emailVerified: Boolean(account.email_verified_at), now: ctx.now() });
+    const failures = publicationFailures(event, { emailVerified: Boolean(account?.email_verified_at), now });
     if (failures.length) throw eventError(422, 'PUBLICATION_REFUSED', 'The event cannot be published yet.', { failures });
-    const now = new Date(ctx.now());
     await client.query(
       `UPDATE event SET status = 'PUBLISHED', published_at = $2, version = version + 1, last_edited_by = $3,
-         updated_at = $2, cleanup_notice_at = NULL WHERE id = $1`, [id, now, accountId]);
+         updated_at = $2, cleanup_notice_at = NULL WHERE id = $1`, [id, new Date(now), accountId]);
     await recordActivity(client, ctx, { associationId: association.id, actorId: accountId,
       action: 'EVENT_PUBLISHED', targetRef: id });
+    return viewAfterWrite(client, ctx, association, id);
   });
-  return readEvent(ctx, association, id);
-};
 
-/** UC19: final; only an upcoming published event. */
-export const cancelEvent = async (ctx, accountId, association, id, { baseVersion, reason }) => {
-  await withTransaction(ctx.db, async (client) => {
-    await lockActiveAssociation(client, association, false);
+/** UC19: final; only an upcoming published event. Returns the member view. */
+export const cancelEvent = (ctx, accountId, association, id, { baseVersion, reason }) =>
+  withTransaction(ctx.db, async (client) => {
+    await lockMemberWrite(client, accountId, association);
     const event = await lockEvent(client, association, id);
-    assertTransition(event, 'cancel', baseVersion, ctx.now());
+    const now = ctx.now();
+    assertTransition(event, 'cancel', baseVersion, now);
     await client.query(
       `UPDATE event SET status = 'CANCELLED', cancellation_reason = $2, version = version + 1, last_edited_by = $3,
-         updated_at = $4 WHERE id = $1`, [id, reason, accountId, new Date(ctx.now())]);
+         updated_at = $4 WHERE id = $1`, [id, reason, accountId, new Date(now)]);
     await recordActivity(client, ctx, { associationId: association.id, actorId: accountId,
       action: 'EVENT_CANCELLED', targetRef: id });
+    return viewAfterWrite(client, ctx, association, id);
   });
-  return readEvent(ctx, association, id);
-};
 
 /** UC20: drafts only; the title is kept in the activity detail once the row is gone. */
 export const deleteEvent = (ctx, accountId, association, id, baseVersion) =>
   withTransaction(ctx.db, async (client) => {
-    await lockActiveAssociation(client, association, false);
+    await lockMemberWrite(client, accountId, association);
     const event = await lockEvent(client, association, id);
     assertTransition(event, 'delete', baseVersion, ctx.now());
     await client.query('DELETE FROM event WHERE id = $1', [id]);
@@ -202,7 +222,7 @@ export const deleteEvent = (ctx, accountId, association, id, baseVersion) =>
 export const readPublicEvent = async (ctx, id) => {
   const { rows: [row] } = await ctx.db.query(
     `SELECT ${EVENT_COLUMNS}, a.name AS association_name, a.slug AS association_slug
-     FROM event e JOIN association a ON a.id = e.association_id LEFT JOIN account editor ON editor.id = e.last_edited_by
+     FROM ${EVENT_SOURCE} JOIN association a ON a.id = e.association_id
      WHERE e.id = $1 AND e.status IN ('PUBLISHED', 'CANCELLED', 'ARCHIVED') AND NOT e.hidden_by_moderation
        AND a.status = 'ACTIVE'`, [id]);
   if (!row) throw notFound();
@@ -210,7 +230,10 @@ export const readPublicEvent = async (ctx, id) => {
     association: { name: row.association_name, slug: row.association_slug } };
 };
 
-/** UC8 hook (C1): in the closing transaction, upcoming published events become CANCELLED. */
+/**
+ * UC8 hook (C1): in the closing transaction (association row already locked), upcoming published
+ * events become CANCELLED. Returns the number cancelled.
+ */
 export const cancelUpcomingEvents = async (client, ctx, associationId, actorId) => {
   const now = ctx.now();
   const { rows } = await client.query(
@@ -237,7 +260,8 @@ export const exportEvents = async (db, accountId) => {
 
 /**
  * Maintenance tasks (02d, S2), each idempotent: archive ended events (A1); notify the members
- * of drafts untouched for 12 months; delete those drafts 14 days after the notice.
+ * of drafts untouched for 12 months (at most 500 per run, the next run takes the rest); delete
+ * those drafts 14 days after the notice.
  */
 export const runEventMaintenance = async (ctx) => {
   const now = ctx.now();
@@ -248,7 +272,7 @@ export const runEventMaintenance = async (ctx) => {
 
   const { rows: stale } = await ctx.db.query(
     `SELECT id FROM event WHERE status = 'DRAFT' AND cleanup_notice_at IS NULL
-     AND updated_at < $1::timestamptz - interval '12 months'`, [new Date(now)]);
+     AND updated_at < $1::timestamptz - interval '12 months' ORDER BY updated_at LIMIT 500`, [new Date(now)]);
   let noticed = 0;
   for (const { id } of stale) {
     noticed += await withTransaction(ctx.db, async (client) => {
@@ -269,6 +293,6 @@ export const runEventMaintenance = async (ctx) => {
   }
 
   const draftsDeleted = (await ctx.db.query(
-    "DELETE FROM event WHERE status = 'DRAFT' AND cleanup_notice_at <= $1", [new Date(now - 14 * DAY_MS)])).rowCount;
+    "DELETE FROM event WHERE status = 'DRAFT' AND cleanup_notice_at <= $1", [new Date(now - DRAFT_NOTICE_GRACE_MS)])).rowCount;
   return { eventsArchived: archived, draftNoticesSent: noticed, draftsDeleted };
 };

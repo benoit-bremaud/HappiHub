@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { eventError } from '../domain/event.js';
+import { cancellationReasonSchema, EVENT_STATUSES, eventError } from '../domain/event.js';
 import {
   cancelEvent, createEvent, deleteEvent, editEvent, listEvents, publishEvent, readEvent, readPublicEvent,
 } from '../services/events.js';
@@ -8,7 +8,8 @@ import { handle } from './handle.js';
 // Brick B endpoints (spec § 5). Field-level rules and the allow-list live in domain/event.js;
 // this layer only shapes the request envelopes.
 
-const STATUSES = ['DRAFT', 'PUBLISHED', 'CANCELLED', 'ARCHIVED'];
+// Canonical lowercase/uppercase hex uuid only (Joi guid also accepts braces and urn prefixes).
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const baseVersion = Joi.number().integer().min(1).required();
 const confirm = Joi.valid(true).required();
 const fieldMap = Joi.object().unknown(true);
@@ -17,9 +18,9 @@ const SCHEMAS = {
   edit: Joi.object({ baseVersion, changes: fieldMap.min(1).required(), base: fieldMap.default({}) }),
   publish: Joi.object({ baseVersion }),
   cancel: Joi.object({ baseVersion, confirm,
-    reason: Joi.string().trim().max(500).pattern(/^\P{Cc}*$/u).allow(null).empty('').default(null) }),
+    reason: cancellationReasonSchema.default(null) }),
   delete: Joi.object({ baseVersion, confirm }),
-  list: Joi.object({ status: Joi.string().valid(...STATUSES) }),
+  list: Joi.object({ status: Joi.string().valid(...EVENT_STATUSES) }),
 };
 
 const envelope = (schema, input) => {
@@ -30,7 +31,7 @@ const envelope = (schema, input) => {
 
 /** A malformed id is answered like an unknown one (BC12, BC19). */
 const eventId = (req) => {
-  if (Joi.string().guid().validate(req.params.id).error) throw eventError(404, 'EVENT_NOT_FOUND', 'Event not found');
+  if (!UUID.test(req.params.id)) throw eventError(404, 'EVENT_NOT_FOUND', 'Event not found');
   return req.params.id;
 };
 

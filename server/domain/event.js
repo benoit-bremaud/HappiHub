@@ -10,24 +10,47 @@ export const DAY_MS = 24 * 3600e3;
 export const EVENT_TYPES = ['THEATRE', 'CONCERT', 'EXHIBITION', 'WORKSHOP', 'DANCE', 'CINEMA', 'TALK', 'OTHER'];
 export const POSTER_STYLES = ['classic', 'bold', 'paper', 'night', 'pastel', 'minimal'];
 export const PRICE_KINDS = ['FREE', 'AMOUNT', 'PAY_WHAT_YOU_WANT'];
+export const EVENT_STATUSES = ['DRAFT', 'PUBLISHED', 'CANCELLED', 'ARCHIVED'];
+/** Q: creations per association within a sliding 24 h window. */
 export const CREATION_QUOTA = 20;
+/** M step 6: EVENT_EDITED entries of one actor on one event within this many ms coalesce. */
 export const COALESCE_MS = 15 * 60e3;
+/** S2: days a flagged draft stays before deletion, unless edited. */
+export const DRAFT_NOTICE_GRACE_MS = 14 * DAY_MS;
 
 /** G1: fields a published event must keep (UC18, UC16 2c). */
 export const REQUIRED_FIELDS = ['title', 'type', 'shortDescription', 'startsAt', 'venueLabel', 'venueCity'];
 const SCHEDULE_FIELDS = new Set(['startsAt', 'endsAt', 'venueLabel', 'venueAddress', 'venueCity']);
 const READ_ONLY = new Set(['CANCELLED', 'ARCHIVED']);
 
-/** Refusal with the brick B body `{message, code, details?}`; `retryAfter` sets the header. */
-export const eventError = (status, code, message, details, retryAfter) =>
-  new DomainError(status, message, { code, ...(details && { details }), ...(retryAfter && { retryAfter }) });
+/** Refusal with the brick B body `{message, code, details?}`. */
+export const eventError = (status, code, message, details) =>
+  new DomainError(status, message, { code, ...(details && { details }) });
 
-// No control characters in single-line text; long descriptions keep line breaks and tabs.
-const SINGLE_LINE = /^\P{Cc}*$/u;
-const MULTI_LINE = /^(?:\P{Cc}|[\t\n\r])*$/u;
+/** Q refusal: 429 with `Retry-After` (seconds) until a creation slot frees. */
+export const quotaError = (retryAfter) => new DomainError(429,
+  `This association has created ${CREATION_QUOTA} events in the last 24 hours.`, { code: 'EVENT_QUOTA', retryAfter });
+
+// No control, invisible formatting (bidi overrides, zero-width) or line/paragraph separator
+// characters in single-line text; long descriptions keep line breaks and tabs.
+const SINGLE_LINE = /^[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}]*$/u;
+const MULTI_LINE = /^(?:[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}]|[\t\n\r])*$/u;
 const optionalText = (max, pattern = SINGLE_LINE) =>
   Joi.string().trim().max(max).pattern(pattern).allow(null).empty('').default(null);
-const optionalDate = Joi.date().iso().allow(null).empty('').default(null);
+/** UC19 cancellation reason: optional single-line text. */
+export const cancellationReasonSchema = optionalText(500);
+
+// ISO 8601 date-time with an explicit zone; impossible calendar dates (Feb 30) are refused
+// instead of rolling over, and numbers are not accepted as dates.
+const ISO_DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
+const isoDateTime = Joi.string().custom((value, helpers) => {
+  const [, year, month, day] = ISO_DATE_TIME.exec(value) ?? [];
+  const calendar = year && new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  if (!calendar || calendar.getUTCDate() !== Number(day) || Number.isNaN(Date.parse(value)))
+    return helpers.error('any.invalid');
+  return new Date(value).toISOString();
+});
+const optionalDate = isoDateTime.allow(null).empty('').default(null);
 const commune = Joi.string().custom((code, helpers) => (findCommune(code) ? code : helpers.error('any.invalid')));
 
 /** Editable fields: the allow-list of `changes` and creation bodies (status, version, ids excluded). */
@@ -47,12 +70,15 @@ const FIELD_SCHEMAS = {
 };
 export const EDITABLE_FIELDS = Object.keys(FIELD_SCHEMAS);
 
-/** Canonical value of one field: trimmed text, ISO timestamps, null for empty. */
+/**
+ * Canonical value of one field: trimmed text, UTC ISO timestamps, null for empty.
+ * @throws 400 UNKNOWN_FIELD outside the allow-list, 400 INVALID_FIELD for an invalid value.
+ */
 export const parseField = (field, value) => {
   if (!Object.hasOwn(FIELD_SCHEMAS, field)) throw eventError(400, 'UNKNOWN_FIELD', 'Unknown field', { field });
   const { error, value: parsed } = FIELD_SCHEMAS[field].validate(value);
   if (error) throw eventError(400, 'INVALID_FIELD', 'Invalid field value', { field });
-  return parsed instanceof Date ? parsed.toISOString() : parsed;
+  return parsed;
 };
 
 export const parseFields = (values) =>
@@ -99,7 +125,10 @@ const assertWritable = (event) => {
 /**
  * Merge M (02a, Q1): with the current version the changes apply; otherwise a field applies only
  * when its current value still equals the `base` the editor started from. Any conflict refuses
- * the whole save. Returns the merged event, the applied fields and whether the schedule changed.
+ * the whole save. Returns the merged event, the names of the fields whose value changed (for the
+ * activity entry, J4 D4) and whether the schedule changed.
+ * @throws 400 BASE_REQUIRED, 409 EDIT_CONFLICT, 409 EVENT_READ_ONLY, 422 PUBLISHED_FIELD_REQUIRED and
+ * the parseField/checkConsistency 400s.
  */
 export const mergeEdit = (event, { baseVersion, changes, base = {} }) => {
   assertWritable(event);
@@ -123,7 +152,7 @@ export const mergeEdit = (event, { baseVersion, changes, base = {} }) => {
       'A published event must keep its required fields.', { fields: missing });
   }
   const changed = Object.keys(applied).filter((field) => applied[field] !== event[field]);
-  return { merged, fields: Object.keys(applied),
+  return { merged, fields: changed,
     scheduleChanged: event.status === 'PUBLISHED' && changed.some((field) => SCHEDULE_FIELDS.has(field)) };
 };
 
@@ -133,7 +162,10 @@ const TRANSITIONS = {
   delete: { from: 'DRAFT', verb: 'deleted' },
 };
 
-/** Lifecycle preconditions of publish, cancel and delete (§ 5): read-only, status, version, end. */
+/**
+ * Lifecycle preconditions of publish, cancel and delete (§ 5): read-only, status, version, end.
+ * @throws 409 EVENT_READ_ONLY, INVALID_TRANSITION, STALE_VERSION or EVENT_ENDED, in that order.
+ */
 export const assertTransition = (event, action, baseVersion, now) => {
   assertWritable(event);
   const { from, verb } = TRANSITIONS[action];
@@ -151,6 +183,6 @@ export const publicationFailures = (event, { emailVerified, now }) => [
   ...(event.startsAt && Date.parse(event.startsAt) <= now ? ['START_IN_PAST'] : []),
 ];
 
-/** Q: seconds until the oldest creation of a full 24 h window leaves it; 0 while below the quota. */
+/** Q: seconds until the oldest creation (epoch ms) of a full 24 h window leaves it; 0 while below the quota. */
 export const quotaRetryAfter = ({ count, oldest }, now) =>
   count < CREATION_QUOTA ? 0 : Math.max(1, Math.ceil((oldest + DAY_MS - now) / 1000));

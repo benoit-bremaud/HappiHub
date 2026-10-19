@@ -1,7 +1,7 @@
 import { findCommune } from '../../domain/communes.js';
 import {
   assertTransition, CREATION_QUOTA, DAY_MS, EDITABLE_FIELDS, effectiveEnd, hasEnded, mergeEdit, newDraft,
-  parseField, publicationFailures, quotaRetryAfter,
+  parseField, publicationFailures, quotaError, quotaRetryAfter,
 } from '../../domain/event.js';
 
 const NOW = Date.parse('2026-10-19T10:00:00Z');
@@ -42,7 +42,9 @@ describe('field validation and allow-list (BC16)', () => {
     ['shortDescription', 'x'.repeat(281)], ['longDescription', 'x'.repeat(10001)], ['longDescription', 'nul\u0000'],
     ['venueLabel', 'x'.repeat(201)], ['type', 'PARTY'], ['posterStyle', 'neon'], ['priceKind', 'DONATION'],
     ['priceAmountCents', 0], ['priceAmountCents', 1.5], ['startsAt', 'tomorrow'], ['venueCity', 'Lyon'],
-    ['venueCity', '99999'],
+    ['venueCity', '99999'], ['startsAt', 1234], ['startsAt', '2026-02-30T10:00:00Z'], ['startsAt', '2026-11-01T18:00'],
+    ['title', 'bidi\u202Eoverride'], ['title', 'zero\u200Bwidth'], ['title', 'line\u2028sep'],
+    ['longDescription', 'para\u2029sep'],
   ])('%s = %j answers 400 INVALID_FIELD', (field, value) => {
     expect(refusal(() => parseField(field, value))).toMatchObject({ status: 400, code: 'INVALID_FIELD', details: { field } });
   });
@@ -77,6 +79,11 @@ describe('merge M (UC16, UC17)', () => {
   test('current version: changes apply (BC3)', () => {
     const result = mergeEdit(draft(), { baseVersion: 3, changes: { title: 'Grand concert' } });
     expect(result).toMatchObject({ merged: { title: 'Grand concert' }, fields: ['title'], scheduleChanged: false });
+  });
+
+  test('only fields whose value changes are reported for the activity log', () => {
+    expect(mergeEdit(draft(), { baseVersion: 3, changes: { title: 'Concert', venueLabel: 'Théâtre' } }).fields)
+      .toEqual(['venueLabel']);
   });
 
   test('older version, different field untouched since: applies (BC4)', () => {
@@ -164,6 +171,11 @@ describe('effective end A1 and quota Q', () => {
     expect(hasEnded({ startsAt: '2026-10-18T10:00:00.000Z', endsAt: null }, NOW)).toBe(false); // exactly 24 h
     expect(hasEnded({ startsAt: '2026-10-18T09:59:59.000Z', endsAt: null }, NOW)).toBe(true);
     expect(hasEnded({ startsAt: null, endsAt: null }, NOW)).toBe(false);
+  });
+
+  test('quota refusal is a 429 EVENT_QUOTA carrying retryAfter', () => {
+    expect(quotaError(60)).toMatchObject({ status: 429, details: { code: 'EVENT_QUOTA', retryAfter: 60 } });
+    expect(quotaError(60).message).toContain(String(CREATION_QUOTA));
   });
 
   test('retry after is the time until the oldest creation leaves the window', () => {

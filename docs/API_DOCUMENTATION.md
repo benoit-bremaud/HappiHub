@@ -51,7 +51,7 @@ Historical FAQ/GUIDE/tutorials do not define current behavior.
 | `POST /associations/:slug/events/:id/publish` | UC18 | 200 | `{baseVersion}`; guard failures `422 PUBLICATION_REFUSED` with `details.failures` |
 | `POST /associations/:slug/events/:id/cancel` | UC19 | 200 | `{baseVersion, confirm: true, reason?}` (≤ 500); final |
 | `POST /associations/:slug/events/:id/delete` | UC20 | 204 | `{baseVersion, confirm: true}`; drafts only |
-| `GET /events/:id` | public | 200 | No session. Published, cancelled or archived events of an active association only; no account ids, version or editing metadata. Anything else is the same `404 EVENT_NOT_FOUND` |
+| `GET /events/:id` | public | 200 | No session. Published, cancelled or archived events of an active association, not hidden by moderation; includes `association: {name, slug}`, no account ids, version or editing metadata. Anything else (draft, hidden, unknown or malformed id) is the same `404 EVENT_NOT_FOUND` |
 | `/comments` | — | 503 | Legacy routes disabled until the participation/comment brick (S3) |
 
 ### Events
@@ -63,7 +63,8 @@ Editable fields (allow-list; anything else answers `400 UNKNOWN_FIELD`): `title`
 commune code from the bundled COG list, answered as `{code, name}`), `priceKind` (`FREE`,
 `AMOUNT`, `PAY_WHAT_YOU_WANT`), `priceAmountCents` (required for `AMOUNT` only), `posterStyle`
 (`classic`, `bold`, `paper`, `night`, `pastel`, `minimal`). Text is plain text; control
-characters answer `400 INVALID_FIELD`. Empty optional text is stored as `null`.
+characters, invisible formatting characters (bidi overrides, zero-width) and line/paragraph
+separators answer `400 INVALID_FIELD`; dates need an explicit zone and a real calendar date. Empty optional text is stored as `null`.
 
 - Statuses: `DRAFT` → `PUBLISHED` → `CANCELLED`; `PUBLISHED`/`CANCELLED` → `ARCHIVED` by the
   maintenance job after the effective end (`endsAt`, or `startsAt` + 24 h). `ended` in views
@@ -91,10 +92,14 @@ characters answer `400 INVALID_FIELD`. Empty optional text is stored as `null`.
 conflict, `410` invalid link, `415` non-JSON body, `429` rate limit with `Retry-After`,
 `422` business rule refused, `503` dependency unavailable. Rate limits are process-local
 (single instance assumed); event writes and public event reads are also limited to 600 per
-15 minutes per IP.
+15 minutes per IP (two separate counters).
 
 Error bodies are `{message}` for brick D routes and `{message, code, details?}` for brick B
-routes: `code` is a stable upper-case identifier, `details` structured data.
+routes: `code` is a stable upper-case identifier, `details` structured data. A malformed
+brick B request envelope (missing `baseVersion`, `confirm`, unknown status filter) answers
+`400 INVALID_REQUEST` with `details.field`; field-level refusals use `UNKNOWN_FIELD` or
+`INVALID_FIELD` with `details.field`. Every write re-checks membership under lock, so a member
+removed meanwhile gets `404`.
 
 ## Email delivery
 
