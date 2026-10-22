@@ -8,6 +8,7 @@ const fold = (text) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase(
 
 const FOLDED = [...BY_CODE.values()].map((commune) => ({ commune, key: fold(commune.name) }));
 
+// A short list keeps the picker readable; a longer query narrows it (spec A-B5).
 export const COMMUNE_SEARCH_LIMIT = 20;
 
 /** The commune for an INSEE code, or null when the code is not in the reference list. */

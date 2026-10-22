@@ -53,6 +53,20 @@ Step contents (fields from the API allow-list):
 
 The live poster preview (`EventPoster`) is visible on steps 1–3 (UC15 2, 4, 6).
 
+**Progressive disclosure (owner rule 2026-10-22, amendment — to revalidate).** Every screen shows
+the fewest fields and buttons possible; each appears from the previous choice or action:
+
+- Step 1: type chips after a title, short description after a type. The steps bar and
+  "Next" appear only once the draft exists and the current step's required fields are filled.
+- Step 2: venue after the start, city after the venue; end time, address and longer
+  description sit behind "+ Add …" links (shown directly when already filled). The price
+  reads "Price: Free · Change" until opened; the amount appears only for a fixed price.
+- City picker: once chosen, "City: X · Change"; the results list only when there are results.
+- Preview: checklist only when something is missing, Publish only when complete, "Delete this
+  draft" as a link on drafts only, cancellation reason behind "+ Add a reason for the public".
+- Conflict panel: "Apply" once every field has a choice. In-place sign-in: the button once a
+  password is typed. List: filter chips only with more than one event or an active filter.
+
 ## 3. Client state model
 
 Editor save status (diagram [05-state-editor](../diagrams/v1-event-client/05-state-editor.md)):
@@ -104,6 +118,8 @@ New folder `client/src/events/`, flat, named exports:
 | `ConflictPanel.jsx`, `ConfirmDialog.jsx`, `CityPicker.jsx` | sub-components |
 | `events.css` | neutral layout + six placeholder poster themes, design tokens as CSS variables |
 
+Also `EventSteps.jsx` (steps 1–3), `StepPreview.jsx`, `InPlaceSignIn.jsx`, `FieldError.jsx`.
+
 Dependency rule: screens → hook → `send`; `eventFields.js` imports nothing. No new npm
 dependency. Plain text rendering only (React escaping, `white-space: pre-line` for line breaks).
 
@@ -134,7 +150,7 @@ Sensitivity: rework at 35 (value 10): A 400, C 400, B 285 — tie broken by orga
 
 ### K — City picker data (no commune search endpoint exists)
 
-- **A** — Add `GET /api/communes?q=` (≥ 2 chars, accent-insensitive prefix, 20 results, `publicReads` limiter) on the server: backend amendment A-B5.
+- **A** — Add `GET /api/communes?q=` (≥ 2 chars, accent-insensitive prefix, 20 results, `publicReads` limiter) on the server: backend amendment A-B5; a 5-character INSEE code returns that commune.
 - **B** — Ship the 1 MB `communes.json` to the client as a lazy chunk.
 - **C** — Let the user type the INSEE code.
 

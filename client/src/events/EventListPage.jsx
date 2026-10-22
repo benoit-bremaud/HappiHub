@@ -19,7 +19,8 @@ export const EventListPage = () => {
     if (sessionStatus !== 'authenticated') return undefined;
     let current = true;
     (async () => {
-      const { ok, data } = await send(`/associations/${slug}/events${filter ? `?status=${filter}` : ''}`);
+      const query = filter ? `?${new URLSearchParams({ status: filter })}` : '';
+      const { ok, data } = await send(`/associations/${encodeURIComponent(slug)}/events${query}`);
       if (current) setResult(ok ? { events: data.events } : { failed: data.message ?? 'Unable to load the events.' });
     })();
     return () => { current = false; };
@@ -30,12 +31,12 @@ export const EventListPage = () => {
       <h2>Events</h2>
       {state?.notice && <p role="status">{state.notice}</p>}
       <p><Link className="hh-button" to={`/associations/${slug}/events/new`}>Create an event</Link></p>
-      <div className="hh-chips" role="group" aria-label="Filter by status">
+      {(filter || result?.events?.length > 1) && <div className="hh-chips" role="group" aria-label="Filter by status">
         {FILTERS.map(([key, label]) => (
           <button key={label} type="button" className={`hh-chip${filter === key ? ' hh-chip--on' : ''}`}
             aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>
         ))}
-      </div>
+      </div>}
       {!result && <p role="status">Loading…</p>}
       {result?.failed && <p role="alert">{result.failed}</p>}
       {result?.events && (result.events.length ? (

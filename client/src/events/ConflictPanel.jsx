@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FIELD_LABELS, formatDate, priceLabel, typeLabel } from './eventFields';
 
+// The amount is shown as a price, so both conflict sides read like the poster does.
 const show = (field, value) => {
   if (value === null || value === undefined || value === '') return '(empty)';
   if (field === 'startsAt' || field === 'endsAt') return formatDate(value);
@@ -26,7 +27,7 @@ export const ConflictPanel = ({ conflict, onResolve }) => {
             onChange={() => setChoices({ ...choices, [field]: 'theirs' })} /> Theirs: {show(field, theirs)}</label>
         </fieldset>
       ))}
-      <button type="button" className="hh-button" disabled={!complete} onClick={() => onResolve(choices)}>Apply my choices</button>
+      {complete && <button type="button" className="hh-button" onClick={() => onResolve(choices)}>Apply my choices</button>}
     </section>
   );
 };

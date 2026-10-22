@@ -3,7 +3,11 @@ import { send } from '../accounts/request';
 
 export const CITY_SEARCH_DELAY_MS = 250;
 
-/** Decision K: city chosen from the server's commune reference; the stored value is the INSEE code. */
+/**
+ * Decision K: city chosen from the server's commune reference; the stored value is the INSEE code.
+ * The search waits CITY_SEARCH_DELAY_MS after typing. `onChange(code, name)` reports a pick, and
+ * `(null, null)` a cleared city; once chosen only the name and "Change" stay visible.
+ */
 export const CityPicker = ({ code, name, onChange, onBlur, invalid }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -21,20 +25,20 @@ export const CityPicker = ({ code, name, onChange, onBlur, invalid }) => {
     return () => { current = false; clearTimeout(timer); };
   }, [query]);
   const pick = (commune) => { onChange(commune.code, commune.name); setQuery(''); setResults([]); onBlur?.(); };
+  if (code) return (
+    <p className="hh-city">City: {name ?? code} <button type="button" className="hh-link" aria-label="Change the city" onClick={() => { onChange(null, null); onBlur?.(); }}>Change</button></p>
+  );
   return (
     <div className="hh-city">
-      <label>City{code && <span className="hh-hint"> Selected: {name ?? code} <button type="button" className="hh-link"
-        onClick={() => { onChange(null, null); onBlur?.(); }}>Clear</button></span>}
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Type at least 2 letters"
-          aria-controls={listId} aria-invalid={invalid || undefined} />
-      </label>
+      <label>City<input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Type at least 2 letters"
+        aria-controls={listId} aria-invalid={invalid || undefined} /></label>
       {failed && <p role="alert" className="hh-error">City search unavailable. Try again.</p>}
-      <ul id={listId} className="hh-list" aria-label="Cities found">
+      {results.length > 0 && <ul id={listId} className="hh-list" aria-label="Cities found">
         {results.map((commune) => (
           <li key={commune.code}><button type="button" className="hh-button hh-secondary" onClick={() => pick(commune)}>
             {commune.name} ({commune.department})</button></li>
         ))}
-      </ul>
+      </ul>}
     </div>
   );
 };

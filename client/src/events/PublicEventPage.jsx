@@ -13,7 +13,7 @@ export const PublicEventPage = () => {
   useEffect(() => {
     let current = true;
     (async () => {
-      const { ok, status, data } = await send(`/events/${id}`);
+      const { ok, status, data } = await send(`/events/${encodeURIComponent(id)}`);
       if (current) setResult(ok ? { event: data } : { failed: status === 404 ? 'Event not found.' : 'Unable to load the event. Try again later.' });
     })();
     return () => { current = false; };

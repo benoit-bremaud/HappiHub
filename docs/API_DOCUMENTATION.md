@@ -85,6 +85,13 @@ separators answer `400 INVALID_FIELD`; dates need an explicit zone and a real ca
   `DRAFT_CLEANUP_NOTICE` to every member and are deleted 14 days later unless edited.
 - The account export (UC5) adds `events` created or last edited by the requester.
 
+### Communes
+
+`GET /api/communes?q=` (public, `publicReads` limiter): `q` trimmed, 2–60 characters. A
+5-character INSEE code returns that commune; otherwise an accent- and case-insensitive name
+prefix match, exact name first then French alphabetical order, at most 20
+`{communes: [{code, name}]}`. Used by the event city picker.
+
 ## Errors and limits
 
 `400` invalid input (`field`, and a password `hint` when relevant), `401` not signed in,

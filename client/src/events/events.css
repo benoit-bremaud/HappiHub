@@ -53,3 +53,5 @@
 @media (prefers-color-scheme: dark) {
   :root { --hh-line: #44444c; --hh-warning: #e0a83a; }
 }
+.hh-danger-link { color: var(--hh-danger); }
+.hh-add { align-self: flex-start; }

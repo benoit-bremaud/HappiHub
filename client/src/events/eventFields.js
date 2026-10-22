@@ -52,14 +52,6 @@ export const fieldProblem = (field, values) => {
   return null;
 };
 
-export const firstProblem = (values) => {
-  for (const field of EDITABLE_FIELDS) {
-    const problem = fieldProblem(field, values);
-    if (problem) return { field, text: problem };
-  }
-  return null;
-};
-
 /** Publication checklist (G1 mirror): the missing required fields with the step to complete. */
 export const missingRequired = (values) => REQUIRED_FIELDS.filter((field) => blank(values[field]))
   .map((field) => ({ field, label: FIELD_LABELS[field], step: stepOf(field) }));
@@ -67,6 +59,7 @@ export const missingRequired = (values) => REQUIRED_FIELDS.filter((field) => bla
 /** Decision R: resume at the first step still incomplete, otherwise the preview. */
 export const entryStep = (values) => missingRequired(values)[0]?.step ?? 4;
 
+/** True when the instant is at or before `now` (epoch ms): a start "now" already counts as past (E2). */
 export const isPast = (iso, now = Date.now()) => Boolean(iso) && Date.parse(iso) <= now;
 
 /** UC18 3a–3c: one line per refusal of `details.failures`, with the step that fixes it. */
@@ -92,6 +85,7 @@ export const toLocalInput = (iso) => {
 /** `datetime-local` value → ISO instant with an explicit zone (the API refuses zone-less dates). */
 export const fromLocalInput = (local) => (local ? new Date(local).toISOString() : null);
 
+/** 1250 → "12.50"; no amount → empty text for the input. */
 export const centsToEuros = (cents) => (cents === null || cents === undefined ? '' : (cents / 100).toFixed(2));
 
 /** "12,50" or "12.5" → 1250; anything not a number → null. */
@@ -100,10 +94,12 @@ export const eurosToCents = (text) => {
   return text === '' || !Number.isFinite(amount) ? null : Math.round(amount * 100);
 };
 
+/** Display date in the fixed en-GB format of the current English UI; empty input gives ''. */
 export const formatDate = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', {
   weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
 }) : '');
 
+/** Poster price line; a fixed price without a positive amount reads "Price to be set". */
 export const priceLabel = ({ priceKind, priceAmountCents }) => {
   if (priceKind === 'AMOUNT') return priceAmountCents > 0 ? `€${centsToEuros(priceAmountCents)}` : 'Price to be set';
   return priceKind === 'PAY_WHAT_YOU_WANT' ? 'Pay what you want' : 'Free';

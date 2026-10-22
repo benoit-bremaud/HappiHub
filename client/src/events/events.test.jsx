@@ -22,7 +22,7 @@ const bodies = (call) => fetch.mock.calls.filter(([url, options]) => key(url, op
 const session = (overrides = {}) => useSession.mockReturnValue({ status: 'authenticated', account: { id: 'me', email: 'claire@example.org' },
   refresh: jest.fn(), acceptSession: jest.fn(), ...overrides });
 
-/** routes[key] is one answer or a list consumed in order (the last one repeats). */
+/** routes[key] is one answer or a list of answers consumed in order; the last one then repeats for later calls. */
 beforeEach(() => {
   routes = {};
   global.fetch = jest.fn((url, options) => {
@@ -70,9 +70,11 @@ describe('create and save (UC15, UC16)', () => {
   test('CC1: the draft is created once with title and type, then the URL becomes the event', async () => {
     routes[`POST ${EVENTS}`] = [201, event({ shortDescription: null })];
     renderAt(`${EVENTS}/new`);
+    expect(screen.queryByLabelText('Concert')).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'Steps' })).toBeNull();
     edit('Title', 'Concert');
-    await screen.findByText('Enter a title and pick a type to save the draft.');
     expect(calls('POST')).toEqual([]);
+    expect(screen.queryByLabelText('Short description', { exact: false })).toBeNull();
     fireEvent.click(screen.getByLabelText('Concert'));
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(`${EVENTS}/${ID}?step=1`));
     expect(bodies(`POST ${EVENTS}`)).toEqual([{ title: 'Concert', type: 'CONCERT' }]);
@@ -210,11 +212,13 @@ describe('conflicts and session (UC17, UC15 *b)', () => {
   });
 
   test('CC12: the creation quota tells when creation is possible again', async () => {
-    routes[`POST ${EVENTS}`] = [429, { code: 'EVENT_QUOTA', message: 'x' }, { 'Retry-After': '3600' }];
+    jest.spyOn(Date, 'now').mockReturnValue(new Date(2030, 0, 1, 9, 15).getTime());
+    routes[`POST ${EVENTS}`] = [429, { code: 'EVENT_QUOTA', message: 'Creation quota reached.' }, { 'Retry-After': '3600' }];
     renderAt(`${EVENTS}/new`);
-    fireEvent.click(screen.getByLabelText('Talk'));
     edit('Title', 'Talk');
-    expect(await screen.findByText(/created 20 events in 24 hours. Creation is possible again at \d\d:\d\d/)).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Talk'));
+    expect(await screen.findByText('Creation quota reached. Creation is possible again at 10:15.')).toBeInTheDocument();
+    Date.now.mockRestore();
   });
 
   test('other rate limits ask to wait', async () => {
@@ -249,6 +253,7 @@ describe('steps (UC15 5–9)', () => {
     edit('Start', '2001-01-01T10:00');
     expect(await screen.findByText(/This start is in the past/)).toBeInTheDocument();
     expect(await screen.findByText('Saved ✓')).toBeInTheDocument();
+    expect(bodies(`PATCH ${EVENTS}/${ID}`)[0].changes.startsAt).toMatch(/^2001-01-01/);
   });
 
   test('CC13: the city picker searches the reference and stores the INSEE code', async () => {
@@ -259,15 +264,16 @@ describe('steps (UC15 5–9)', () => {
     fireEvent.change(screen.getByPlaceholderText('Type at least 2 letters'), { target: { value: 'vill' } });
     await act(async () => { jest.advanceTimersByTime(CITY_SEARCH_DELAY_MS); });
     fireEvent.click(await screen.findByRole('button', { name: 'Villeurbanne (69)' }));
-    await act(async () => { await Promise.resolve(); });
+    await waitFor(() => expect(bodies(`PATCH ${EVENTS}/${ID}`)).toHaveLength(1));
     expect(bodies(`PATCH ${EVENTS}/${ID}`)[0]).toEqual({ baseVersion: 1, changes: { venueCity: '69266' }, base: { venueCity: null } });
-    expect(screen.getByText(/Selected: Villeurbanne/)).toBeInTheDocument();
+    expect(screen.getByText(/City: Villeurbanne/)).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Type at least 2 letters')).toBeNull();
   });
 
   test('city search failures are reported; short queries do not call the API', async () => {
     jest.useFakeTimers();
     routes['GET /communes?q=ly'] = [503, { message: 'down' }];
-    await openEditor(2);
+    await openEditor(2, event({ venueCity: null }));
     const input = screen.getByPlaceholderText('Type at least 2 letters');
     fireEvent.change(input, { target: { value: 'l' } });
     await act(async () => { jest.advanceTimersByTime(CITY_SEARCH_DELAY_MS); });
@@ -280,9 +286,12 @@ describe('steps (UC15 5–9)', () => {
   test('price: a fixed amount is sent in cents; another kind clears it', async () => {
     routes[`PATCH ${EVENTS}/${ID}`] = [200, event({ version: 2, priceKind: 'AMOUNT', priceAmountCents: 1250 })];
     await openEditor(2);
+    expect(screen.queryByLabelText('Fixed price')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Change the price' }));
     fireEvent.click(screen.getByLabelText('Fixed price'));
+    expect(calls('PATCH')).toEqual([]);
     edit('Amount in euros', '12,50');
-    await waitFor(() => expect(bodies(`PATCH ${EVENTS}/${ID}`).at(-1).changes).toEqual({ priceAmountCents: 1250 }));
+    await waitFor(() => expect(bodies(`PATCH ${EVENTS}/${ID}`).at(-1).changes).toEqual({ priceKind: 'AMOUNT', priceAmountCents: 1250 }));
     fireEvent.click(screen.getByLabelText('Free'));
     await waitFor(() => expect(bodies(`PATCH ${EVENTS}/${ID}`).at(-1).changes).toEqual({ priceKind: 'FREE', priceAmountCents: null }));
   });
@@ -309,8 +318,7 @@ describe('lifecycle (UC18–UC20)', () => {
     routes[`POST ${EVENTS}/${ID}/publish`] = [422, { code: 'PUBLICATION_REFUSED', message: 'x',
       details: { failures: ['START_IN_PAST', 'EMAIL_NOT_VERIFIED'] } }];
     routes['POST /email-verification/resend'] = [202, {}];
-    await openEditor(4, event({ shortDescription: null }));
-    expect(screen.getByText(/Short description is missing/)).toBeInTheDocument();
+    await openEditor(4);
     fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Publish' }));
     expect(await screen.findByText(/The start must be in the future to publish/)).toBeInTheDocument();
@@ -320,6 +328,14 @@ describe('lifecycle (UC18–UC20)', () => {
     expect(bodies('POST /email-verification/resend')).toEqual([{ email: 'claire@example.org' }]);
     fireEvent.click(screen.getByRole('button', { name: 'go to step 2' }));
     expect(screen.getByTestId('where')).toHaveTextContent('?step=2');
+  });
+
+  test('the checklist links to the incomplete step and Publish appears only when complete', async () => {
+    await openEditor(4, event({ shortDescription: null }));
+    expect(screen.getByText(/Short description is missing/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'complete step 1' }));
+    expect(screen.getByTestId('where')).toHaveTextContent('?step=1');
   });
 
   test('CC8: a successful publish shows the public link', async () => {
@@ -346,12 +362,15 @@ describe('lifecycle (UC18–UC20)', () => {
     await openEditor(4, event({ status: 'PUBLISHED', version: 2 }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel this event' }));
     const dialog = screen.getByRole('dialog', { name: 'Cancel this event?' });
+    expect(within(dialog).queryByRole('textbox')).toBeNull();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Keep the event' }));
     expect(calls('POST')).toEqual([]);
     fireEvent.click(screen.getByRole('button', { name: 'Cancel this event' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Add a reason for the public' }));
     fireEvent.change(screen.getByLabelText(/Reason/), { target: { value: ' Storm ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Cancel the event' }));
     expect(await screen.findByText(/This event is cancelled and can no longer be edited. Reason: Storm/)).toBeInTheDocument();
+    expect(screen.getByText('Event cancelled.')).toBeInTheDocument();
     expect(bodies(`POST ${EVENTS}/${ID}/cancel`)).toEqual([{ baseVersion: 2, confirm: true, reason: 'Storm' }]);
     expect(screen.queryByRole('textbox')).toBeNull();
   });
@@ -365,18 +384,25 @@ describe('lifecycle (UC18–UC20)', () => {
     routes[`POST ${EVENTS}/${ID}/delete`] = [204, {}];
     routes[`GET ${EVENTS}`] = [200, { events: [] }];
     await openEditor(4);
-    fireEvent.click(screen.getByRole('button', { name: 'Delete draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete this draft' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete the draft' }));
     expect(await screen.findByText('Draft deleted.')).toBeInTheDocument();
+    expect(screen.getByTestId('where')).toHaveTextContent(new RegExp(`^${EVENTS}$`));
     expect(bodies(`POST ${EVENTS}/${ID}/delete`)).toEqual([{ baseVersion: 1, confirm: true }]);
   });
 
-  test('CC11: an archived event is read-only and writes nothing', async () => {
-    routes[`GET ${EVENTS}/${ID}`] = [200, event({ status: 'ARCHIVED' })];
+  test('a published event offers no delete', async () => {
+    await openEditor(4, event({ status: 'PUBLISHED' }));
+    expect(screen.queryByRole('button', { name: 'Delete this draft' })).toBeNull();
+  });
+
+  test.each(['ARCHIVED', 'CANCELLED'])('CC11: a %s event is read-only and writes nothing', async (status) => {
+    routes[`GET ${EVENTS}/${ID}`] = [200, event({ status })];
     renderAt(`${EVENTS}/${ID}`);
-    expect(await screen.findByText(/This event is archived and can no longer be edited/)).toBeInTheDocument();
+    expect(await screen.findByText(/can no longer be edited/)).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
+    expect(calls().filter((call) => !call.startsWith('GET'))).toEqual([]);
   });
 
   test('a write refused as read-only switches to the read-only view', async () => {
@@ -390,14 +416,23 @@ describe('lifecycle (UC18–UC20)', () => {
 
 describe('list and public page', () => {
   test('the member list filters by status', async () => {
-    routes[`GET ${EVENTS}`] = [200, { events: [{ id: ID, title: 'Concert', type: 'CONCERT', status: 'PUBLISHED', startsAt: '2030-06-01T18:00:00.000Z', ended: true, lastEditedBy: null }] }];
+    routes[`GET ${EVENTS}`] = [200, { events: [{ id: ID, title: 'Concert', type: 'CONCERT', status: 'PUBLISHED', startsAt: '2030-06-01T18:00:00.000Z', ended: true, lastEditedBy: null },
+      { id: 'other', title: '<b>Talk</b>', type: 'TALK', status: 'DRAFT', startsAt: null, ended: false, lastEditedBy: 'Claire' }] }];
     routes[`GET ${EVENTS}?status=DRAFT`] = [200, { events: [] }];
     renderAt(EVENTS);
     expect(await screen.findByRole('link', { name: 'Concert' })).toHaveAttribute('href', `${EVENTS}/${ID}`);
     expect(screen.getByText('Ended')).toBeInTheDocument();
     expect(screen.getByText('Updated by a former member')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '<b>Talk</b>' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Draft' }));
     expect(await screen.findByText('No events yet.')).toBeInTheDocument();
+  });
+
+  test('a single event needs no filter', async () => {
+    routes[`GET ${EVENTS}`] = [200, { events: [{ id: ID, title: 'Solo', type: 'TALK', status: 'DRAFT', startsAt: null, ended: false, lastEditedBy: 'Claire' }] }];
+    renderAt(EVENTS);
+    await screen.findByRole('link', { name: 'Solo' });
+    expect(screen.queryByRole('group', { name: 'Filter by status' })).toBeNull();
   });
 
   test('a list failure is reported', async () => {
@@ -408,10 +443,12 @@ describe('list and public page', () => {
 
   test('CC14: public page — not found, cancelled banner with reason, schedule change', async () => {
     routes[`GET /events/${ID}`] = [200, { ...event({ status: 'CANCELLED', cancellationReason: 'Storm', scheduleChangedAt: '2030-05-01T10:00:00.000Z',
-      longDescription: 'Line 1\nLine 2' }), association: { name: 'Troupe', slug: 'troupe' } }];
+      longDescription: 'Line 1\nLine 2', title: '<script>x</script>' }), lastEditedBy: undefined, association: { name: 'Troupe', slug: 'troupe' } }];
     renderAt(`/events/${ID}`);
     expect(await screen.findByText('This event is cancelled. Storm')).toBeInTheDocument();
-    expect(screen.getByText(/By Troupe · Updated on/)).toBeInTheDocument();
+    expect(screen.getByText(/By Troupe · Updated on .*May 2030/)).toBeInTheDocument();
+    expect(screen.getByText('<script>x</script>')).toBeInTheDocument();
+    expect(screen.queryByText(/Claire/)).toBeNull();
     expect(screen.getByText(/Line 1/)).toHaveClass('hh-long');
   });
 
