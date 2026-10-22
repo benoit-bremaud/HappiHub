@@ -11,7 +11,7 @@ import {
 } from '../controllers/associationController.js';
 import {
   cancelEventHandler, createEventHandler, deleteEventHandler, editEventHandler, listEventsHandler, publishEventHandler,
-  readEventHandler, readPublicEventHandler,
+  readEventHandler, readPublicEventHandler, searchCommunesHandler,
 } from '../controllers/eventController.js';
 
 /** Brick D and brick B endpoints (specs § 5); `limits` are the per-IP limiters created by the app. */
@@ -55,6 +55,7 @@ export const apiRoutes = (limits) => {
   router.post(`${events}/:id/cancel`, limits.eventWrites, auth, member, cancelEventHandler);
   router.post(`${events}/:id/delete`, limits.eventWrites, auth, member, deleteEventHandler);
   router.get('/events/:id', limits.publicReads, readPublicEventHandler);
+  router.get('/communes', limits.publicReads, searchCommunesHandler);
 
   // Legacy comment routes stay disabled until the participation/comment brick (D3, decision S3).
   router.all(['/comments', '/comments/*'], (_req, res) =>

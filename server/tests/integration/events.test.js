@@ -258,6 +258,19 @@ describe('reads (BC12, member list)', () => {
   });
 });
 
+describe('commune search (A-B5)', () => {
+  test('anyone can search the city reference; the query is validated', async () => {
+    const anonymous = await browser(app);
+    const found = await anonymous.get('/api/communes?q=lyon');
+    expect(found.status).toBe(200);
+    expect(found.body.communes[0]).toEqual({ code: '69123', name: 'Lyon', department: '69' });
+    for (const query of ['', '?q=a', `?q=${'a'.repeat(61)}`]) {
+      const refused = await anonymous.get(`/api/communes${query}`);
+      expect([refused.status, refused.body.code, refused.body.details]).toEqual([400, 'INVALID_REQUEST', { field: 'q' }]);
+    }
+  });
+});
+
 describe('cross-brick effects (BC14, BC15)', () => {
   test('closure cancels upcoming published events only and blocks later writes (BC14)', async () => {
     const claire = await claireOnly();

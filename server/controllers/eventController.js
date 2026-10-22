@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { searchCommunes } from '../domain/communes.js';
 import { cancellationReasonSchema, EVENT_STATUSES, eventError } from '../domain/event.js';
 import {
   cancelEvent, createEvent, deleteEvent, editEvent, listEvents, publishEvent, readEvent, readPublicEvent,
@@ -21,6 +22,7 @@ const SCHEMAS = {
     reason: cancellationReasonSchema.default(null) }),
   delete: Joi.object({ baseVersion, confirm }),
   list: Joi.object({ status: Joi.string().valid(...EVENT_STATUSES) }),
+  communes: Joi.object({ q: Joi.string().trim().min(2).max(60).required() }),
 };
 
 const envelope = (schema, input) => {
@@ -80,3 +82,7 @@ export const deleteEventHandler = handle(async (req, res) => {
 
 /** Public read without a session; every hidden case is the same 404. */
 export const readPublicEventHandler = handle(async (req, res) => res.json(await readPublicEvent(ctxOf(req), eventId(req))));
+
+/** A-B5: city picker reference search, no session (public reference data). */
+export const searchCommunesHandler = handle(async (req, res) =>
+  res.json({ communes: searchCommunes(envelope(SCHEMAS.communes, req.query).q) }));
