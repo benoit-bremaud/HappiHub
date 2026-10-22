@@ -38,6 +38,8 @@ export const browser = async (app) => {
     agent, state,
     get: (path) => agent.get(path).set('Origin', origin),
     post: (path, body = {}) => write('post', path).send(body),
+    /** Bodiless write as browsers send it: no content type, `Content-Length: 0` (#283). */
+    postEmpty: (path) => write('post', path).set('Content-Length', '0'),
     patch: (path, body = {}) => write('patch', path).send(body),
     del: (path, body = {}) => write('delete', path).send(body),
     /** Adopt the CSRF token returned when a session is opened. */

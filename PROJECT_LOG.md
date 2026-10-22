@@ -5,6 +5,17 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-10-22
+
+- **#283 bodiless writes rejected with 415 — fix in review (PR #299)** — browsers send
+  `Content-Length: 0` on bodiless POSTs, which `type-is` counts as a body, so the CSRF
+  middleware returned 415 for leave and invitation resend. Owner approved option A (MCDA
+  500/500): a write is bodiless without `Transfer-Encoding` and with `Content-Length` absent or
+  `0`; only a non-empty body must be JSON; origin and CSRF checks unchanged. New unit and
+  integration tests fail without the fix. Local gate green: server unit 93, integration 97,
+  client 36, SonarQube passed, gitleaks clean, browser QA evidence in
+  `docs/architecture/qa/2026-10-19-283-*.jpg`.
+
 ## 2026-10-19
 
 - **Repository audit and documentation refresh (#294)** — read-only audit of every tracked
