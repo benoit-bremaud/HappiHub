@@ -150,7 +150,7 @@ backend UC15–UC20 (PR #282), on PostgreSQL.
 - Latest recorded verification (2026-10-19): 65 unit and 97 PostgreSQL integration server
   tests, 36 client tests, SonarQube gate passed, gitleaks clean, API QA transcript.
 - Not implemented: the event client (#252), partner/external API authentication, booking
-  or payment, logo and demo dataset. QA bugs #283–#292 and audit follow-ups #294–#296 are open.
+  or payment, logo and demo dataset. QA bugs #284–#292 and audit follow-ups #294–#296 are open (#283 fixed by PR #299).
 - PR creation, merge and CI/CD changes require explicit approval.
 - Prepare deployment topology, image/security checks, private configuration, backup/restore
   and recovery before real external use. No production rollout is authorized by this plan.
@@ -182,4 +182,4 @@ identify implemented behavior, proposals and missing approvals without chat hist
 
 V1 conception is approved (implementation gate 2026-10-16); bricks D and B are merged.
 Next: the event client (#252) or the persona scenario study, each after its own conception
-is approved; the P1 QA bug #283 is in review (PR #299). See [HANDOVER](HANDOVER.md) for the live state.
+is approved; the P1 QA bug #283 is fixed (PR #299, db6a4df). See [HANDOVER](HANDOVER.md) for the live state.

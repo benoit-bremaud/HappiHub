@@ -6,7 +6,7 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ## [Unreleased]
 
-The following changes are merged to main (recovery PR #257, bricks D #276 and B #282) and
+The following changes are merged to main (recovery PR #257, bricks D #276 and B #282, fix #299) and
 have not been released or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
 history and [handover](../HANDOVER.md) for the current state.
 
