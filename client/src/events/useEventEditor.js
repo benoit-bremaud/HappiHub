@@ -44,7 +44,9 @@ export const useEventEditor = ({ slug, id, onCreated, refreshSession }) => {
   const adopt = (event, extra = {}) => {
     const server = fromServer(event);
     for (const field of s.dirty) server[field] = s.values[field];
-    set({ event, values: server, status: READ_ONLY.has(event.status) ? 'readOnly' : s.dirty.size ? 'dirty' : 'saved', ...extra });
+    let status = s.dirty.size ? 'dirty' : 'saved';
+    if (READ_ONLY.has(event.status)) status = 'readOnly';
+    set({ event, values: server, status, ...extra });
   };
 
   const load = async (eventId = s.event?.id ?? id) => {

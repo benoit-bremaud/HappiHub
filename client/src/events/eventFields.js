@@ -48,7 +48,7 @@ export const fieldProblem = (field, values) => {
   if (MAX_LENGTHS[field] && (value ?? '').length > MAX_LENGTHS[field]) return `At most ${MAX_LENGTHS[field]} characters.`;
   if (field === 'endsAt' && value && values.startsAt && Date.parse(value) < Date.parse(values.startsAt))
     return 'The end must be after the start.';
-  if (field === 'priceAmountCents' && values.priceKind === 'AMOUNT' && !(value > 0)) return 'Enter an amount above zero.';
+  if (field === 'priceAmountCents' && values.priceKind === 'AMOUNT' && (value ?? 0) <= 0) return 'Enter an amount above zero.';
   return null;
 };
 

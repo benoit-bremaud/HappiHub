@@ -1,3 +1,6 @@
+/* global globalThis -- ES2020 global, unknown to the CRA ESLint environment. */
+import PropTypes from 'prop-types';
+import { editorShape } from './propShapes';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../session';
@@ -39,7 +42,7 @@ export const StepPreview = ({ editor, cityName, slug, goTo }) => {
           {values.longDescription && <p className="hh-long">{values.longDescription}</p>}</div>
       </div>
       {notice && <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'hh-error' : undefined}>{notice.text}</p>}
-      {editor.message && <p role="status">{editor.message}</p>}
+      {editor.message && <output>{editor.message}</output>}
       {event.status === 'DRAFT' && (
         <section aria-label="Publication checklist">
           {(missing.length > 0 || failures.length > 0) && <ul className="hh-checklist">
@@ -59,7 +62,7 @@ export const StepPreview = ({ editor, cityName, slug, goTo }) => {
       )}
       {event.status === 'PUBLISHED' && (
         <section aria-label="Published event">
-          <p>Public page: <Link to={`/events/${event.id}`}>{window.location.origin}/events/{event.id}</Link></p>
+          <p>Public page: <Link to={`/events/${event.id}`}>{globalThis.location.origin}/events/{event.id}</Link></p>
           {!event.ended && !dialog && !editor.pending && <button type="button" className="hh-link hh-danger-link" onClick={() => setDialog('cancel')}>Cancel this event</button>}
         </section>
       )}
@@ -88,3 +91,4 @@ export const StepPreview = ({ editor, cityName, slug, goTo }) => {
     </>
   );
 };
+StepPreview.propTypes = { editor: editorShape.isRequired, cityName: PropTypes.string, slug: PropTypes.string.isRequired, goTo: PropTypes.func.isRequired };

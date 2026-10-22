@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+import { valuesShape } from './propShapes';
 import { formatDate, priceLabel, typeLabel } from './eventFields';
 
 /** Live poster preview shared by the editor steps and the public page (UC15 2–6). Plain text only. */
@@ -12,3 +14,4 @@ export const EventPoster = ({ values, cityName, cancelled = false }) => (
     {values.shortDescription && <p className="hh-poster__summary">{values.shortDescription}</p>}
   </article>
 );
+EventPoster.propTypes = { values: valuesShape.isRequired, cityName: PropTypes.string, cancelled: PropTypes.bool };

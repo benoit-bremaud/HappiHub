@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { useSession } from '../session';
 import { send } from '../accounts/request';
@@ -23,3 +24,4 @@ export const InPlaceSignIn = ({ email, onSignedIn }) => {
     </form>
   );
 };
+InPlaceSignIn.propTypes = { email: PropTypes.string.isRequired, onSignedIn: PropTypes.func.isRequired };

@@ -4,7 +4,7 @@ import communes from './data/communes.json' with { type: 'json' };
 const BY_CODE = new Map(communes.map(([code, name, department]) => [code, { code, name, department }]));
 
 /** Lowercase, accents removed, hyphens and apostrophes as spaces: "Saint-Étienne" → "saint etienne". */
-const fold = (text) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[-'’\s]+/g, ' ').trim();
+const fold = (text) => text.normalize('NFD').replaceAll(/\p{M}/gu, '').toLowerCase().replaceAll(/[-'’\s]+/g, ' ').trim();
 
 const FOLDED = [...BY_CODE.values()].map((commune) => ({ commune, key: fold(commune.name) }));
 

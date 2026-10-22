@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useEffect, useId, useState } from 'react';
 import { send } from '../accounts/request';
 
@@ -42,3 +43,4 @@ export const CityPicker = ({ code, name, onChange, onBlur, invalid }) => {
     </div>
   );
 };
+CityPicker.propTypes = { code: PropTypes.string, name: PropTypes.string, onChange: PropTypes.func.isRequired, onBlur: PropTypes.func, invalid: PropTypes.bool };

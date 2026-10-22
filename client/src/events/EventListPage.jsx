@@ -29,15 +29,15 @@ export const EventListPage = () => {
   return (
     <section className="hh-page">
       <h2>Events</h2>
-      {state?.notice && <p role="status">{state.notice}</p>}
+      {state?.notice && <output>{state.notice}</output>}
       <p><Link className="hh-button" to={`/associations/${slug}/events/new`}>Create an event</Link></p>
-      {(filter || result?.events?.length > 1) && <div className="hh-chips" role="group" aria-label="Filter by status">
+      {(filter || result?.events?.length > 1) && <fieldset className="hh-chips" aria-label="Filter by status">
         {FILTERS.map(([key, label]) => (
           <button key={label} type="button" className={`hh-chip${filter === key ? ' hh-chip--on' : ''}`}
             aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>
         ))}
-      </div>}
-      {!result && <p role="status">Loading…</p>}
+      </fieldset>}
+      {!result && <output>Loading…</output>}
       {result?.failed && <p role="alert">{result.failed}</p>}
       {result?.events && (result.events.length ? (
         <ul className="hh-list hh-events" aria-label="Events">

@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+import { editorShape } from './propShapes';
 import { useState } from 'react';
 import { CityPicker } from './CityPicker';
 import { FieldError } from './FieldError';
@@ -23,6 +25,7 @@ const Field = ({ editor, field, label, as = 'input', ...props }) => {
     </label>
   );
 };
+Field.propTypes = { editor: editorShape.isRequired, field: PropTypes.string.isRequired, label: PropTypes.string.isRequired, as: PropTypes.string };
 
 /** An optional field: a link until the member asks for it, or as soon as it holds a value. */
 const Optional = ({ shown, label, children }) => {
@@ -30,6 +33,7 @@ const Optional = ({ shown, label, children }) => {
   if (shown || open) return children;
   return <button type="button" className="hh-link hh-add" onClick={() => setOpen(true)}>+ {label}</button>;
 };
+Optional.propTypes = { shown: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]), label: PropTypes.string.isRequired, children: PropTypes.node.isRequired };
 
 /** One choice among a closed list; picking saves at once. */
 const Chips = ({ editor, field, legend, options }) => (
@@ -40,6 +44,7 @@ const Chips = ({ editor, field, legend, options }) => (
     ))}
   </fieldset>
 );
+Chips.propTypes = { editor: editorShape.isRequired, field: PropTypes.string.isRequired, legend: PropTypes.string.isRequired, options: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)).isRequired };
 
 const DateField = ({ editor, field, label }) => (
   <label>{label}<input type="datetime-local" value={toLocalInput(editor.values[field])}
@@ -49,6 +54,7 @@ const DateField = ({ editor, field, label }) => (
     <FieldError problem={editor.problem} fields={[field]} />
   </label>
 );
+DateField.propTypes = { editor: editorShape.isRequired, field: PropTypes.string.isRequired, label: PropTypes.string.isRequired };
 
 /** Euro text kept locally while typing; it follows the stored cents when they change elsewhere (conflict, reload). */
 const AmountField = ({ editor }) => {
@@ -61,6 +67,7 @@ const AmountField = ({ editor }) => {
       <FieldError problem={editor.problem} fields={['priceAmountCents', 'priceKind']} /></label>
   );
 };
+AmountField.propTypes = { editor: editorShape.isRequired };
 
 export const StepWhat = ({ editor }) => {
   const { values } = editor;
@@ -72,6 +79,7 @@ export const StepWhat = ({ editor }) => {
     </>
   );
 };
+StepWhat.propTypes = { editor: editorShape.isRequired };
 
 export const StepWhere = ({ editor, cityName, setCityName }) => {
   const { values } = editor;
@@ -79,7 +87,7 @@ export const StepWhere = ({ editor, cityName, setCityName }) => {
   return (
     <>
       <DateField editor={editor} field="startsAt" label="Start" />
-      {isPast(values.startsAt) && <p role="status" className="hh-warning">This start is in the past. The draft is saved, but the start must be in the future to publish.</p>}
+      {isPast(values.startsAt) && <output className="hh-warning">This start is in the past. The draft is saved, but the start must be in the future to publish.</output>}
       {values.startsAt && <Optional shown={values.endsAt} label="Add an end time"><DateField editor={editor} field="endsAt" label="End" /></Optional>}
       {(values.startsAt || values.venueLabel) && <Field editor={editor} field="venueLabel" label="Venue" maxLength={MAX_LENGTHS.venueLabel} />}
       {(values.venueLabel || values.venueCity) && (
@@ -94,6 +102,7 @@ export const StepWhere = ({ editor, cityName, setCityName }) => {
     </>
   );
 };
+StepWhere.propTypes = { editor: editorShape.isRequired, cityName: PropTypes.string, setCityName: PropTypes.func.isRequired };
 
 export const StepLook = ({ editor }) => (
   <>
@@ -103,3 +112,4 @@ export const StepLook = ({ editor }) => (
     </Optional>
   </>
 );
+StepLook.propTypes = { editor: editorShape.isRequired };

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSession } from '../session';
@@ -8,6 +9,7 @@ import { InPlaceSignIn } from './InPlaceSignIn';
 import { StepPreview } from './StepPreview';
 import { entryStep, missingRequired, STATUS_LABELS, STEPS } from './eventFields';
 import { useEventEditor } from './useEventEditor';
+import { editorShape } from './propShapes';
 import '../accounts/accounts.css';
 import './events.css';
 
@@ -15,6 +17,19 @@ const SAVE_LABELS = {
   idle: '', loading: 'Loading…', dirty: 'Changes not saved yet', saving: 'Saving…', saved: 'Saved ✓',
   failed: 'Not saved', conflict: 'Not saved: conflict to resolve', unauthenticated: 'Not saved: session expired',
 };
+
+/** A cancelled or archived event: poster and links only, nothing editable (UC20, E3). */
+const ReadOnlyEvent = ({ editor: { event, values, message }, cityName, list }) => (
+    <section className="hh-page">
+      <h2>{event.title} <span className="hh-badge">{STATUS_LABELS[event.status]}</span></h2>
+      {message && <output>{message}</output>}
+      <p>{event.status === 'CANCELLED' ? 'This event is cancelled' : 'This event is archived'} and can no longer be edited.
+        {event.cancellationReason && ` Reason: ${event.cancellationReason}`}</p>
+      <EventPoster values={values} cityName={cityName} cancelled={event.status === 'CANCELLED'} />
+      <p><Link to={`/events/${event.id}`}>Public page</Link> · <Link to={list}>Back to the events</Link></p>
+    </section>
+);
+ReadOnlyEvent.propTypes = { editor: editorShape.isRequired, cityName: PropTypes.string, list: PropTypes.string.isRequired };
 
 /** UC15–UC20 four-step editor (client spec § 2), fields revealed progressively. */
 export const EventEditorPage = () => {
@@ -40,7 +55,7 @@ export const EventEditorPage = () => {
 
   const list = `/associations/${slug}/events`;
   if (sessionStatus === 'anonymous' && !event) return <Navigate to="/signin" state={{ from: `${list}/${id ?? 'new'}` }} replace />;
-  if (status === 'loading') return <section className="hh-page"><p role="status">Loading…</p></section>;
+  if (status === 'loading') return <section className="hh-page"><output>Loading…</output></section>;
   if (status === 'notFound') return (
     <section className="hh-page"><p role="alert">This event no longer exists or you are no longer a member of this association.</p>
       <Link to={list}>Back to the events</Link></section>);
@@ -48,16 +63,7 @@ export const EventEditorPage = () => {
     <section className="hh-page"><p role="alert">{editor.message}</p>
       <button type="button" className="hh-button" onClick={() => editor.reload(id)}>Retry</button></section>);
 
-  if (status === 'readOnly') return (
-    <section className="hh-page">
-      <h2>{event.title} <span className="hh-badge">{STATUS_LABELS[event.status]}</span></h2>
-      {editor.message && <p role="status">{editor.message}</p>}
-      <p>{event.status === 'CANCELLED' ? 'This event is cancelled' : 'This event is archived'} and can no longer be edited.
-        {event.cancellationReason && ` Reason: ${event.cancellationReason}`}</p>
-      <EventPoster values={values} cityName={shownCity} cancelled={event.status === 'CANCELLED'} />
-      <p><Link to={`/events/${event.id}`}>Public page</Link> · <Link to={list}>Back to the events</Link></p>
-    </section>
-  );
+  if (status === 'readOnly') return <ReadOnlyEvent editor={editor} cityName={shownCity} list={list} />;
 
   const goTo = (number) => { editor.save(); setParams({ step: String(number) }); };
   // Next appears once the required fields of the current step are filled (step 3 has none).
@@ -72,8 +78,8 @@ export const EventEditorPage = () => {
             className={`hh-step${number === step ? ' hh-step--current' : ''}`} onClick={() => goTo(number)}>{number}. {title}</button>
         ))}
       </nav>}
-      <p className="hh-save" role="status">{event?.status === 'PUBLISHED' && status === 'saved' ? 'Saved ✓ — visible immediately' : SAVE_LABELS[status]}
-        {status === 'failed' && !editor.problem && <> <button type="button" className="hh-link" onClick={editor.save}>Retry</button></>}</p>
+      <output className="hh-save">{event?.status === 'PUBLISHED' && status === 'saved' ? 'Saved ✓ — visible immediately' : SAVE_LABELS[status]}
+        {status === 'failed' && !editor.problem && <> <button type="button" className="hh-link" onClick={editor.save}>Retry</button></>}</output>
       {editor.message && !['unauthenticated', 'saved'].includes(status) && <p role="alert" className="hh-error">{editor.message}</p>}
       {status === 'unauthenticated' && (account?.email
         ? <InPlaceSignIn email={account.email} onSignedIn={editor.saveNow} />

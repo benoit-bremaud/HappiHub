@@ -18,14 +18,14 @@ export const PublicEventPage = () => {
     })();
     return () => { current = false; };
   }, [id]);
-  if (!result) return <section className="hh-page"><p role="status">Loading…</p></section>;
+  if (!result) return <section className="hh-page"><output>Loading…</output></section>;
   if (result.failed) return <section className="hh-page"><p role="alert">{result.failed}</p></section>;
   const { event } = result;
   const cancelled = event.status === 'CANCELLED';
   return (
     <section className="hh-page">
-      {cancelled && <p role="status" className="hh-banner">This event is cancelled.{event.cancellationReason && ` ${event.cancellationReason}`}</p>}
-      {event.ended && !cancelled && <p role="status" className="hh-banner">This event has ended.</p>}
+      {cancelled && <output className="hh-banner">This event is cancelled.{event.cancellationReason && ` ${event.cancellationReason}`}</output>}
+      {event.ended && !cancelled && <output className="hh-banner">This event has ended.</output>}
       <EventPoster values={fromServer(event)} cityName={event.venueCity?.name} cancelled={cancelled} />
       {event.venueAddress && <p>{event.venueAddress}</p>}
       {event.longDescription && <p className="hh-long">{event.longDescription}</p>}

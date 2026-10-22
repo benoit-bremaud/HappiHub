@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { FIELD_LABELS, formatDate, priceLabel, typeLabel } from './eventFields';
 
@@ -31,3 +32,4 @@ export const ConflictPanel = ({ conflict, onResolve }) => {
     </section>
   );
 };
+ConflictPanel.propTypes = { conflict: PropTypes.shape({ lastEditedBy: PropTypes.string, conflicts: PropTypes.arrayOf(PropTypes.shape({ field: PropTypes.string.isRequired, yours: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), theirs: PropTypes.oneOfType([PropTypes.string, PropTypes.number]) })).isRequired }).isRequired, onResolve: PropTypes.func.isRequired };
