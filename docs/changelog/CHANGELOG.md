@@ -37,6 +37,8 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Fixed
 
+- Bodiless writes sent with `Content-Length: 0` (leave an association, resend an invitation)
+  no longer fail with 415; only a non-empty body must be JSON (#283).
 - Password-verification bypass, public administrator signup, caller-controlled authorship,
   private-event/comment exposure and sensitive response/logging paths addressed locally.
 - Session revocation, password-change invalidation and guarded local configuration.
