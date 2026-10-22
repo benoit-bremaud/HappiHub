@@ -7,7 +7,7 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-22
 
-- **#283 bodiless writes rejected with 415 — fix in review (PR #299)** — browsers send
+- **#283 bodiless writes rejected with 415 — merged (PR #299, merge db6a4df)** — browsers send
   `Content-Length: 0` on bodiless POSTs, which `type-is` counts as a body, so the CSRF
   middleware returned 415 for leave and invitation resend. Owner approved option A (MCDA
   500/500): a write is bodiless without `Transfer-Encoding` and with `Content-Length` absent or

@@ -182,4 +182,4 @@ identify implemented behavior, proposals and missing approvals without chat hist
 
 V1 conception is approved (implementation gate 2026-10-16); bricks D and B are merged.
 Next: the event client (#252) or the persona scenario study, each after its own conception
-is approved; the P1 QA bug #283 is in review (PR #299). See [HANDOVER](HANDOVER.md) for the live state.
+is approved; the P1 QA bug #283 is fixed (PR #299, db6a4df). See [HANDOVER](HANDOVER.md) for the live state.
