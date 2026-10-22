@@ -163,19 +163,19 @@ Evidence: [session migration](architecture/session-migration-2026-10-12.md),
 
 ## QA backlog from the event client (#252, 2026-10-22)
 
-Found during the #252 tests and browser QA; none blocks the brick, each needs an issue:
+Found during the #252 tests and browser QA; none blocks the brick; each is filed as an issue:
 
-1. Mobile header (375 px): the "HappiHub" title overlaps the "Home" button (existing layout).
-2. Public page of a cancelled event says "Cancelled" twice (banner and poster badge).
+1. Mobile header (375 px): the "HappiHub" title overlaps the "Home" button (existing layout). (#301)
+2. Public page of a cancelled event says "Cancelled" twice (banner and poster badge). (#302)
 3. Clearing a required field of a published event sends a PATCH the server refuses (422,
-   logged in the console); the client could apply the published-required rule locally.
+   logged in the console); the client could apply the published-required rule locally. (#303)
 4. `datetime-local` shows the browser locale (US `mm/dd/yyyy` here) while the UI formats
-   dates en-GB; decide one locale with the visual design.
+   dates en-GB; decide one locale with the visual design. (#304)
 5. Conflict panel, in-place sign-in and creation quota are covered by tests only; a
-   two-account browser QA needs the pending dedicated local test accounts.
-6. Test noise: `ReactDOMTestUtils.act` deprecation and React Router v7 future-flag warnings.
-7. Branch coverage 76 % in the server integration run (statements 93 %); raise with #295.
-8. No accessibility audit (Lighthouse/axe) and no dark mode check on the new screens.
+   two-account browser QA needs the pending dedicated local test accounts. (#305)
+6. Test noise: `ReactDOMTestUtils.act` deprecation and React Router v7 future-flag warnings. (#306)
+7. Branch coverage 76 % in the server integration run (statements 93 %); raise with #295. (#307)
+8. No accessibility audit (Lighthouse/axe) and no dark mode check on the new screens. (#308)
 
 ## Research references
 
