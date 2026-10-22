@@ -239,5 +239,4 @@ Coverage ≥ 80 % on new modules.
 | Date | S | K | AS | R | Notes |
 | --- | --- | --- | --- | --- | --- |
 | 2026-10-22 | A wizard (430) | A `GET /api/communes` (470) | A debounce + blur + step (420) | A derived (465) | Weights validated and top scores chosen by Benoît |
-| A-B6 | Last editor attribution | `lastEditedByFormerMember` flag in member views and list (420) | B neutral client label (395) |
-| PD | Progressive disclosure amendment (§ 2, diagram 03, INSEE shortcut) | validated 2026-10-22 | — |
+| 2026-10-22 | — | — | — | — | A-B6 `lastEditedByFormerMember` flag (420, over neutral label 395); progressive-disclosure amendment (§ 2, diagram 03, INSEE shortcut) validated |
