@@ -416,13 +416,15 @@ describe('lifecycle (UC18–UC20)', () => {
 
 describe('list and public page', () => {
   test('the member list filters by status', async () => {
-    routes[`GET ${EVENTS}`] = [200, { events: [{ id: ID, title: 'Concert', type: 'CONCERT', status: 'PUBLISHED', startsAt: '2030-06-01T18:00:00.000Z', ended: true, lastEditedBy: null },
+    routes[`GET ${EVENTS}`] = [200, { events: [{ id: ID, title: 'Concert', type: 'CONCERT', status: 'PUBLISHED', startsAt: '2030-06-01T18:00:00.000Z', ended: true, lastEditedBy: null, lastEditedByFormerMember: true },
+      { id: 'nameless', title: 'Nameless', type: 'TALK', status: 'DRAFT', startsAt: null, ended: false, lastEditedBy: null, lastEditedByFormerMember: false },
       { id: 'other', title: '<b>Talk</b>', type: 'TALK', status: 'DRAFT', startsAt: null, ended: false, lastEditedBy: 'Claire' }] }];
     routes[`GET ${EVENTS}?status=DRAFT`] = [200, { events: [] }];
     renderAt(EVENTS);
     expect(await screen.findByRole('link', { name: 'Concert' })).toHaveAttribute('href', `${EVENTS}/${ID}`);
     expect(screen.getByText('Ended')).toBeInTheDocument();
     expect(screen.getByText('Updated by a former member')).toBeInTheDocument();
+    expect(screen.getByText('Updated by a member')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '<b>Talk</b>' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Draft' }));
     expect(await screen.findByText('No events yet.')).toBeInTheDocument();

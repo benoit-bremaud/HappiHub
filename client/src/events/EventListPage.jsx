@@ -48,7 +48,7 @@ export const EventListPage = () => {
               {event.ended && <span className="hh-badge">Ended</span>}
               <span>{typeLabel(event.type)}</span>
               {event.startsAt && <span>{formatDate(event.startsAt)}</span>}
-              <span className="hh-hint">Updated by {event.lastEditedBy ?? 'a former member'}</span>
+              <span className="hh-hint">Updated by {event.lastEditedBy ?? (event.lastEditedByFormerMember ? 'a former member' : 'a member')}</span>
             </li>
           ))}
         </ul>

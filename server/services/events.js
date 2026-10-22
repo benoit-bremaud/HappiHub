@@ -13,7 +13,7 @@ import { queueEmail } from './outbox.js';
 const EVENT_COLUMNS = `e.id, e.association_id, e.type, e.title, e.short_description, e.long_description, e.starts_at,
   e.ends_at, e.venue_label, e.venue_address, e.venue_normalized_city, e.price_kind, e.price_amount_cents, e.poster_style,
   e.status, e.cancellation_reason, e.published_at, e.schedule_changed_at, e.version, e.created_at, e.updated_at,
-  editor.display_name AS last_edited_by_name`;
+  editor.display_name AS last_edited_by_name, e.last_edited_by IS NULL AS last_editor_deleted`;
 const EVENT_SOURCE = 'event e LEFT JOIN account editor ON editor.id = e.last_edited_by';
 
 const iso = (value) => (value ? value.toISOString() : null);
@@ -26,7 +26,8 @@ const toEvent = (row) => ({
   venueCity: row.venue_normalized_city, priceKind: row.price_kind, priceAmountCents: row.price_amount_cents,
   posterStyle: row.poster_style, cancellationReason: row.cancellation_reason, publishedAt: iso(row.published_at),
   scheduleChangedAt: iso(row.schedule_changed_at), createdAt: iso(row.created_at), updatedAt: iso(row.updated_at),
-  lastEditedBy: row.last_edited_by_name ?? null,
+  // A deleted account nulls last_edited_by; a member without a display name only has no name.
+  lastEditedBy: row.last_edited_by_name ?? null, lastEditedByFormerMember: row.last_editor_deleted === true,
 });
 
 /** Content shared by the member and public views; the city is shown with its name (V). */
@@ -42,7 +43,7 @@ const contentView = (event, now) => ({
 
 /** Editor view: content plus the version and editing metadata (members only). */
 const memberView = (event, now) => ({ ...contentView(event, now), version: event.version,
-  lastEditedBy: event.lastEditedBy, createdAt: event.createdAt, updatedAt: event.updatedAt });
+  lastEditedBy: event.lastEditedBy, lastEditedByFormerMember: event.lastEditedByFormerMember, createdAt: event.createdAt, updatedAt: event.updatedAt });
 
 /** Parameters of the 12 editable columns, in the order of the INSERT and UPDATE texts. */
 const contentParams = (event) => [event.type, event.title, event.shortDescription, event.longDescription, event.startsAt,
@@ -128,7 +129,8 @@ export const listEvents = async (ctx, association, status) => {
     [association.id, status ?? null]);
   const now = ctx.now();
   return rows.map(toEvent).map((event) => ({ id: event.id, title: event.title, type: event.type, status: event.status,
-    startsAt: event.startsAt, ended: hasEnded(event, now), updatedAt: event.updatedAt, lastEditedBy: event.lastEditedBy }));
+    startsAt: event.startsAt, ended: hasEnded(event, now), updatedAt: event.updatedAt, lastEditedBy: event.lastEditedBy,
+    lastEditedByFormerMember: event.lastEditedByFormerMember }));
 };
 
 /** Editor read; an event of another association is 404 EVENT_NOT_FOUND (BC19). */

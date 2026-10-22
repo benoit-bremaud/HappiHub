@@ -149,7 +149,8 @@ backend UC15–UC20 (PR #282), on PostgreSQL.
 
 - Latest recorded verification (2026-10-19): 65 unit and 97 PostgreSQL integration server
   tests, 36 client tests, SonarQube gate passed, gitleaks clean, API QA transcript.
-- Not implemented: the event client (#252), partner/external API authentication, booking
+- Event client (#252) implemented on `feat/252-event-client`, PR pending.
+- Not implemented: partner/external API authentication, booking
   or payment, logo and demo dataset. QA bugs #284–#292 and audit follow-ups #294–#296 are open (#283 fixed by PR #299).
 - PR creation, merge and CI/CD changes require explicit approval.
 - Prepare deployment topology, image/security checks, private configuration, backup/restore
@@ -159,6 +160,22 @@ Evidence: [session migration](architecture/session-migration-2026-10-12.md),
 [dependency remediation](architecture/dependency-remediation-2026-10-12.md),
 [Docker workflows](DOCKER.md), and
 [completed backlog cleanup](architecture/backlog-audit-2026-10-12/completion.md).
+
+## QA backlog from the event client (#252, 2026-10-22)
+
+Found during the #252 tests and browser QA; none blocks the brick, each needs an issue:
+
+1. Mobile header (375 px): the "HappiHub" title overlaps the "Home" button (existing layout).
+2. Public page of a cancelled event says "Cancelled" twice (banner and poster badge).
+3. Clearing a required field of a published event sends a PATCH the server refuses (422,
+   logged in the console); the client could apply the published-required rule locally.
+4. `datetime-local` shows the browser locale (US `mm/dd/yyyy` here) while the UI formats
+   dates en-GB; decide one locale with the visual design.
+5. Conflict panel, in-place sign-in and creation quota are covered by tests only; a
+   two-account browser QA needs the pending dedicated local test accounts.
+6. Test noise: `ReactDOMTestUtils.act` deprecation and React Router v7 future-flag warnings.
+7. Branch coverage 76 % in the server integration run (statements 93 %); raise with #295.
+8. No accessibility audit (Lighthouse/axe) and no dark mode check on the new screens.
 
 ## Research references
 

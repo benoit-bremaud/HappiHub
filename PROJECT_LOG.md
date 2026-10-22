@@ -7,6 +7,17 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-22
 
+- **#252 event client — implemented on `feat/252-event-client` (PR pending)** — conception
+  validated (MCDA S 430, K 470, AS 420, R 465; spec `v1-brick-b-client-event-workflow.md`,
+  diagrams `v1-event-client/`). Owner rule added mid-brick: progressive disclosure (fields
+  and buttons appear from the previous choice); spec § 2 and diagram 03 amended and
+  revalidated the same day. Amendments: A-B5 commune search (`GET /api/communes`), A-B6
+  `lastEditedByFormerMember` (owner chose option A 420/500) after browser QA showed every
+  member without a display name listed as "former member". SonarQube first failed with 147
+  new issues (PropTypes, ARIA roles), all fixed. Gate: server unit 69 + integration 98
+  (93.3 % statements), client 84 (92.6 %), SonarQube passed, gitleaks clean, browser QA
+  screenshots `docs/architecture/qa/2026-10-22-252-*.jpg`. QA leftovers listed in the work
+  plan backlog.
 - **#283 bodiless writes rejected with 415 — merged (PR #299, merge db6a4df)** — browsers send
   `Content-Length: 0` on bodiless POSTs, which `type-is` counts as a body, so the CSRF
   middleware returned 415 for leave and invitation resend. Owner approved option A (MCDA

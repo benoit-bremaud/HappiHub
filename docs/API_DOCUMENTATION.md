@@ -83,6 +83,8 @@ separators answer `400 INVALID_FIELD`; dates need an explicit zone and a real ca
 - Closing an association cancels its upcoming published events ("Association closed"); drafts
   stay until the 30-day association purge. Drafts untouched for 12 months trigger a
   `DRAFT_CLEANUP_NOTICE` to every member and are deleted 14 days later unless edited.
+- Member views and the list add `lastEditedByFormerMember`: `true` when the last editor deleted
+  their account (shown as "former member"); `lastEditedBy` is `null` also for a member without a display name.
 - The account export (UC5) adds `events` created or last edited by the requester.
 
 ### Communes

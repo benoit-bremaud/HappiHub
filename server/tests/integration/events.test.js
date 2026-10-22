@@ -179,7 +179,7 @@ describe('UC18 publish (BC8, BC9)', () => {
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ id: event.id, title: 'Concert', status: 'PUBLISHED', ended: false,
       venueCity: { code: '69123', name: 'Lyon' }, association: { name: 'Troupe', slug: 'troupe' } });
-    for (const hidden of ['version', 'lastEditedBy', 'createdBy', 'createdAt', 'updatedAt', 'cleanupNoticeAt'])
+    for (const hidden of ['version', 'lastEditedBy', 'lastEditedByFormerMember', 'createdBy', 'createdAt', 'updatedAt', 'cleanupNoticeAt'])
       expect(response.body).not.toHaveProperty(hidden);
     const claireId = await accountId('claire@example.org');
     const { rows: [{ association_id: associationId }] } = await pool.query('SELECT association_id FROM event');
@@ -251,7 +251,7 @@ describe('reads (BC12, member list)', () => {
     const all = (await claire.get(EVENTS)).body.events;
     expect(all.map((e) => e.id).sort()).toEqual([draft.id, live.id].sort());
     expect(all.find((e) => e.id === live.id)).toEqual({ id: live.id, title: 'Concert', type: 'CONCERT', status: 'PUBLISHED', startsAt: live.startsAt,
-      ended: false, updatedAt: expect.any(String), lastEditedBy: 'Claire' });
+      ended: false, updatedAt: expect.any(String), lastEditedBy: 'Claire', lastEditedByFormerMember: false });
     expect((await claire.get(`${EVENTS}?status=DRAFT`)).body.events.map((e) => e.id)).toEqual([draft.id]);
     expect((await claire.get(`${EVENTS}?status=GONE`)).body.code).toBe('INVALID_REQUEST');
     expect((await claire.get(`${EVENTS}/${draft.id}`)).body).toMatchObject({ id: draft.id, version: 1, status: 'DRAFT' });
@@ -306,6 +306,8 @@ describe('cross-brick effects (BC14, BC15)', () => {
     expect(await row(mine.id)).toMatchObject({ created_by: null, last_edited_by: null, title: 'Mine' });
     expect((await row(edited.id)).last_edited_by).toBeNull();
     expect((await row(edited.id)).created_by).not.toBeNull();
+    const listed = (await malik.get(EVENTS)).body.events.find((event) => event.id === edited.id);
+    expect(listed).toMatchObject({ lastEditedBy: null, lastEditedByFormerMember: true });
   });
 });
 

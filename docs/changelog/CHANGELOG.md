@@ -12,6 +12,12 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Added
 
+- Event client for organizers (#252): event list per association, four-step editor (what,
+  when and where, look, preview) with autosave, field-by-field conflict resolution, in-place
+  sign-in, publish, cancel and delete confirmations, and the public event page. Fields and
+  actions appear progressively from the previous choice.
+- `GET /api/communes?q=` city search for the editor (amendment A-B5) and
+  `lastEditedByFormerMember` in member event views (amendment A-B6).
 - Server-managed HttpOnly cookie sessions, CSRF-protected writes and server logout.
 - Session conception, explicit runtime configuration, isolated local/production container
   workflows and disposable real-database regression coverage.
