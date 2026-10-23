@@ -137,7 +137,9 @@ folders as an approved implementation plan.
    and S1-C validated. Brick B (event lifecycle backend, UC15–UC20) conception decided 2026-10-16 ([spec](architecture/specs/v1-brick-b-event-lifecycle.md)): Benoît validated S, A1, Q, V, P (top scores). Spec merged as PR #278 (8dd08ad). Done 2026-10-19: brick B implemented and merged (PR #282, 47b8cde), server only; amendments A-B1–A-B4 in spec § 12; local gate green ([review-local](architecture/review-local.md)). QA on 2026-10-19 filed client/compose bugs #283–#292 (backlog; #283 P1 leave/resend 415: fixed by PR #299, merge db6a4df). Owner vision for persona scenarios and external API clients (Brasse-Bouillon, theatre sites) recorded on #20, #251, #244. Repository audit 2026-10-19 filed #294–#296.
    Done 2026-10-23: event client #252 merged (PR #309, 8ff8177).
    #310 encryption at rest: conception validated 2026-10-23
-   ([spec](architecture/specs/db-encryption-at-rest.md), ADR-0004 accepted); implementation next. Then #244 partner API and #251 persona scenarios (P1), each after conception approval.
+   ([spec](architecture/specs/db-encryption-at-rest.md), ADR-0004 accepted). Implementation on
+   `feat/310-db-encryption` (PR pending owner approval); one design gap (Compose production
+   transport, socket volume option A 425/500) validated 2026-10-23 and recorded in spec § 7. Then #244 partner API and #251 persona scenarios (P1), each after conception approval.
    T11a blocks deployment. Open: email provider, hosting/backups (must provide EU PostgreSQL) and Géoplateforme quota (T11). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.
 
@@ -151,6 +153,8 @@ not a consultation already conducted or permission to contact him.
 No preview is guaranteed to be running. Local run used for the 2026-10-19 QA: a disposable
 PostgreSQL container, `npm run migrate` then `npm start` in `server/` (API 5000) and
 `npm start` in `client/` with `REACT_APP_API_URL=http://localhost:5000/api` (web 3000).
+Since #310 the API also needs a field keyring: `npm run keyring:generate -- .keys/field-keyring.dev.json`
+and `FIELD_KEYRING_FILE_DEV` ([configuration](CONFIGURATION.md)); recreate pre-#310 databases.
 In development, emails (verification, invitations) are printed in the server log.
 
 Follow [configuration](CONFIGURATION.md) and [Docker workflows](DOCKER.md) for reproducible

@@ -36,6 +36,10 @@ services:
       DATABASE_URL_DEV: postgres://happihub:happihub-local@postgres:5432/happihub_local
       PORT_DEV: "5000"
       APP_URL_DEV: "http://localhost:${HAPPIHUB_LOCAL_WEB_PORT:-3200}"
+      FIELD_KEYRING_FILE_DEV: /run/keys/field-keyring.dev.json
+    volumes:
+      # Generated locally and git-ignored (spec db-encryption-at-rest § 6.1).
+      - ./server/.keys/field-keyring.dev.json:/run/keys/field-keyring.dev.json:ro
     ports:
       - "127.0.0.1:${HAPPIHUB_LOCAL_API_PORT:-5200}:5000"
     networks: [frontend, database]

@@ -137,6 +137,17 @@ warning, but its v3 returns to weaker libpq semantics), reads a Unix socket from
 query parameter, and forbids an explicit `ssl` option in the Pool config, which would override
 `sslmode`.
 
+**Compose production baseline (design gap found during implementation, validated by Benoît on
+2026-10-23, option A 425/500)**: `docker-compose.prod.yml` reached PostgreSQL by its service name
+`postgres` on an internal Docker network, which this rule refuses. The API now reaches it only
+through the Unix socket on a shared `postgres_socket` volume (`?host=/var/run/postgresql`) and
+leaves the database network; `POSTGRES_INITDB_ARGS=--auth-local=scram-sha-256` keeps a password on
+the socket (the image trusts local connections by default). MCDA (security 30, D7 kept unchanged 25,
+KISS 25, operations 10, testability 10): A socket volume 425, D defer to hosting 360 (baseline would
+not boot), B TLS with a private CA 325, C allow-list of internal host names 290 (weakens D7).
+Sensitivity: KISS 40 / security 15 keeps A first (425 vs 390). The URL is parsed with WHATWG `URL`:
+the user-only form `postgres://u:p@/db` is refused (fail closed); use `@localhost/db?host=…`.
+
 ## 8. Impact on code (for the implementation brick, not authorized yet)
 
 New pure module `server/domain/fieldCipher.js` (named exports: `createFieldCipher(keyring)` →
@@ -158,6 +169,7 @@ and `links`. Services call it at their SQL boundary; no ORM, no repository layer
 | events | `last_edited_by_name` projection decrypts `display_name_enc` (`events.js:16`); draft-cleanup notice decrypts member emails before `queueEmail` (`events.js:294-297`) |
 | jobs/maintenance | reminder selects `email_enc` and decrypts |
 | new jobs/reencrypt.js | rotation job (§ 6.2) |
+| docker-compose.prod.yml / docker-compose.yml | socket volume and `field_keyring` secret (§ 7); local keyring bind mount |
 
 Logging: decrypted values are never logged in production (the log transport is already refused
 there); decrypt errors throw a generic `FieldCipherError` without values.

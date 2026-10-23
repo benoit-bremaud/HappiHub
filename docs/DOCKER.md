@@ -10,7 +10,9 @@ Both build contexts exclude environment files, host node_modules, output and tes
 
 ## Local stack
 
-Create the ignored server/.env.docker.local file with a fresh private SESSION_SECRET_DEV (at least 32 random bytes). Compose supplies database URI, port and CORS origin. The local database has no authentication but is confined to an internal network without any host port. Use synthetic data only.
+Create the ignored server/.env.docker.local file with a fresh private SESSION_SECRET_DEV (at least 32 random bytes). Compose supplies database URI, port and CORS origin. The local database has no authentication but is confined to an internal network without any host port. Use synthetic data only. Generate the git-ignored local field keyring once with
+`cd server && npm run keyring:generate -- .keys/field-keyring.dev.json`;
+Compose mounts it read-only. A database created before #310 must be recreated (no backfill, D3).
 
 ```sh
 docker compose -p happihub-local build
@@ -29,7 +31,13 @@ Supply a private HAPPIHUB_SECRETS_DIR with files:
 
 - session_key: fresh session signing key (independent of former JWT keys).
 - postgres_user and postgres_password: database bootstrap identity.
-- database_url: URL the API uses, postgres://<user>:<encoded-password>@postgres:5432/happihub.
+- database_url: URL the API uses, postgres://<user>:<encoded-password>@localhost/happihub?host=/var/run/postgresql.
+  The API reaches PostgreSQL only through the Unix socket on the shared `postgres_socket` volume
+  (transport rule D7, [encryption at rest](architecture/specs/db-encryption-at-rest.md) § 7); a host
+  URL without `sslmode=verify-full` is refused at start. The socket requires a password
+  (`--auth-local=scram-sha-256`, applied when the data volume is first initialized).
+- field_keyring: JSON field keyring (`npm run keyring:generate -- <path>`, § 6.1). Keep a copy in the
+  password manager and never with backups: losing it loses the encrypted data.
   A least-privilege application role separate from the bootstrap identity is a follow-up.
 
 Secret files must be readable by their container users. With file-backed Compose secrets, source-file permissions apply: do not assume uid/gid/mode remap the source. A tested local setup uses a mode-0700 host directory with mode-0444 files; only the needed files are mounted read-only into each service. Alternatively arrange explicit ownership/ACLs for UID 1000 (Node) and the PostgreSQL image runtime user. Never put these files in the repository or build contexts.

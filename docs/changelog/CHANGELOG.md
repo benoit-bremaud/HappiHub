@@ -30,6 +30,12 @@ history and [handover](../HANDOVER.md) for the current state.
   publication guard, cancellation, draft deletion, a minimal public read, association-closure
   and account export effects, and maintenance archiving/draft cleanup. Legacy event routes
   are removed.
+- Encryption of personal data at rest (#310, ADR-0004): AES-256-GCM envelopes bound to their
+  column, HMAC-SHA256 blind indexes for email lookups and uniqueness, a JSON keyring file
+  (`FIELD_KEYRING_FILE_<suffix>`, `npm run keyring:generate`), staged key rotation with
+  `npm run reencrypt`, and a production transport rule (Unix socket, loopback or
+  `sslmode=verify-full`). The production Compose baseline reaches PostgreSQL through a shared
+  socket volume. Databases created before this change must be recreated (no backfill).
 
 ### Changed
 

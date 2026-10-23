@@ -37,15 +37,19 @@ services:
       SESSION_SECRET_PROD_FILE: /run/secrets/session_key
       TRUSTED_PROXY: "${HAPPIHUB_PROXY_IP:-10.254.240.2}"
       DATABASE_URL_PROD_FILE: /run/secrets/database_url
+      FIELD_KEYRING_FILE_PROD: /run/secrets/field_keyring
       APP_URL_PROD: "${HAPPIHUB_PROD_ORIGIN:?Supply the exact public origin}"
       PORT_PROD: "5000"
     secrets:
       - session_key
       - database_url
+      - field_keyring
+    # D7 (spec db-encryption-at-rest § 7): the API reaches PostgreSQL only through its Unix socket.
+    volumes:
+      - postgres_socket:/var/run/postgresql
     networks:
       frontend:
         ipv4_address: "${HAPPIHUB_API_IP:-10.254.240.3}"
-      database: {}
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,11 +68,14 @@ services:
       POSTGRES_USER_FILE: /run/secrets/postgres_user
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_DB: happihub
+      # The image trusts local socket connections by default; require a password there too.
+      POSTGRES_INITDB_ARGS: "--auth-local=scram-sha-256"
     secrets:
       - postgres_user
       - postgres_password
     volumes:
       - prod_postgres_data:/var/lib/postgresql/data
+      - postgres_socket:/var/run/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d happihub -U \"$$(cat /run/secrets/postgres_user)\""]
       interval: 5s
@@ -76,6 +83,7 @@ services:
       retries: 12
 volumes:
   prod_postgres_data:
+  postgres_socket:
 secrets:
   session_key:
     file: "${HAPPIHUB_SECRETS_DIR:?Supply the private secret directory}/session_key"
@@ -85,6 +93,8 @@ secrets:
     file: "${HAPPIHUB_SECRETS_DIR}/postgres_user"
   postgres_password:
     file: "${HAPPIHUB_SECRETS_DIR}/postgres_password"
+  field_keyring:
+    file: "${HAPPIHUB_SECRETS_DIR}/field_keyring"
 
 networks:
   frontend:
