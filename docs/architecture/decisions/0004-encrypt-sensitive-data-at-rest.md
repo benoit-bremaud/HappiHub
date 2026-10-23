@@ -19,7 +19,7 @@ wants sensitive data encrypted, ideally everything, and chose on 2026-10-22 the 
   personal columns of the [specification](../specs/db-encryption-at-rest.md) § 2, and an
   HMAC-SHA256 blind index (dedicated key, `foldEmail` normalization) for email uniqueness and lookups.
 - Keys in a keyring file outside the repository and database, path from the environment;
-  rotation by key id with a re-encryption job.
+  staged rotation by key id with a re-encryption job.
 - Session table and public event content stay clear; sessions carry no personal data.
 
 MCDA for each choice (D1–D7) is in the specification § 10.
@@ -29,4 +29,4 @@ MCDA for each choice (D1–D7) is in the specification § 10.
 Email columns lose their SQL `CHECK lower` and plain indexes; normalization moves to the domain.
 Losing the keyring loses the data, so it is escrowed separately from backups. A full compromise
 of the API host still exposes data (keys in memory). Fallbacks: D2 keys as environment values
-(410/500); D1 emails only (365/500).
+(410/500); D1 A' personal columns plus activity detail (385/500).

@@ -43,7 +43,7 @@ DF1–DF5 identifies the personal data).
 | outbox_message.payload | Verification/reset/invitation links, names | Secret (live tokens) + personal | clear jsonb | `payload_enc` (whole JSON in one envelope) |
 | session.sess | `cookie`, `accountId`, `authVersion`, `startedAt`, `csrfToken` | Technical, no PII | clear json | unchanged (D4) |
 | activity_entry.detail | Edited field names, deleted event title | Organizational | clear jsonb | unchanged (D1 option A) |
-| event.* | Event content, public once published | Public by design | clear | unchanged |
+| event.* | Event content | Public once published; drafts organizational | clear | unchanged (D1) |
 | association name/slug/city/presentation/website | Public association profile | Public | clear | unchanged |
 
 Not personal: ids, timestamps, statuses, roles, counters. Emails in memory-only rate limiters
@@ -105,7 +105,9 @@ the owner's password manager: **losing it loses the data**, and it is never stor
 
 ### 6.2 Lifecycle and rotation (state diagram 04)
 
-`generated → active → retiring → retired`. Rotation: add a new key and make it active (restart),
+`generated → staged → active → retiring → retired`. Rotation, staged so several processes never disagree: add the new key as *staged* (in the
+keyring, not active) and restart every process (API, maintenance, migrate, reencrypt); then
+switch `active` to it and restart again;
 run the re-encryption job (`npm run reencrypt`, batches of 200 rows, `FOR UPDATE SKIP LOCKED`,
 idempotent: rows whose envelope `kid` ≠ active are decrypted and re-encrypted), the job reports
 remaining counts per column; remove the old key only at zero (AC5). Cadence: yearly, or at once
@@ -121,8 +123,13 @@ unique constraints, drop the old columns — a dedicated migration under its own
 ADR-0003 places PostgreSQL next to the API. Rule: in production the URL host must be a Unix
 socket path or a loopback address, **or** carry `sslmode=verify-full` (`pg-connection-string`
 2.x in `pg` 8.23.1 maps it to `ssl.rejectUnauthorized = true` with host check; `sslrootcert`
-for a private CA). Anything else refuses to boot. Applies to `server.js` and
-`jobs/runMaintenance.js` (both build `new pg.Pool({ connectionString })`).
+for a private CA). Anything else refuses to boot. The check lives in one `config/`
+helper called by every entry point: `server.js`, `jobs/runMaintenance.js` (both `new pg.Pool`)
+and `jobs/migrate.js` (`node-pg-migrate`). It requires the literal `sslmode=verify-full`
+(pg-connection-string 2.14.1 currently upgrades `require`/`verify-ca` to verify-full with a
+warning, but its v3 returns to weaker libpq semantics), reads a Unix socket from the `host`
+query parameter, and forbids an explicit `ssl` option in the Pool config, which would override
+`sslmode`.
 
 ## 8. Impact on code (for the implementation brick, not authorized yet)
 
@@ -142,6 +149,7 @@ and `links`. Services call it at their SQL boundary; no ORM, no repository layer
 | invitations.* | insert/list/accept with `email_enc`/`email_bidx`; `invitation.email !== account.email` compares decrypted folded values |
 | associations | member list decrypts names/emails; `contact_email_enc` read/write |
 | outbox.queueEmail / deliverOutbox | encrypt recipient+payload; transport receives decrypted message; failure path nulls `payload_enc` |
+| events | `last_edited_by_name` projection decrypts `display_name_enc` (`events.js:16`); draft-cleanup notice decrypts member emails before `queueEmail` (`events.js:294-297`) |
 | jobs/maintenance | reminder selects `email_enc` and decrypts |
 | new jobs/reencrypt.js | rotation job (§ 6.2) |
 
@@ -151,7 +159,10 @@ there); decrypt errors throw a generic `FieldCipherError` without values.
 ### Migration (D3)
 
 V1 has never been deployed (no production data, HANDOVER): one SQL migration replaces the clear
-columns by the encrypted and blind-index columns and their indexes, without backfill; local
+columns by the encrypted and blind-index columns, without backfill: `account.email UNIQUE` →
+`email_bidx UNIQUE`; `CHECK lower` on `email` and `pending_email` dropped (rule in `foldEmail`);
+`invitation_pending_email_uq` → `(association_id, email_bidx) WHERE status = 'PENDING'`;
+`invitation_email_idx` → on `email_bidx`; `outbox_message_recipient_idx` → on `recipient_bidx`; local
 databases are reset (`npm run migrate` on a fresh volume). Down migration restores the clear
 column shapes empty. A backfill procedure is needed only for a change after the first deployment
 and gets its own study then.
@@ -189,8 +200,8 @@ features preserved (search, sort, uniqueness) 20, performance 5, testability 10.
 | B Everything incl. event drafts | 5 | 4 | 1 | 1 (public list/search/sort break) | 3 | 2 | 285 |
 
 A vs A': near tie (5 points); A' adds a code path for data that is not personal. A vs C: A also
-covers names and contacts for one more column each. Sensitivity: raising "wish" to 30 (from KISS)
-makes A' win by 10 — the owner's weight on "everything" decides between them.
+covers names and contacts for one more column each. Sensitivity: moving 15 points from KISS to "wish"
+(wish 30, KISS 5) makes A' win, 415 vs 390 — the owner's weight on "everything" decides between them.
 
 ### D2 — Key custody
 
@@ -246,7 +257,7 @@ Criteria: security 30, KISS 25, debuggability 15, rotation support 20, storage 1
 | Option | Sec. 30 | KISS 25 | Debug 15 | Rot. 20 | Storage 10 | Total |
 | --- | --- | --- | --- | --- | --- | --- |
 | **A** Text `hh1.kid.b64url`, AAD table.column | 4 | 5 | 5 | 5 | 3 | **450** |
-| C A + row id in AAD | 5 | 2 (ids generated before insert) | 5 | 5 | 3 | 405 |
+| C A + row id in AAD | 5 | 2 (needs ids generated in the app before insert; today `gen_random_uuid()` defaults) | 5 | 5 | 3 | 405 |
 | B Binary `bytea` | 4 | 4 | 2 | 5 | 5 | 400 |
 
 ### D7 — TLS rule
@@ -304,7 +315,8 @@ against the installed runtime and packages: Node 22.23.3 `node:crypto` (executed
 
 1. **Requirements and traceability**: AC1–AC8 map to § 2 (AC1), § 8 (AC2, AC7), § 6 (AC3–AC5),
    § 4 (AC6), § 12 (AC8); every *Personal* row of § 2 has a column change in § 8; every
-   current email query (`accounts`, `invitations`, `associations`, `maintenance`, `outbox`) is listed.
+   current email/name query (`accounts`, `invitations`, `associations`, `events`, `maintenance`,
+   `outbox`) is listed (corrected after review-local: `events` was missing).
 2. **Clean / SOLID**: `fieldCipher` is pure and receives its keyring (dependency inversion);
    file and environment access stay in `config/`; one reason to change per module.
 3. **KISS / YAGNI / DRY**: no ORM, repository layer, KMS or per-person keys; one normalization
