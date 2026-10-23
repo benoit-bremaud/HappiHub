@@ -20,7 +20,7 @@ export class FieldCipherError extends Error {
 
 const decodeKey = (value) => {
   const key = typeof value === 'string' ? Buffer.from(value, 'base64') : null;
-  if (!key || key.length !== KEY_BYTES || key.toString('base64') !== value) throw new FieldCipherError('Field keyring is invalid');
+  if (key?.length !== KEY_BYTES || key.toString('base64') !== value) throw new FieldCipherError('Field keyring is invalid');
   return key;
 };
 

@@ -126,5 +126,6 @@ case-insensitively (`foldEmail`).
 ## Verification commands
 
 From `server/`: `npm run migrate`, `npm test -- --runInBand`, `npm run test:integration`
-(needs Docker), `npm run maintenance`, `npm run reencrypt` (key rotation). Every command needs
-`FIELD_KEYRING_FILE_<suffix>` ([configuration](CONFIGURATION.md)), except the test suites.
+(needs Docker), `npm run maintenance`, `npm run reencrypt` (key rotation). The server, `maintenance`
+and `reencrypt` need `FIELD_KEYRING_FILE_<suffix>` ([configuration](CONFIGURATION.md));
+`migrate` and the test suites do not.

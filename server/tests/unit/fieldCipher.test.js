@@ -145,6 +145,13 @@ describe('database transport rule (§ 7, D7)', () => {
     expect(() => databasePoolConfig(url, production)).toThrow('A remote database requires sslmode=verify-full in production');
   });
 
+  test.each([
+    'postgres://u:p@db.example.net/db?sslmode=verify-full&sslmode=disable',
+    'postgres://u:p@localhost/db?host=/run/pg&host=db.example.net',
+  ])('refuses the repeated parameter in %s (the driver keeps the last copy)', (url) => {
+    expect(() => databasePoolConfig(url, production)).toThrow('Database URL configuration is invalid');
+  });
+
   test('refuses an unparsable URL in production and allows any URL outside production', () => {
     expect(() => databasePoolConfig('not a url', production)).toThrow('Database URL configuration is invalid');
     expect(databasePoolConfig('postgres://u:p@db.example.net/db', { production: false }))
