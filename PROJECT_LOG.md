@@ -17,6 +17,9 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   envelope with column AAD 450, loopback-or-verify-full TLS 440. After review-local (3 Must,
   4 Should fixed) the owner validated the whole conception, with staged key rotation (B 460/500
   over full stop D 415); ADR-0004 accepted. Implementation is the next brick.
+- **Complementary triage (owner MCDA T2, 445/500)** — closed #58 (V1 framing validated
+  2026-10-15) and #247 (V1 conception and implementation gate validated 2026-10-16) as completed;
+  #242 and #243 kept open (popularity study, role promotion and ownership transfer not covered).
 - **Backlog triage (owner MCDA option A, 450/500)** — closed #274, #245 and #114 as resolved
   and #301 as a duplicate of #285; #292 retitled to the compose migrations gap. New labels:
   `priority: P1` on #310, #244, #251; `priority: P2` on #284–#291, #302–#308, #272, #263;
