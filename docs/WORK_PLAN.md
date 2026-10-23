@@ -1,6 +1,6 @@
 # HappiHub prioritized work plan
 
-Updated: 2026-10-19. This plan orders the work; it does not approve implementation.
+Updated: 2026-10-23. This plan orders the work; it does not approve implementation.
 Owner: Benoît. Clément/Yazii contributes to product and visual-design review.
 
 ## Product direction and decision status
@@ -144,12 +144,11 @@ target a designated demo database, preserve unrelated data and be safe to rerun.
 ## Established baseline and remaining readiness
 
 Merged to main (not a deployed release): the security/configuration/Docker/session recovery
-(PR #257), V1 brick D accounts and associations (PR #276) and brick B event lifecycle
-backend UC15–UC20 (PR #282), on PostgreSQL.
+(PR #257), V1 brick D accounts and associations (PR #276), brick B event lifecycle
+backend UC15–UC20 (PR #282) and the event client #252 (PR #309, 8ff8177), on PostgreSQL.
 
-- Latest recorded verification (2026-10-19): 65 unit and 97 PostgreSQL integration server
-  tests, 36 client tests, SonarQube gate passed, gitleaks clean, API QA transcript.
-- Event client (#252) implemented on `feat/252-event-client`, PR pending.
+- Latest recorded verification (2026-10-23, #252): 69 unit and 98 PostgreSQL integration server
+  tests, 84 client tests, SonarQube gate passed, gitleaks clean, browser QA.
 - Not implemented: partner/external API authentication, booking
   or payment, logo and demo dataset. QA bugs #284–#292 and audit follow-ups #294–#296 are open (#283 fixed by PR #299).
 - PR creation, merge and CI/CD changes require explicit approval.
@@ -165,7 +164,7 @@ Evidence: [session migration](architecture/session-migration-2026-10-12.md),
 
 Found during the #252 tests and browser QA; none blocks the brick; each is filed as an issue:
 
-1. Mobile header (375 px): the "HappiHub" title overlaps the "Home" button (existing layout). (#301)
+1. Mobile header (375 px): the "HappiHub" title overlaps the "Home" button (existing layout). (#301, closed as duplicate of #285)
 2. Public page of a cancelled event says "Cancelled" twice (banner and poster badge). (#302)
 3. Clearing a required field of a published event sends a PATCH the server refuses (422,
    logged in the console); the client could apply the published-required rule locally. (#303)
@@ -197,6 +196,8 @@ identify implemented behavior, proposals and missing approvals without chat hist
 
 ## Immediate next work
 
-V1 conception is approved (implementation gate 2026-10-16); bricks D and B are merged.
-Next: the event client (#252) or the persona scenario study, each after its own conception
-is approved; the P1 QA bug #283 is fixed (PR #299, db6a4df). See [HANDOVER](HANDOVER.md) for the live state.
+V1 conception is approved (implementation gate 2026-10-16); bricks D, B and the event client
+(#252) are merged. P1 order after the 2026-10-23 triage: #310 encryption at rest (conception
+study in review: [spec](architecture/specs/db-encryption-at-rest.md)), then #244 partner API
+and #251 persona scenarios, each after its own conception is approved. P2/P3 labels on the
+remaining QA and audit issues. See [HANDOVER](HANDOVER.md) for the live state.

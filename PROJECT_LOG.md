@@ -5,6 +5,24 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-10-23
+
+- **#310 encryption at rest — conception study opened** — branch `docs/310-db-encryption-study`,
+  spec `docs/architecture/specs/db-encryption-at-rest.md`, proposed ADR-0004 and diagrams
+  `docs/architecture/diagrams/db-encryption/`. Scope chosen by the owner on 2026-10-22
+  (option A, 405/500): disk/volume encryption and TLS to PostgreSQL plus application-level
+  AES-256-GCM on sensitive columns with an HMAC blind index for email lookups. Study only;
+  no code before the owner validates the conception.
+- **Backlog triage (owner MCDA option A, 450/500)** — closed #274, #245 and #114 as resolved
+  and #301 as a duplicate of #285; #292 retitled to the compose migrations gap. New labels:
+  `priority: P1` on #310, #244, #251; `priority: P2` on #284–#291, #302–#308, #272, #263;
+  `priority: P3` on #273, #295, #296, #298, #292. The 2024 umbrella studies stay in the icebox.
+- **#252 event client — merged (PR #309, merge 8ff8177)** — final gate on the merged head:
+  server unit 69 + integration 98, client 84, SonarQube passed with the three lcov reports,
+  gitleaks clean, browser QA `docs/architecture/qa/2026-10-22-252-*`. Last fix 14d1001 for
+  new Sonar rules; S3800 (Joi custom validator returning two types) and S9382 (per-draft
+  transaction loop) accepted in SonarQube with an owner MCDA of 500/500.
+
 ## 2026-10-22
 
 - **#252 event client — implemented on `feat/252-event-client` (PR pending)** — conception
