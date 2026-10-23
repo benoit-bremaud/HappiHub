@@ -3,7 +3,7 @@
 > **Source spec**: [encryption at rest](../../specs/db-encryption-at-rest.md) § 2–3, § 9
 > **Related**: [V1 data flow 06](../v1-events/06-data-flow.md)
 
-Status: proposed, awaiting Benoît's validation.
+Status: proposed; decisions validated 2026-10-23, final conception validation pending.
 
 Question answered: at which trust boundary is each personal value clear, and which key protects it?
 

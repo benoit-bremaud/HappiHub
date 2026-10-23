@@ -1,7 +1,7 @@
 # Encryption of sensitive data at rest (#310)
 
-Status: **proposed — conception study, awaiting Benoît's validation**. No code is authorized
-until the decisions in § 10 are validated (AGENTS.md). Proposed ADR:
+Status: **decisions D1–D7 validated by Benoît on 2026-10-23 (option A each, top scores)**;
+the whole conception awaits his final validation before any code (AGENTS.md). Proposed ADR:
 [ADR-0004](../decisions/0004-encrypt-sensitive-data-at-rest.md). Diagrams:
 [db-encryption/](../diagrams/db-encryption/).
 
@@ -170,7 +170,10 @@ and gets its own study then.
 | T8 bidx key leak | separate key; HMAC | dictionary attack on emails possible → § 6.3 |
 | T9 session dump | no PII in `sess`; `sid` useless without the cookie signature secret | — |
 
-## 10. Decisions (MCDA, scores 0–5, weights sum to 100, totals /500) — pending validation
+## 10. Decisions (MCDA, scores 0–5, weights sum to 100, totals /500)
+
+Validated by Benoît on 2026-10-23: D1 A 390, D2 A 435, D3 A 415, D4 A 460, D5 A 470, D6 A 450,
+D7 A 440. Recorded fallbacks: D1 A' 385, D2 B 410.
 
 ### D1 — Encryption scope
 

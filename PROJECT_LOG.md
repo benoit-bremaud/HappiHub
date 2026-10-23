@@ -11,8 +11,11 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   spec `docs/architecture/specs/db-encryption-at-rest.md`, proposed ADR-0004 and diagrams
   `docs/architecture/diagrams/db-encryption/`. Scope chosen by the owner on 2026-10-22
   (option A, 405/500): disk/volume encryption and TLS to PostgreSQL plus application-level
-  AES-256-GCM on sensitive columns with an HMAC blind index for email lookups. Study only;
-  no code before the owner validates the conception.
+  AES-256-GCM on sensitive columns with an HMAC blind index for email lookups. Owner
+  validated D1–D7 (all option A): personal columns 390, keyring file 435, replace columns
+  without backfill 415, session table unchanged 460, full shared HMAC blind index 470, text
+  envelope with column AAD 450, loopback-or-verify-full TLS 440. Study only; no code before
+  the final conception validation.
 - **Backlog triage (owner MCDA option A, 450/500)** — closed #274, #245 and #114 as resolved
   and #301 as a duplicate of #285; #292 retitled to the compose migrations gap. New labels:
   `priority: P1` on #310, #244, #251; `priority: P2` on #284–#291, #302–#308, #272, #263;

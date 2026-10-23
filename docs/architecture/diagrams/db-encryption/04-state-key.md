@@ -2,7 +2,7 @@
 
 > **Source spec**: [encryption at rest](../../specs/db-encryption-at-rest.md) § 6.2
 
-Status: proposed, awaiting Benoît's validation.
+Status: proposed; decisions validated 2026-10-23, final conception validation pending.
 
 Question answered: when may a key encrypt, decrypt, or be removed?
 

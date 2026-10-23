@@ -2,7 +2,7 @@
 
 > **Source spec**: [encryption at rest](../../specs/db-encryption-at-rest.md) § 4–5, § 8
 
-Status: proposed, awaiting Benoît's validation.
+Status: proposed; decisions validated 2026-10-23, final conception validation pending.
 
 Question answered: how do uniqueness and lookup work when the email column is ciphertext?
 

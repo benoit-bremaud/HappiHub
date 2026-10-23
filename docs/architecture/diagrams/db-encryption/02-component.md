@@ -2,7 +2,7 @@
 
 > **Source spec**: [encryption at rest](../../specs/db-encryption-at-rest.md) § 6, § 8
 
-Status: proposed, awaiting Benoît's validation.
+Status: proposed; decisions validated 2026-10-23, final conception validation pending.
 
 Question answered: which module owns encryption, who depends on it, and does the dependency
 rule hold (domain never imports infrastructure)?

@@ -1,6 +1,7 @@
 # ADR-0004 — Encrypt sensitive data at rest in PostgreSQL
 
-Status: **proposed** on 2026-10-23, awaiting the owner's validation (#310).
+Status: **proposed** on 2026-10-23; decisions D1–D7 validated by the owner the same day,
+final conception validation pending (#310).
 
 ## Context
 
@@ -10,7 +11,7 @@ links) in clear. Passwords (bcryptjs) and link tokens (SHA-256) are already hash
 wants sensitive data encrypted, ideally everything, and chose on 2026-10-22 the layered scope
 (option A, 405/500). Constraints: zero budget, EU hosting, GDPR art. 32, no production data yet.
 
-## Decision (proposed)
+## Decision
 
 - Storage and backups encrypted at the host level (requirement on the hosting choice, T11).
 - Production database connections over a Unix socket/loopback or TLS `sslmode=verify-full`.
