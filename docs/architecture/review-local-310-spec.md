@@ -32,6 +32,8 @@
 - § 7 `[security]` · the `sslmode` semantics change in pg-connection-string v3; Unix sockets arrive as a `host` query parameter; an `ssl` option overrides `sslmode` · rule requires the literal `verify-full`, reads the socket from the query and forbids the `ssl` override. **Fixed.**
 - § 8 migration `[correctness]` · index and CHECK replacements incomplete · all listed. **Fixed.**
 
+- PR #311 round (owner chose MCDA A 455/500: fix, no bot reply) `[security|correctness]` · retired keys must outlive pre-rotation backups (Archived state added); account export must decrypt `invitation.email_enc`. **Fixed.**
+
 ## 🔵 Nice to Have
 
 - § 2 `event.*` `[docs]` · drafts are not public · reworded. **Fixed.**

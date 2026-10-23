@@ -105,12 +105,14 @@ the owner's password manager: **losing it loses the data**, and it is never stor
 
 ### 6.2 Lifecycle and rotation (state diagram 04)
 
-`generated → staged → active → retiring → retired`. Rotation, staged so several processes never disagree: add the new key as *staged* (in the
+`generated → staged → active → retiring → retired → archived`. Rotation, staged so several processes never disagree: add the new key as *staged* (in the
 keyring, not active) and restart every process (API, maintenance, migrate, reencrypt); then
 switch `active` to it and restart again;
 run the re-encryption job (`npm run reencrypt`, batches of 200 rows, `FOR UPDATE SKIP LOCKED`,
 idempotent: rows whose envelope `kid` ≠ active are decrypted and re-encrypted), the job reports
-remaining counts per column; remove the old key only at zero (AC5). Cadence: yearly, or at once
+remaining counts per column; remove the old key from the runtime keyring only at zero (AC5), but keep a decrypt-only
+archived copy in the password manager until the last backup taken before the rotation has
+expired (restores must stay readable); destroy it only then. Cadence: yearly, or at once
 after a suspected leak.
 
 Rotation procedure MCDA (2026-10-23, validated): staged B 460, full stop D 415, hot reload C 355,
@@ -148,7 +150,7 @@ and `links`. Services call it at their SQL boundary; no ORM, no repository layer
 | accounts.authenticate, requestPasswordReset | `WHERE email_bidx = $1` |
 | accounts.resendVerification | `WHERE (email_bidx = $1 AND …) OR pending_email_bidx = $1` |
 | accounts verify / updateAccount | move `pending_email_*` pair; uniqueness check by bidx |
-| accounts.toAccount, export | decrypt email, pending email, display name |
+| accounts.toAccount, export | decrypt email, pending email, display name, and `invitation.email_enc` in `invitationsSent` (`accounts.js:186-196`) |
 | accounts.deleteAccount | `DELETE … WHERE email_bidx = ANY($1)` / `recipient_bidx = ANY($1)` |
 | invitations.* | insert/list/accept with `email_enc`/`email_bidx`; `invitation.email !== account.email` compares decrypted folded values |
 | associations | member list decrypts names/emails; `contact_email_enc` read/write |

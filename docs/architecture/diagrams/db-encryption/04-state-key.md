@@ -14,13 +14,15 @@ stateDiagram-v2
   Active --> Retiring: a newer key becomes active
   Retiring --> Retiring: reencrypt job batch<br/>(rows with this kid remain)
   Retiring --> Retired: job reports 0 envelopes with this kid
-  Retired --> [*]: removed from keyring and password manager
+  Retired --> Archived: removed from runtime keyring,<br/>decrypt-only copy kept in password manager
+  Archived --> [*]: last backup holding its envelopes has expired
   Active --> Compromised: suspected leak
   Retiring --> Compromised: suspected leak
   Compromised --> Retiring: emergency rotation (new key active at once)
 ```
 
 Rules: only `Active` encrypts; `Staged`, `Active` and `Retiring` decrypt (staging first means no
-process meets an envelope whose key it lacks); removing a key while envelopes
+process meets an envelope whose key it lacks); the archived copy stays until every
+backup older than the rotation has expired, so a restore stays readable; removing a key while envelopes
 still carry its kid is refused by the job's zero-count check (AC5). The blind-index key follows
 its own exceptional procedure (spec § 6.3).
