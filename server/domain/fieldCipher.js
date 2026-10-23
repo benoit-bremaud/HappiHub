@@ -5,10 +5,18 @@ import { foldEmail } from './email.js';
 // value injected by the composition root; no file, environment or database access here.
 const VERSION = 'hh1';
 const KID = /^[a-z0-9]{1,16}$/;
-const COLUMN = /^[a-z_]+\.[a-z_]+$/;
 const IV_BYTES = 12;
 const TAG_BYTES = 16;
 const KEY_BYTES = 32;
+
+/** AAD of every encrypted column (spec § 2, § 4): the single source for writers, readers and reencrypt. */
+export const FIELD = Object.freeze({
+  accountEmail: 'account.email_enc', accountPendingEmail: 'account.pending_email_enc',
+  accountDisplayName: 'account.display_name_enc', invitationEmail: 'invitation.email_enc',
+  associationContactEmail: 'association.contact_email_enc',
+  outboxRecipient: 'outbox_message.recipient_enc', outboxPayload: 'outbox_message.payload_enc',
+});
+const COLUMNS = new Set(Object.values(FIELD));
 
 /** Generic failure: never carries a key, an envelope or a plaintext (AC3, AC6). */
 export class FieldCipherError extends Error {
@@ -40,7 +48,7 @@ const readKeyring = (keyring) => {
 };
 
 const assertColumn = (column) => {
-  if (!COLUMN.test(column)) throw new FieldCipherError('Field column is invalid');
+  if (!COLUMNS.has(column)) throw new FieldCipherError('Field column is invalid');
 };
 
 /** `hh1.<kid>.<b64url>` into its parts; anything else is a generic failure. */
@@ -53,8 +61,9 @@ const parse = (envelope) => {
 };
 
 /**
- * Build the cipher once from a keyring. `column` is `"table.column"`, bound as AAD so an
- * envelope moved to another column fails (T7). `NULL`, `undefined` and `''` stay `null`.
+ * Build the cipher once from a keyring. `column` is one of `FIELD`, bound as AAD so an
+ * envelope moved to another column fails (T7). `NULL`, `undefined` and `''` stay `null`;
+ * any other non-string value is refused.
  */
 export const createFieldCipher = (keyring) => {
   const { active, keys, blindIndexKey } = readKeyring(keyring);
@@ -62,10 +71,11 @@ export const createFieldCipher = (keyring) => {
     encrypt(column, value) {
       assertColumn(column);
       if (value === null || value === undefined || value === '') return null;
+      if (typeof value !== 'string') throw new FieldCipherError('Field value must be a string');
       const iv = randomBytes(IV_BYTES);
       const cipher = createCipheriv('aes-256-gcm', keys.get(active), iv);
       cipher.setAAD(Buffer.from(column));
-      const ciphertext = Buffer.concat([cipher.update(String(value), 'utf8'), cipher.final()]);
+      const ciphertext = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
       return `${VERSION}.${active}.${Buffer.concat([iv, ciphertext, cipher.getAuthTag()]).toString('base64url')}`;
     },
     decrypt(column, envelope) {

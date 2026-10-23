@@ -4,19 +4,19 @@
 - Commit: 123e895
 - Scope: branch diff `main...feat/310-db-encryption`
 - Checks run: design · docs · tests · security · correctness
-- Verdict: fix Must Have first  ·  Must 4 · Should 9 · Nice 7
+- Verdict: ship (Must and Should resolved after review, Nice open)  ·  Must 4 ✅ · Should 9 ✅ · Nice 7 open
 
-## Pre-merge gate (head SHA 123e895)
+## Pre-merge gate (after the fixes)
 | Step | Result |
 |---|---|
-| 1 Tests | ✅ server unit 139 · ✅ server integration 107 · ✅ client 84 |
-| 2 Coverage | server integration 90.74 % stmts / 72.76 % branches / 96.51 % funcs / 93.49 % lines (floor 80) · client 92.61 % stmts · docs not measured (no counter in the project) |
-| 3 SonarQube | ❌ FAILED (new_violations = 5) · hotspots ⚠️ not read (the analysis token lacks the right to browse them) |
-| 4 Secrets | ✅ gitleaks clean (`main..HEAD`, `--all`, dir scan) · no tracked .env · diff read: nothing sensitive (dev keyring is ignored) |
-| 5 QA pass | ⏳ not run yet (runs after the Must fixes) |
-- Gate: **RED — step 3 (SonarQube) and step 5 (QA pending)**
+| 1 Tests | ✅ server unit 142 · ✅ server integration 111 · ✅ client 84 |
+| 2 Coverage | server integration 90.97 % stmts / 73.09 % branches / 96.52 % funcs / 93.73 % lines (floor 80) · client 92.61 % stmts · docs not measured (no counter in the project) |
+| 3 SonarQube | ✅ PASSED. S6582 was fixed. The four S9382 issues were accepted as intentional (owner, MCDA option A 500/500; precedent #252). Hotspots ⚠️ were not read (the analysis token lacks the right to browse them). |
+| 4 Secrets | ✅ gitleaks clean (`main..HEAD`, dir scan) · no tracked .env · diff read: nothing sensitive |
+| 5 QA pass | ✅ full, on a disposable PostgreSQL 16 with the dev keyring. Covered: sign-up with a mixed-case address, verification, sign-in with another case, display name, association contact email, invitation, export (`qa/2026-10-23-310-export.json`), deletion (0 rows left). `pg_dump` holds no plaintext address or name. Console clean; network has no 4xx/5xx. Screenshots: `qa/2026-10-23-310-*.jpg` |
+- Gate: **GREEN, pending owner merge approval**
 
-## 🔴 Must Have
+## 🔴 Must Have (all fixed)
 - `server/config/databaseUrl.js:15,18` `[security|design]` · A repeated `host` or `sslmode` parameter bypasses D7. `URLSearchParams.get()` reads the first value, while `pg-connection-string` uses the last. So `?sslmode=verify-full&sslmode=disable` is accepted in production and the driver connects without TLS. · Refuse `getAll(key).length > 1` for `host` and `sslmode`, and add unit tests with both URLs.
 - `docs/API_DOCUMENTATION.md` `[docs]` · States that `npm run migrate` needs the keyring; `migrate.js` never reads it. · Remove the claim.
 - `docs/architecture/specs/db-encryption-at-rest.md` § 8 `[docs]` · The heading still says "not authorized yet", and the line anchors are stale. · Update the heading and anchors.
@@ -25,7 +25,7 @@
   - `server/jobs/reencrypt.js:37,59,60` and `server/services/outbox.js:35`: S9382 (await in a loop). The sequential order is intentional (batched row locks, ordered delivery), and #252 set a precedent of accepting S9382.
   - Fix S6582 in code; S9382 needs an owner decision: accept it as intentional, or refactor.
 
-## 🟡 Should Have
+## 🟡 Should Have (all fixed)
 - `server/domain/fieldCipher.js` + services/jobs `[design]` · The AAD column names are repeated as raw strings, and a typo still passes the regex. · Use exported `FIELD` constants with a membership check.
 - `server/services/invitations.js:131` `[design|tests]` · There is no test that stored addresses are folded (spec § 5), and the comment credits `foldEmail` with work `emailSchema` does. · Add an integration test and correct the comment.
 - `server/domain/fieldCipher.js:68` `[design|correctness]` · `String(value)` silently stores `[object Object]`. · Reject non-string values with FieldCipherError.

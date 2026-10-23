@@ -3,6 +3,7 @@ import { newToken, TOKEN_TTL_MS } from '../domain/tokens.js';
 import { deleteAccountRow } from '../services/accounts.js';
 import { runEventMaintenance } from '../services/events.js';
 import { queueEmail } from '../services/outbox.js';
+import { FIELD } from '../domain/fieldCipher.js';
 
 const DAY_MS = 24 * 3600e3;
 
@@ -29,7 +30,7 @@ export const runMaintenance = async (ctx) => {
       await client.query("DELETE FROM auth_token WHERE account_id = $1 AND purpose = 'VERIFY'", [account.id]);
       await client.query("INSERT INTO auth_token (account_id, purpose, token_hash, expires_at) VALUES ($1, 'VERIFY', $2, $3)",
         [account.id, hash, new Date(now + TOKEN_TTL_MS.VERIFY)]);
-      await queueEmail(client, ctx, { recipient: ctx.cipher.decrypt('account.email_enc', account.email_enc), template: 'VERIFY_REMINDER',
+      await queueEmail(client, ctx, { recipient: ctx.cipher.decrypt(FIELD.accountEmail, account.email_enc), template: 'VERIFY_REMINDER',
         payload: { link: ctx.links.verify(token) } });
       await client.query('UPDATE account SET verification_reminder_at = $2 WHERE id = $1', [account.id, new Date(now)]);
     });

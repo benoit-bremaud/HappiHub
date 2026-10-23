@@ -6,6 +6,7 @@ import {
 } from '../domain/event.js';
 import { recordActivity } from './activity.js';
 import { queueEmail } from './outbox.js';
+import { FIELD } from '../domain/fieldCipher.js';
 
 // Brick B persistence and transactions (spec § 5). Lock order everywhere: association row,
 // then event row, so UC8 closure (which locks the association first) never deadlocks an edit.
@@ -27,7 +28,7 @@ const toEvent = (cipher, row) => ({
   posterStyle: row.poster_style, cancellationReason: row.cancellation_reason, publishedAt: iso(row.published_at),
   scheduleChangedAt: iso(row.schedule_changed_at), createdAt: iso(row.created_at), updatedAt: iso(row.updated_at),
   // A deleted account nulls last_edited_by; a member without a display name only has no name.
-  lastEditedBy: cipher.decrypt('account.display_name_enc', row.last_edited_by_name_enc),
+  lastEditedBy: cipher.decrypt(FIELD.accountDisplayName, row.last_edited_by_name_enc),
   lastEditedByFormerMember: row.last_editor_deleted === true,
 });
 
@@ -296,7 +297,7 @@ export const runEventMaintenance = async (ctx) => {
         'SELECT a.email_enc FROM membership m JOIN account a ON a.id = m.account_id WHERE m.association_id = $1',
         [draft.association_id]);
       await Promise.all(members.map(({ email_enc: emailEnc }) => queueEmail(client, ctx,
-        { recipient: ctx.cipher.decrypt('account.email_enc', emailEnc),
+        { recipient: ctx.cipher.decrypt(FIELD.accountEmail, emailEnc),
         template: 'DRAFT_CLEANUP_NOTICE', payload: { associationName: draft.association_name, eventTitle: draft.title } })));
       return 1;
     });

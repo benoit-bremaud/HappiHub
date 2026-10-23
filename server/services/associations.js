@@ -5,6 +5,7 @@ import { recordActivity } from './activity.js';
 import { cancelUpcomingEvents } from './events.js';
 import { queueEmail } from './outbox.js';
 import { DomainError } from './errors.js';
+import { FIELD } from '../domain/fieldCipher.js';
 
 /** A similar name exists when the base slug, or a suffixed variant, is taken (UC1 4b). */
 export const similarAssociationExists = async (db, name) => {
@@ -70,10 +71,10 @@ export const associationView = async ({ db, cipher }, association) => {
   return {
     name: association.name, slug: association.slug, city: association.city,
     presentation: association.presentation, websiteUrl: association.website_url,
-    contactEmail: cipher.decrypt('association.contact_email_enc', association.contact_email_enc),
+    contactEmail: cipher.decrypt(FIELD.associationContactEmail, association.contact_email_enc),
     status: association.status, closedAt: association.closed_at,
-    members: members.map((m) => ({ accountId: m.id, displayName: cipher.decrypt('account.display_name_enc', m.display_name_enc),
-      email: cipher.decrypt('account.email_enc', m.email_enc), joinedAt: m.joined_at })),
+    members: members.map((m) => ({ accountId: m.id, displayName: cipher.decrypt(FIELD.accountDisplayName, m.display_name_enc),
+      email: cipher.decrypt(FIELD.accountEmail, m.email_enc), joinedAt: m.joined_at })),
   };
 };
 
@@ -87,7 +88,7 @@ export const updateProfile = (ctx, accountId, association, changes) => withTrans
   if (locked.status !== 'ACTIVE') throw new DomainError(409, 'This association is closed.');
   const values = Object.keys(PROFILE_COLUMNS).map((key) => {
     const value = key in changes ? changes[key] : null;
-    return key === 'contactEmail' ? ctx.cipher.encrypt('association.contact_email_enc', value) : value;
+    return key === 'contactEmail' ? ctx.cipher.encrypt(FIELD.associationContactEmail, value) : value;
   });
   const present = Object.keys(PROFILE_COLUMNS).map((key) => key in changes);
   // Fixed query text: each column is updated only when its "present" flag is true.
@@ -130,6 +131,6 @@ export const endMembership = (ctx, actor, association, targetId) => withTransact
   await recordActivity(client, ctx, { associationId: association.id, actorId: actor.id,
     action: leaving ? 'MEMBER_LEFT' : 'MEMBER_REMOVED', targetRef: targetId });
   // No dispute link until UC13 ships with the administration brick (S1).
-  if (!leaving) await queueEmail(client, ctx, { recipient: ctx.cipher.decrypt('account.email_enc', target.email_enc), template: 'MEMBER_REMOVED',
+  if (!leaving) await queueEmail(client, ctx, { recipient: ctx.cipher.decrypt(FIELD.accountEmail, target.email_enc), template: 'MEMBER_REMOVED',
     payload: { associationName: association.name } });
 });

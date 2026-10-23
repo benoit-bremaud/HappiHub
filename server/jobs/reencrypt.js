@@ -1,9 +1,11 @@
 // Key rotation job (spec db-encryption-at-rest § 6.2, AC5): re-encrypt every envelope whose key
 // id is not the active one, in batches of 200 locked rows, then report what remains per column.
-// Idempotent: a second run finds nothing to do. Operator entry point: jobs/runReencrypt.js.
+// Idempotent: a second run finds nothing to do. An undecryptable value stops the run (fail
+// closed, generic FieldCipherError); batches already committed stay rotated. Operator entry point: jobs/runReencrypt.js.
 import { withTransaction } from '../db/transaction.js';
 
-// Fixed query texts per table (AC15): only `id > $1` keyset paging and positional values.
+// Fixed query texts per table (brick D AC15): only `id > $1` keyset paging and positional
+// values. Must list every column of FIELD (domain/fieldCipher.js).
 const TARGETS = [
   { table: 'account', columns: ['email_enc', 'pending_email_enc', 'display_name_enc'],
     SELECT: 'SELECT id, email_enc, pending_email_enc, display_name_enc FROM account WHERE id > $1 ORDER BY id LIMIT $2 FOR UPDATE SKIP LOCKED',

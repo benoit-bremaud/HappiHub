@@ -1,4 +1,5 @@
 import { withTransaction } from '../db/transaction.js';
+import { FIELD } from '../domain/fieldCipher.js';
 
 const MAX_ATTEMPTS = 5;
 // Templates limited per recipient (quota "Verification / reset emails", 10 per hour).
@@ -12,8 +13,8 @@ export const queueEmail = async (client, ctx, { recipient, template, payload }) 
   if (CAPPED_TEMPLATES.has(template) && !ctx.limits.recipient.take(recipient, ctx.now())) return false;
   await client.query(
     'INSERT INTO outbox_message (recipient_enc, recipient_bidx, template, payload_enc, created_at) VALUES ($1, $2, $3, $4, $5)',
-    [ctx.cipher.encrypt('outbox_message.recipient_enc', recipient), ctx.cipher.blindIndex(recipient), template,
-      payload === undefined || payload === null ? null : ctx.cipher.encrypt('outbox_message.payload_enc', JSON.stringify(payload)),
+    [ctx.cipher.encrypt(FIELD.outboxRecipient, recipient), ctx.cipher.blindIndex(recipient), template,
+      payload === undefined || payload === null ? null : ctx.cipher.encrypt(FIELD.outboxPayload, JSON.stringify(payload)),
       new Date(ctx.now())]);
   return true;
 };
@@ -23,17 +24,19 @@ export const queueEmail = async (client, ctx, { recipient, template, payload }) 
  * MAX_ATTEMPTS failures the row keeps no payload (it holds the token link) and is purged by F25.
  * The transport receives the decrypted message; the database only holds envelopes (§ 8).
  */
-export const deliverOutbox = (pool, transport, { cipher, now = Date.now, batch = 20 }) =>
-  withTransaction(pool, async (client) => {
+export const deliverOutbox = (pool, transport, { cipher, now = Date.now, batch = 20 } = {}) => {
+  // Without this guard a wiring mistake would count as delivery failures and null the payloads.
+  if (!cipher) throw new Error('Field cipher is required');
+  return withTransaction(pool, async (client) => {
     let delivered = 0;
     const { rows } = await client.query(
       `SELECT id, recipient_enc, template, payload_enc, attempts FROM outbox_message
        WHERE failed_at IS NULL ORDER BY created_at LIMIT $1 FOR UPDATE SKIP LOCKED`, [batch]);
     for (const row of rows) {
       try {
-        const payload = cipher.decrypt('outbox_message.payload_enc', row.payload_enc);
+        const payload = cipher.decrypt(FIELD.outboxPayload, row.payload_enc);
         await transport.send({ id: row.id, template: row.template,
-          recipient: cipher.decrypt('outbox_message.recipient_enc', row.recipient_enc),
+          recipient: cipher.decrypt(FIELD.outboxRecipient, row.recipient_enc),
           payload: payload === null ? null : JSON.parse(payload) });
         await client.query('DELETE FROM outbox_message WHERE id = $1', [row.id]);
         delivered += 1;
@@ -48,6 +51,7 @@ export const deliverOutbox = (pool, transport, { cipher, now = Date.now, batch =
     }
     return delivered;
   });
+};
 
 /**
  * Development transport: prints the email and its link on the local console (spec § 6).

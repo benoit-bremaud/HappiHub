@@ -7,6 +7,7 @@ import { exportEvents } from './events.js';
 import { pendingInvitationsFor } from './invitations.js';
 import { queueEmail } from './outbox.js';
 import { DomainError } from './errors.js';
+import { FIELD } from '../domain/fieldCipher.js';
 
 const BCRYPT_COST = 12;
 // Compared when no account matches, so both paths cost one bcrypt verification (AC2).
@@ -14,9 +15,9 @@ const DUMMY_HASH = bcrypt.hashSync('dummy password for constant-time paths', BCR
 
 const ACCOUNT_COLUMNS = 'id, email_enc, email_verified_at, pending_email_enc, display_name_enc, platform_role, auth_version';
 /** Account row to the domain shape, decrypting its personal columns at the SQL boundary (§ 8). */
-export const toAccount = (cipher, row) => ({ id: row.id, email: cipher.decrypt('account.email_enc', row.email_enc),
-  emailVerifiedAt: row.email_verified_at, pendingEmail: cipher.decrypt('account.pending_email_enc', row.pending_email_enc),
-  displayName: cipher.decrypt('account.display_name_enc', row.display_name_enc), platformRole: row.platform_role,
+export const toAccount = (cipher, row) => ({ id: row.id, email: cipher.decrypt(FIELD.accountEmail, row.email_enc),
+  emailVerifiedAt: row.email_verified_at, pendingEmail: cipher.decrypt(FIELD.accountPendingEmail, row.pending_email_enc),
+  displayName: cipher.decrypt(FIELD.accountDisplayName, row.display_name_enc), platformRole: row.platform_role,
   authVersion: row.auth_version });
 
 export const findAccount = async (db, cipher, id) => {
@@ -53,7 +54,7 @@ export const signUp = async (ctx, { email, password, associationName }) => {
     const { rows: [created] } = await client.query(
       `INSERT INTO account (email_enc, email_bidx, password_hash, created_at) VALUES ($1, $2, $3, $4)
        ON CONFLICT (email_bidx) DO NOTHING RETURNING id`,
-      [ctx.cipher.encrypt('account.email_enc', email), ctx.cipher.blindIndex(email), passwordHash, new Date(ctx.now())]);
+      [ctx.cipher.encrypt(FIELD.accountEmail, email), ctx.cipher.blindIndex(email), passwordHash, new Date(ctx.now())]);
     if (!created) {
       await queueEmail(client, ctx, { recipient: email, template: 'ACCOUNT_EXISTS',
         payload: { signInLink: ctx.links.signIn(), resetLink: ctx.links.forgotPassword() } });
@@ -94,11 +95,11 @@ export const verifyEmail = (ctx, token) => withTransaction(ctx.db, async (client
       throw new DomainError(410, 'This link is expired or was already used. Ask for a new one.');
     }
     // The column-bound AAD forbids copying the envelope: decrypt, then encrypt for account.email_enc.
-    const email = ctx.cipher.decrypt('account.pending_email_enc', row.pending_email_enc);
+    const email = ctx.cipher.decrypt(FIELD.accountPendingEmail, row.pending_email_enc);
     await client.query(
       `UPDATE account SET email_enc = $3, email_bidx = pending_email_bidx, pending_email_enc = NULL,
          pending_email_bidx = NULL, email_verified_at = $2 WHERE id = $1`,
-      [accountId, now, ctx.cipher.encrypt('account.email_enc', email)]);
+      [accountId, now, ctx.cipher.encrypt(FIELD.accountEmail, email)]);
   } else {
     await client.query('UPDATE account SET email_verified_at = COALESCE(email_verified_at, $2) WHERE id = $1', [accountId, now]);
   }
@@ -157,11 +158,11 @@ export const updateAccount = async (ctx, account, { displayName, email, newPassw
     await client.query('SELECT id FROM account WHERE id = $1 FOR UPDATE', [account.id]);
     if (displayName !== undefined)
       await client.query('UPDATE account SET display_name_enc = $2 WHERE id = $1',
-        [account.id, ctx.cipher.encrypt('account.display_name_enc', displayName || null)]);
+        [account.id, ctx.cipher.encrypt(FIELD.accountDisplayName, displayName || null)]);
     if (email !== undefined && email !== account.email) {
       const emailBidx = ctx.cipher.blindIndex(email);
       await client.query('UPDATE account SET pending_email_enc = $2, pending_email_bidx = $3 WHERE id = $1',
-        [account.id, ctx.cipher.encrypt('account.pending_email_enc', email), emailBidx]);
+        [account.id, ctx.cipher.encrypt(FIELD.accountPendingEmail, email), emailBidx]);
       const { rows: taken } = await client.query('SELECT 1 FROM account WHERE email_bidx = $1', [emailBidx]);
       const token = await issueToken(client, ctx, account.id, 'VERIFY');
       if (!taken.length)
@@ -206,7 +207,7 @@ export const exportAccount = async (ctx, accountId) => {
       displayName: account.displayName },
     memberships: await accountMemberships(ctx.db, accountId),
     invitationsSent: invitations.map((i) => ({ association: i.association,
-      email: ctx.cipher.decrypt('invitation.email_enc', i.email_enc), expiresAt: i.expires_at })),
+      email: ctx.cipher.decrypt(FIELD.invitationEmail, i.email_enc), expiresAt: i.expires_at })),
     activity: activity.map((e) => ({ association: e.association, action: e.action, targetRef: e.target_ref,
       detail: e.detail, occurredAt: e.occurred_at })),
     events: await exportEvents(ctx.db, accountId),

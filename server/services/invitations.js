@@ -5,6 +5,7 @@ import { maskEmail } from '../domain/email.js';
 import { recordActivity } from './activity.js';
 import { queueEmail } from './outbox.js';
 import { DomainError } from './errors.js';
+import { FIELD } from '../domain/fieldCipher.js';
 
 const DAY_MS = 24 * 3600e3;
 const GONE = 'This invitation is no longer valid. Ask the association for a new one.';
@@ -59,7 +60,7 @@ export const createInvitation = (ctx, actor, association, email) => withTransact
   const { rows: [created] } = await client.query(
     `INSERT INTO invitation (association_id, email_enc, email_bidx, token_hash, expires_at, invited_by)
      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-    [association.id, ctx.cipher.encrypt('invitation.email_enc', email), emailBidx, newToken().hash, new Date(ctx.now()), actor.id]);
+    [association.id, ctx.cipher.encrypt(FIELD.invitationEmail, email), emailBidx, newToken().hash, new Date(ctx.now()), actor.id]);
   return sendInvitation(client, ctx, { actor, association, invitationId: created.id, email });
 });
 
@@ -71,14 +72,14 @@ export const resendInvitation = (ctx, actor, association, invitationId) => withT
     [invitationId, association.id]);
   if (!invitation) throw new DomainError(404, 'Invitation not found');
   return sendInvitation(client, ctx, { actor, association, invitationId: invitation.id,
-    email: ctx.cipher.decrypt('invitation.email_enc', invitation.email_enc) });
+    email: ctx.cipher.decrypt(FIELD.invitationEmail, invitation.email_enc) });
 });
 
 export const listInvitations = async (ctx, association) => {
   const { rows } = await ctx.db.query(
     `SELECT id, email_enc, expires_at FROM invitation WHERE association_id = $1 AND status = 'PENDING' AND expires_at > $2
      ORDER BY expires_at`, [association.id, new Date(ctx.now())]);
-  return rows.map((row) => ({ id: row.id, email: ctx.cipher.decrypt('invitation.email_enc', row.email_enc),
+  return rows.map((row) => ({ id: row.id, email: ctx.cipher.decrypt(FIELD.invitationEmail, row.email_enc),
     expiresAt: row.expires_at }));
 };
 
@@ -102,7 +103,7 @@ export const lookupInvitation = async (ctx, token) => {
     [hashToken(token), new Date(ctx.now())]);
   if (!invitation) throw new DomainError(410, GONE);
   return { associationName: invitation.name, associationSlug: invitation.slug,
-    email: ctx.cipher.decrypt('invitation.email_enc', invitation.email_enc) };
+    email: ctx.cipher.decrypt(FIELD.invitationEmail, invitation.email_enc) };
 };
 
 /** Pending, unexpired invitations for a verified address, offered after UC2 (UC11 4c). */
@@ -128,8 +129,8 @@ export const acceptInvitation = (ctx, account, { token, invitationId }) => withT
       [invitationId, new Date(ctx.now())]));
   }
   if (!invitation) throw new DomainError(410, GONE);
-  // Both sides are folded before storage (foldEmail), so decrypted values compare directly.
-  const invitedEmail = ctx.cipher.decrypt('invitation.email_enc', invitation.email_enc);
+  // Both sides are folded by emailSchema before storage (integration-tested), so decrypted values compare directly.
+  const invitedEmail = ctx.cipher.decrypt(FIELD.invitationEmail, invitation.email_enc);
   if (invitedEmail !== account.email)
     throw new DomainError(403, `This invitation is for ${maskEmail(invitedEmail)}. Ask the association to invite your address.`,
       { hint: maskEmail(invitedEmail) });

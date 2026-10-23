@@ -37,6 +37,11 @@ describe('fieldCipher envelope (§ 4, AC6)', () => {
     expect(() => cipher.decrypt(COLUMN, tamper(cipher.encrypt(COLUMN, 'a@b.fr'), index))).toThrow(FieldCipherError);
   });
 
+  test('a non-string value is refused instead of being stored as its text form', () => {
+    expect(() => cipher.encrypt(COLUMN, { email: 'a@b.fr' })).toThrow('Field value must be a string');
+    expect(() => cipher.encrypt(COLUMN, 42)).toThrow(FieldCipherError);
+  });
+
   test('an envelope moved to another column fails (AAD)', () => {
     expect(() => cipher.decrypt('invitation.email_enc', cipher.encrypt(COLUMN, 'a@b.fr'))).toThrow(FieldCipherError);
   });
@@ -51,8 +56,9 @@ describe('fieldCipher envelope (§ 4, AC6)', () => {
     expect(() => cipher.decrypt(COLUMN, other.encrypt(COLUMN, 'a@b.fr'))).toThrow(FieldCipherError);
   });
 
-  test('an invalid column name is refused', () => {
+  test('an invalid or unknown column name is refused, so a typo fails on the first write', () => {
     expect(() => cipher.encrypt('email', 'a@b.fr')).toThrow(FieldCipherError);
+    expect(() => cipher.encrypt('account.emial_enc', 'a@b.fr')).toThrow('Field column is invalid');
     expect(() => cipher.decrypt('Account.Email', null)).toThrow(FieldCipherError);
   });
 
@@ -124,7 +130,10 @@ describe('keyring loader (§ 6.1)', () => {
     expect(() => readFieldKeyring({ NODE_ENV: 'production' })).toThrow('FIELD_KEYRING_FILE_PROD is not configured');
     const env = { FIELD_KEYRING_FILE_DEV: '/nowhere' };
     expect(() => readFieldKeyring(env, () => { throw new Error('ENOENT'); })).toThrow('FIELD_KEYRING_FILE_DEV does not point');
-    expect(() => readFieldKeyring(env, () => '{"active": "secret-value"')).toThrow(/^(?!.*secret-value).*$/);
+    let failure;
+    try { readFieldKeyring(env, () => '{"active": "secret-value"'); } catch (error) { failure = error; }
+    expect(failure.message).toBe('FIELD_KEYRING_FILE_DEV does not point to a readable JSON keyring');
+    expect(`${failure.message} ${failure.stack}`).not.toContain('secret-value');
   });
 });
 

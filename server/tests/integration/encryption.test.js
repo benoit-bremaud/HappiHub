@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createFieldCipher } from '../../domain/fieldCipher.js';
 import { reencrypt } from '../../jobs/reencrypt.js';
+import { deliverOutbox } from '../../services/outbox.js';
 import { sharedTestKeyring, testKeyring } from '../testCipher.js';
 import { bidx, browser, buildApp, cipher, createPool, migrate, PASSWORD, resetData, signUpVerified } from './harness.js';
 
@@ -68,6 +69,31 @@ describe('no plaintext at rest (AC1)', () => {
   });
 });
 
+describe('normalization and fail-closed reads', () => {
+  test('stored addresses are folded (spec § 5, replaces the dropped CHECK lower)', async () => {
+    await signUpVerified(app, pool, ' Ada@Example.FR ');
+    const { rows: [row] } = await pool.query('SELECT email_enc FROM account');
+    expect(cipher.decrypt('account.email_enc', row.email_enc)).toBe('ada@example.fr');
+  });
+
+  test('a corrupted envelope fails the request without leaking it (AC3)', async () => {
+    const claire = await signUpVerified(app, pool, 'claire@example.org');
+    await claire.patch('/api/account', { displayName: 'Claire Martin' });
+    const { rows: [row] } = await pool.query('SELECT display_name_enc FROM account');
+    const corrupted = `${row.display_name_enc.slice(0, -2)}AA`;
+    await pool.query('UPDATE account SET display_name_enc = $1', [corrupted]);
+    const response = await claire.get('/api/account');
+    // The account loads in the auth middleware, which fails closed with its generic 503.
+    expect(response.status).toBe(503);
+    expect(response.body).toEqual({ message: 'Authentication unavailable' });
+    expect(JSON.stringify(response.body)).not.toContain(corrupted.split('.')[2]);
+  });
+
+  test('delivery refuses to run without a cipher instead of failing every message', () => {
+    expect(() => deliverOutbox(pool, { send: jest.fn() })).toThrow('Field cipher is required');
+  });
+});
+
 describe('blind-index constraints', () => {
   test('a duplicate account address is refused by email_bidx, whatever its case', async () => {
     await signUpVerified(app, pool, 'claire@example.org');
@@ -112,6 +138,25 @@ describe('re-encryption job (§ 6.2, AC5)', () => {
       remaining: first.remaining });
     // Readers holding both keys keep working during the staged rotation.
     expect((await claire.get('/api/account')).body.displayName).toBe('Claire Martin');
+    // The blind-index key does not rotate: lookups by address still match.
+    expect((await pool.query('SELECT 1 FROM account WHERE email_bidx = $1', [bidx('claire@example.org')])).rows).toHaveLength(1);
+  });
+
+  test('pages past one batch and reports rows locked during the run as remaining', async () => {
+    for (const name of ['a', 'b', 'c']) await signUpVerified(app, pool, `${name}@example.org`);
+    const rotated = createFieldCipher({ ...sharedTestKeyring, active: 'k2' });
+    const holder = await pool.connect();
+    try {
+      await holder.query('BEGIN');
+      await holder.query('SELECT id FROM account WHERE email_bidx = $1 FOR UPDATE', [bidx('b@example.org')]);
+      const run = await reencrypt(pool, rotated, { batch: 1 });
+      expect(run.rotatedRows.account).toBe(2);
+      expect(run.remaining['account.email_enc']).toBe(1);
+    } finally {
+      await holder.query('ROLLBACK');
+      holder.release();
+    }
+    expect((await reencrypt(pool, rotated, { batch: 1 })).rotatedRows.account).toBe(1);
   });
 });
 

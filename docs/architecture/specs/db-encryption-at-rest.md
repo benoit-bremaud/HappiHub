@@ -169,6 +169,7 @@ and `links`. Services call it at their SQL boundary; no ORM, no repository layer
 | events | `last_edited_by_name` projection decrypts `display_name_enc` (`events.js:30`); draft-cleanup notice decrypts member emails before `queueEmail` (`events.js:298-299`) |
 | jobs/maintenance | reminder selects `email_enc` and decrypts |
 | new jobs/reencrypt.js | rotation job (§ 6.2) |
+| new scripts/generate-keyring.js | `npm run keyring:generate -- <path>`: fresh keyring (§ 6.1), mode 0400, refuses to overwrite, never prints the keys (added during implementation, acknowledged by the owner 2026-10-23) |
 | docker-compose.prod.yml / docker-compose.yml | socket volume and `field_keyring` secret (§ 7); local keyring bind mount |
 
 Logging: decrypted values are never logged in production (the log transport is already refused
