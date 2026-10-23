@@ -11,13 +11,13 @@
 
 | Step | Result |
 |---|---|
-| 1 Tests | ✅ server unit 97/97 (7 suites); integration and client not rerun: no runtime file changed |
+| 1 Tests | ✅ server unit 97/97, integration 98/98, client 84/84 |
 | 2 Coverage | not applicable (no code); doc coverage unchanged |
-| 3 SonarQube | ⚠️ not run: no analysable source changed |
+| 3 SonarQube | ✅ PASSED (three lcov reports, 2026-10-23) |
 | 4 Secrets | ✅ gitleaks clean (origin/main..HEAD) · no tracked .env · diff read: placeholders only |
 | 5 QA pass | not applicable before the PR; Mermaid diagrams render (`mmdc`), links resolve |
 
-- Gate: push OK; the merge waits for the owner's waiver of steps 3 and 5 for a docs-only diff.
+- Gate: green except step 5, not applicable to a docs-only diff (no runtime change).
 
 ## 🔴 Must Have
 
