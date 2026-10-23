@@ -1,7 +1,7 @@
 # Encryption of sensitive data at rest (#310)
 
-Status: **decisions D1–D7 validated by Benoît on 2026-10-23 (option A each, top scores)**;
-the whole conception awaits his final validation before any code (AGENTS.md). Proposed ADR:
+Status: **conception validated by Benoît on 2026-10-23** (D1–D7 option A; staged key rotation
+B 460/500 over full stop D 415). Implementation is a separate brick under this spec. Proposed ADR:
 [ADR-0004](../decisions/0004-encrypt-sensitive-data-at-rest.md). Diagrams:
 [db-encryption/](../diagrams/db-encryption/).
 
@@ -112,6 +112,10 @@ run the re-encryption job (`npm run reencrypt`, batches of 200 rows, `FOR UPDATE
 idempotent: rows whose envelope `kid` ≠ active are decrypted and re-encrypted), the job reports
 remaining counts per column; remove the old key only at zero (AC5). Cadence: yearly, or at once
 after a suspected leak.
+
+Rotation procedure MCDA (2026-10-23, validated): staged B 460, full stop D 415, hot reload C 355,
+one-step A 325 (criteria: correctness during process overlap 35, KISS 25, operations 15,
+multi-instance future 15, testability 10).
 
 ### 6.3 Blind-index key change (exceptional)
 

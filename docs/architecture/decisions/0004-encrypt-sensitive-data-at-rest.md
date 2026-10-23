@@ -1,7 +1,6 @@
 # ADR-0004 — Encrypt sensitive data at rest in PostgreSQL
 
-Status: **proposed** on 2026-10-23; decisions D1–D7 validated by the owner the same day,
-final conception validation pending (#310).
+Status: **accepted** by the owner on 2026-10-23 (#310).
 
 ## Context
 

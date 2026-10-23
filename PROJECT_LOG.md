@@ -14,8 +14,9 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   AES-256-GCM on sensitive columns with an HMAC blind index for email lookups. Owner
   validated D1–D7 (all option A): personal columns 390, keyring file 435, replace columns
   without backfill 415, session table unchanged 460, full shared HMAC blind index 470, text
-  envelope with column AAD 450, loopback-or-verify-full TLS 440. Study only; no code before
-  the final conception validation.
+  envelope with column AAD 450, loopback-or-verify-full TLS 440. After review-local (3 Must,
+  4 Should fixed) the owner validated the whole conception, with staged key rotation (B 460/500
+  over full stop D 415); ADR-0004 accepted. Implementation is the next brick.
 - **Backlog triage (owner MCDA option A, 450/500)** — closed #274, #245 and #114 as resolved
   and #301 as a duplicate of #285; #292 retitled to the compose migrations gap. New labels:
   `priority: P1` on #310, #244, #251; `priority: P2` on #284–#291, #302–#308, #272, #263;
