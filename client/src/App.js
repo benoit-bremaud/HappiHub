@@ -7,6 +7,9 @@ import { ForgotPassword, ResetPassword, SignIn, SignUp, VerifyEmail } from './ac
 import { AccountPage } from './accounts/AccountPage';
 import { AssociationPage } from './accounts/AssociationPage';
 import { InvitationPage } from './accounts/InvitationPage';
+import { EventEditorPage } from './events/EventEditorPage';
+import { EventListPage } from './events/EventListPage';
+import { PublicEventPage } from './events/PublicEventPage';
 
 function AppContent() {
   const { account, status, refresh } = useSession();
@@ -27,6 +30,10 @@ function AppContent() {
             <Route path="/account" element={<AccountPage />} />
             <Route path="/associations/:slug" element={<AssociationPage />} />
             <Route path="/invitations" element={<InvitationPage />} />
+            <Route path="/associations/:slug/events" element={<EventListPage />} />
+            <Route path="/associations/:slug/events/new" element={<EventEditorPage />} />
+            <Route path="/associations/:slug/events/:id" element={<EventEditorPage />} />
+            <Route path="/events/:id" element={<PublicEventPage />} />
           </Routes>
         </main>
       </Router>

@@ -109,6 +109,7 @@ export const AssociationPage = () => {
     <section className="hh-page">
       <h2>{association.name}{closed && ' (closed)'}</h2>
       <Message message={message} />
+      {!closed && <p><Link className="hh-button" to={`/associations/${slug}/events`}>Events</Link></p>}
       {!closed && <ProfileForm slug={slug} association={association} onSaved={load} />}
       <h3>Members</h3>
       <ul className="hh-list">

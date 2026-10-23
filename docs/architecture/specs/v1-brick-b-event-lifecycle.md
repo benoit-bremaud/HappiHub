@@ -160,7 +160,7 @@ documents the format.
 | UC | Endpoint | Transaction / behavior |
 | --- | --- | --- |
 | UC15 | `POST /api/associations/{slug}/events` {title, type, shortDescription?, …} | quota check (Q below) under `FOR UPDATE` on the association row; insert DRAFT, `version` 1, `created_by`; activity `EVENT_CREATED`. 201 + body with `version`. 429 `EVENT_QUOTA` + `Retry-After` = oldest `created_at` in the 24 h window + 24 h − now |
-| list | `GET /api/associations/{slug}/events?status=` | member view: id, title, type, status, startsAt, updatedAt, lastEditedBy display name |
+| list | `GET /api/associations/{slug}/events?status=` | member view: id, title, type, status, startsAt, updatedAt, lastEditedBy display name, lastEditedByFormerMember (amendment A-B6, 2026-10-22) |
 | read | `GET /api/associations/{slug}/events/{id}` | full event with `version` in the body; an event of another association answers 404 |
 | UC16/UC17 | `PATCH /api/associations/{slug}/events/{id}` {baseVersion, changes:{field: value}, base:{field: originalValue}} | see merge M below |
 | UC18 | `POST /api/associations/{slug}/events/{id}/publish` {baseVersion} | `SELECT … FOR UPDATE`; guard G1–G4; status PUBLISHED, `published_at`, version+1; activity `EVENT_PUBLISHED`. 422 with the list of failing guard codes (`MISSING_FIELD:<name>`, `EMAIL_NOT_VERIFIED`, `START_IN_PAST`) so the client links to the step |

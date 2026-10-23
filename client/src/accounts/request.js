@@ -8,7 +8,7 @@ export const send = async (path, method = 'GET', body) => {
       method, ...(body !== undefined && { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
     });
     const data = response.status === 204 ? {} : await response.json().catch(() => ({}));
-    return { ok: response.ok, status: response.status, data };
+    return { ok: response.ok, status: response.status, data, retryAfter: Number(response.headers?.get('Retry-After')) || null };
   } catch {
     return { ok: false, status: 0, data: { message: 'Network error. Your input has been kept; try again.' } };
   }

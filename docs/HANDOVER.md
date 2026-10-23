@@ -60,7 +60,11 @@ express-session with `connect-pg-simple`; CSRF applies to all writes. Implemente
 invitations and memberships (brick D), and the event lifecycle backend UC15–UC20 (drafts,
 concurrent edit merge, publish, cancel, delete, public read, maintenance job; brick B).
 
-Not implemented: the event client (#252), partner/external API authentication, booking or
+Event client (#252): implemented on `feat/252-event-client` (PR pending, gate green
+2026-10-22: server unit 69 + integration 98, client 84, SonarQube passed, gitleaks clean,
+browser QA). QA leftovers: work plan "QA backlog".
+
+Not implemented: partner/external API authentication, booking or
 payment, logo and expanded demo dataset. Compose files on main use PostgreSQL; #292 needs re-checking (stale local containers).
 
 Latest recorded verification (brick B gate, 2026-10-19): 65 unit and 97 PostgreSQL

@@ -1,0 +1,58 @@
+/* Neutral event screens (client spec § 1, decision S-A). The poster themes are placeholders
+   until Clément/Yazii's visual design; only these variables and classes change then. */
+:root {
+  --hh-warning: #8a5a00;
+  --hh-line: #d0d0d8;
+  --hh-poster-bg: #ffffff;
+  --hh-poster-fg: #1d1d1f;
+  --hh-poster-accent: #3b3b98;
+}
+.hh-editor { max-width: 64rem; }
+.hh-editor__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+@media (min-width: 52rem) { .hh-editor__body { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
+.hh-steps { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+.hh-step { font: inherit; padding: 0.4rem 0.8rem; border: 1px solid var(--hh-line); border-radius: 999px; background: none; cursor: pointer; }
+.hh-step--current { border-color: var(--hh-accent); color: var(--hh-accent); font-weight: 700; }
+.hh-save { color: var(--hh-muted); min-height: 1.5em; }
+.hh-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; border: none; padding: 0; margin: 0 0 1rem; }
+.hh-chips legend { font-weight: 600; margin-bottom: 0.25rem; }
+.hh-chips label { flex-direction: row; font-weight: 400; align-items: center; }
+.hh-chip { font: inherit; padding: 0.3rem 0.8rem; border: 1px solid var(--hh-line); border-radius: 999px; background: none; cursor: pointer; }
+.hh-chip--on { background: var(--hh-accent); border-color: var(--hh-accent); color: #fff; }
+.hh-badge { display: inline-block; margin-left: 0.5rem; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.8rem;
+  border: 1px solid var(--hh-line); color: var(--hh-muted); vertical-align: middle; }
+.hh-warning { color: var(--hh-warning); }
+.hh-secondary { background: none; color: var(--hh-accent); border: 1px solid var(--hh-accent); }
+.hh-link { font: inherit; background: none; border: none; padding: 0; color: var(--hh-accent); text-decoration: underline; cursor: pointer; }
+.hh-actions { display: flex; flex-wrap: wrap; gap: var(--hh-gap); }
+.hh-notice, .hh-conflict, .hh-dialog { border: 1px solid var(--hh-line); border-radius: var(--hh-radius); padding: 1rem; margin-bottom: 1rem; }
+.hh-conflict fieldset { border: none; padding: 0; margin: 0 0 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
+.hh-dialog { border-color: var(--hh-accent); position: static; width: auto; margin: 0 0 1rem; color: inherit; background: inherit; }
+output { display: block; }
+.hh-dialog textarea { width: 100%; font: inherit; }
+.hh-banner { padding: 0.75rem; border-radius: var(--hh-radius); background: var(--hh-danger); color: #fff; }
+.hh-long { white-space: pre-line; }
+.hh-checklist { padding-left: 1.2rem; }
+.hh-events li a { font-weight: 600; }
+.hh-city input { width: 100%; box-sizing: border-box; }
+.hh-previews { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+.hh-preview--mobile { width: 20rem; max-width: 100%; }
+.hh-preview--desktop { flex: 1 1 24rem; }
+.hh-poster { padding: 1.25rem; border-radius: var(--hh-radius); background: var(--hh-poster-bg); color: var(--hh-poster-fg);
+  border: 1px solid var(--hh-line); overflow-wrap: anywhere; }
+.hh-poster p { margin: 0.25rem 0; }
+.hh-poster__type { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--hh-poster-accent); }
+.hh-poster__title { font-size: 1.6rem; margin: 0.25rem 0 0.5rem; }
+.hh-poster__summary { margin-top: 0.75rem; }
+.hh-poster__banner { background: var(--hh-danger); color: #fff; padding: 0.25rem 0.5rem; border-radius: 4px; display: inline-block; }
+.hh-poster--bold { --hh-poster-bg: #1d1d1f; --hh-poster-fg: #ffffff; --hh-poster-accent: #ffcf33; }
+.hh-poster--bold .hh-poster__title { font-size: 2rem; }
+.hh-poster--paper { --hh-poster-bg: #f6f0e3; --hh-poster-fg: #3a2f1f; --hh-poster-accent: #8a5a00; font-family: Georgia, serif; }
+.hh-poster--night { --hh-poster-bg: #14163a; --hh-poster-fg: #e8e8ff; --hh-poster-accent: #9fa6ff; }
+.hh-poster--pastel { --hh-poster-bg: #fdeef4; --hh-poster-fg: #3b2a35; --hh-poster-accent: #b04a7a; }
+.hh-poster--minimal { --hh-poster-bg: #ffffff; --hh-poster-fg: #1d1d1f; --hh-poster-accent: #5a5a60; border-color: transparent; }
+@media (prefers-color-scheme: dark) {
+  :root { --hh-line: #44444c; --hh-warning: #e0a83a; }
+}
+.hh-danger-link { color: var(--hh-danger); }
+.hh-add { align-self: flex-start; }

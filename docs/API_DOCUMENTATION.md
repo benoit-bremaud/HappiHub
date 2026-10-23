@@ -83,7 +83,16 @@ separators answer `400 INVALID_FIELD`; dates need an explicit zone and a real ca
 - Closing an association cancels its upcoming published events ("Association closed"); drafts
   stay until the 30-day association purge. Drafts untouched for 12 months trigger a
   `DRAFT_CLEANUP_NOTICE` to every member and are deleted 14 days later unless edited.
+- Member views and the list add `lastEditedByFormerMember`: `true` when the last editor deleted
+  their account (shown as "former member"); `lastEditedBy` is `null` also for a member without a display name.
 - The account export (UC5) adds `events` created or last edited by the requester.
+
+### Communes
+
+`GET /api/communes?q=` (public, `publicReads` limiter): `q` trimmed, 2–60 characters. A
+5-character INSEE code returns that commune; otherwise an accent- and case-insensitive name
+prefix match, exact name first then French alphabetical order, at most 20
+`{communes: [{code, name}]}`. Used by the event city picker.
 
 ## Errors and limits
 
