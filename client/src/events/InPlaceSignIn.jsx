@@ -20,7 +20,7 @@ export const InPlaceSignIn = ({ email, onSignedIn }) => {
       <p>Your session has expired. Your input is kept in this page.</p>
       {error && <p role="alert" className="hh-error">{error}</p>}
       <label>Password for {email}<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" /></label>
-      {password && <button className="hh-button">Sign in again</button>}
+      {password && <button type="submit" className="hh-button">Sign in again</button>}
     </form>
   );
 };

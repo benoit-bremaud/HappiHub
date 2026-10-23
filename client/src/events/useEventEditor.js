@@ -95,7 +95,7 @@ export const useEventEditor = ({ slug, id, onCreated, refreshSession }) => {
     const created = !s.event;
     adopt(response.data);
     if (created) latest.current.onCreated?.(response.data.id);
-    if (s.dirty.size) save();
+    if (s.dirty.size) void save();
   };
   s.save = save;
 

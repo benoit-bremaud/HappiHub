@@ -12,7 +12,8 @@ export const PublicEventPage = () => {
   const [result, setResult] = useState(null);
   useEffect(() => {
     let current = true;
-    (async () => {
+    // send() resolves even on network failure (status 0), so nothing is left to catch.
+    void (async () => {
       const { ok, status, data } = await send(`/events/${encodeURIComponent(id)}`);
       if (current) setResult(ok ? { event: data } : { failed: status === 404 ? 'Event not found.' : 'Unable to load the event. Try again later.' });
     })();

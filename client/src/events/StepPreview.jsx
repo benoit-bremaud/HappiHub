@@ -84,7 +84,7 @@ export const StepPreview = ({ editor, cityName, slug, goTo }) => {
           <p>Cancellation is final. The public page stays online with a “Cancelled” banner.</p>
           {reason === null
             ? <button type="button" className="hh-link hh-add" onClick={() => setReason('')}>+ Add a reason for the public</button>
-            : <label>Reason<textarea value={reason} maxLength={REASON_MAX} onChange={(e) => setReason(e.target.value)} rows={3} autoFocus />
+            : <label>Reason<textarea value={reason} maxLength={REASON_MAX} onChange={(e) => setReason(e.target.value)} rows={3} />
               {reason.length > REASON_MAX * 0.8 && <span className="hh-hint">{reason.length} / {REASON_MAX}</span>}</label>}
         </ConfirmDialog>
       )}

@@ -249,8 +249,8 @@ export const cancelUpcomingEvents = async (client, ctx, associationId, actorId) 
        updated_at = $2 WHERE association_id = $1 AND status = 'PUBLISHED'
        AND (ends_at >= $2 OR (ends_at IS NULL AND starts_at >= $3)) RETURNING id`,
     [associationId, new Date(now), new Date(now - DAY_MS)]);
-  for (const { id } of rows)
-    await recordActivity(client, ctx, { associationId, actorId, action: 'EVENT_CANCELLED', targetRef: id });
+  await Promise.all(rows.map(({ id }) =>
+    recordActivity(client, ctx, { associationId, actorId, action: 'EVENT_CANCELLED', targetRef: id })));
   return rows.length;
 };
 
@@ -294,8 +294,8 @@ export const runEventMaintenance = async (ctx) => {
       const { rows: members } = await client.query(
         'SELECT a.email FROM membership m JOIN account a ON a.id = m.account_id WHERE m.association_id = $1',
         [draft.association_id]);
-      for (const { email } of members) await queueEmail(client, ctx, { recipient: email,
-        template: 'DRAFT_CLEANUP_NOTICE', payload: { associationName: draft.association_name, eventTitle: draft.title } });
+      await Promise.all(members.map(({ email }) => queueEmail(client, ctx, { recipient: email,
+        template: 'DRAFT_CLEANUP_NOTICE', payload: { associationName: draft.association_name, eventTitle: draft.title } })));
       return 1;
     });
   }

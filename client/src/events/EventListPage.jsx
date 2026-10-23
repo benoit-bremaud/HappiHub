@@ -18,7 +18,8 @@ export const EventListPage = () => {
   useEffect(() => {
     if (sessionStatus !== 'authenticated') return undefined;
     let current = true;
-    (async () => {
+    // send() resolves even on network failure (status 0), so nothing is left to catch.
+    void (async () => {
       const query = filter ? `?${new URLSearchParams({ status: filter })}` : '';
       const { ok, data } = await send(`/associations/${encodeURIComponent(slug)}/events${query}`);
       if (current) setResult(ok ? { events: data.events } : { failed: data.message ?? 'Unable to load the events.' });

@@ -65,7 +65,7 @@ export const EventEditorPage = () => {
 
   if (status === 'readOnly') return <ReadOnlyEvent editor={editor} cityName={shownCity} list={list} />;
 
-  const goTo = (number) => { editor.save(); setParams({ step: String(number) }); };
+  const goTo = (number) => { void editor.save(); setParams({ step: String(number) }); };
   // Next appears once the required fields of the current step are filled (step 3 has none).
   const stepDone = !missingRequired(values).some((missing) => missing.step === step);
   return (
