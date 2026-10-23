@@ -1,13 +1,15 @@
 import { readAppConfig } from '../config/appConfig.js';
 import { createApp } from '../app.js';
+import { testCipher } from './testCipher.js';
 import { config, makeStore, stubDb } from './sessionFixture.js';
 test('app instances isolate session configuration and require an explicit store and pool', () => {
-  const a = createApp(config, { store: makeStore(), db: stubDb() });
-  const b = createApp({ ...config, sessionSecret: 'different-synthetic-secret-32bytes' }, { store: makeStore(), db: stubDb() });
+  const a = createApp(config, { cipher: testCipher, store: makeStore(), db: stubDb() });
+  const b = createApp({ ...config, sessionSecret: 'different-synthetic-secret-32bytes' }, { cipher: testCipher, store: makeStore(), db: stubDb() });
   expect(a.locals.config.sessionSecret).not.toBe(b.locals.config.sessionSecret);
   expect(Object.isFrozen(a.locals.config)).toBe(true);
-  expect(() => createApp(config, { db: stubDb() })).toThrow('Session store is required');
-  expect(() => createApp(config, { store: makeStore() })).toThrow('Database pool is required');
+  expect(() => createApp(config, { cipher: testCipher, db: stubDb() })).toThrow('Session store is required');
+  expect(() => createApp(config, { cipher: testCipher, store: makeStore() })).toThrow('Database pool is required');
+  expect(() => createApp(config, { store: makeStore(), db: stubDb() })).toThrow('Field cipher is required');
 });
 test('configuration validates session key, database URL and production HTTPS', () => {
   const env = { NODE_ENV: 'test', SESSION_SECRET_TEST: config.sessionSecret, APP_URL_TEST: config.origin,

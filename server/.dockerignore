@@ -10,3 +10,5 @@ tests
 *.test.ts
 *.test.rest
 npm-debug.log*
+.keys
+*keyring*.json

@@ -26,13 +26,14 @@ const ipLimiter = (windowMs, limit, extra = {}) => rateLimit({ windowMs, limit,
   message: { message: 'Too many requests. Try again later.' }, ...extra });
 
 /** Construct an isolated HTTP application without reading environment variables or starting IO. */
-export const createApp = (config, { store, db, now = Date.now } = {}) => {
+export const createApp = (config, { store, db, cipher, now = Date.now } = {}) => {
   if (!db) throw new Error('Database pool is required');
+  if (!cipher) throw new Error('Field cipher is required');
   const app = express();
   app.locals.config = Object.freeze({ ...config });
   app.locals.now = now;
   app.locals.ctx = {
-    db, now, links: createLinks(config.origin),
+    db, now, cipher, links: createLinks(config.origin),
     limits: {
       recipient: createKeyedLimiter({ limit: 10, windowMs: HOUR }),
       currentPassword: createKeyedLimiter({ limit: 5, windowMs: 15 * MINUTE }),

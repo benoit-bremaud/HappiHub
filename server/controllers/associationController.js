@@ -10,7 +10,7 @@ const uuid = Joi.string().guid({ version: ['uuidv4'] });
 const idParam = (req, name) => validate(Joi.object({ id: uuid.required() }), { id: req.params[name] }).id;
 
 export const getAssociation = handle(async (req, res) =>
-  res.json(await associationView(req.app.locals.ctx.db, req.association)));
+  res.json(await associationView(req.app.locals.ctx, req.association)));
 
 const optionalText = (max) => Joi.string().trim().max(max).allow('', null).empty('').default(null);
 const profileSchema = Joi.object({

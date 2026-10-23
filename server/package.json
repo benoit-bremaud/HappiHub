@@ -33,7 +33,9 @@
     "migrate": "node jobs/migrate.js up",
     "migrate:down": "node jobs/migrate.js down",
     "maintenance": "node jobs/runMaintenance.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "reencrypt": "node jobs/runReencrypt.js",
+    "keyring:generate": "node scripts/generate-keyring.js"
   },
   "repository": {
     "type": "git",

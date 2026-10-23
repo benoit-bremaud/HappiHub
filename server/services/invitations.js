@@ -43,21 +43,23 @@ const sendInvitation = async (client, ctx, { actor, association, invitationId, e
  */
 export const createInvitation = (ctx, actor, association, email) => withTransaction(ctx.db, async (client) => {
   await lockAndCheckQuota(client, ctx, association.id);
+  const emailBidx = ctx.cipher.blindIndex(email);
   const { rows: member } = await client.query(
-    'SELECT 1 FROM membership m JOIN account a ON a.id = m.account_id WHERE m.association_id = $1 AND a.email = $2',
-    [association.id, email]);
+    'SELECT 1 FROM membership m JOIN account a ON a.id = m.account_id WHERE m.association_id = $1 AND a.email_bidx = $2',
+    [association.id, emailBidx]);
   if (member.length) throw new DomainError(409, 'This person is already a member.');
   // An expired row not yet removed by the hourly job is replaced (spec § 4).
-  await client.query("DELETE FROM invitation WHERE association_id = $1 AND email = $2 AND expires_at <= $3",
-    [association.id, email, new Date(ctx.now())]);
+  await client.query("DELETE FROM invitation WHERE association_id = $1 AND email_bidx = $2 AND expires_at <= $3",
+    [association.id, emailBidx, new Date(ctx.now())]);
   const { rows: pending } = await client.query(
-    "SELECT id FROM invitation WHERE association_id = $1 AND email = $2 AND status = 'PENDING'", [association.id, email]);
+    "SELECT id FROM invitation WHERE association_id = $1 AND email_bidx = $2 AND status = 'PENDING'", [association.id, emailBidx]);
   if (pending.length) throw new DomainError(409, 'A pending invitation exists for this email. Resend it instead.',
     { invitationId: pending[0].id });
   // Placeholder hash replaced at once by sendInvitation, inside the same transaction.
   const { rows: [created] } = await client.query(
-    'INSERT INTO invitation (association_id, email, token_hash, expires_at, invited_by) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-    [association.id, email, newToken().hash, new Date(ctx.now()), actor.id]);
+    `INSERT INTO invitation (association_id, email_enc, email_bidx, token_hash, expires_at, invited_by)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+    [association.id, ctx.cipher.encrypt('invitation.email_enc', email), emailBidx, newToken().hash, new Date(ctx.now()), actor.id]);
   return sendInvitation(client, ctx, { actor, association, invitationId: created.id, email });
 });
 
@@ -65,17 +67,19 @@ export const createInvitation = (ctx, actor, association, email) => withTransact
 export const resendInvitation = (ctx, actor, association, invitationId) => withTransaction(ctx.db, async (client) => {
   await lockAndCheckQuota(client, ctx, association.id);
   const { rows: [invitation] } = await client.query(
-    "SELECT id, email FROM invitation WHERE id = $1 AND association_id = $2 AND status = 'PENDING' FOR UPDATE",
+    "SELECT id, email_enc FROM invitation WHERE id = $1 AND association_id = $2 AND status = 'PENDING' FOR UPDATE",
     [invitationId, association.id]);
   if (!invitation) throw new DomainError(404, 'Invitation not found');
-  return sendInvitation(client, ctx, { actor, association, invitationId: invitation.id, email: invitation.email });
+  return sendInvitation(client, ctx, { actor, association, invitationId: invitation.id,
+    email: ctx.cipher.decrypt('invitation.email_enc', invitation.email_enc) });
 });
 
 export const listInvitations = async (ctx, association) => {
   const { rows } = await ctx.db.query(
-    `SELECT id, email, expires_at FROM invitation WHERE association_id = $1 AND status = 'PENDING' AND expires_at > $2
+    `SELECT id, email_enc, expires_at FROM invitation WHERE association_id = $1 AND status = 'PENDING' AND expires_at > $2
      ORDER BY expires_at`, [association.id, new Date(ctx.now())]);
-  return rows.map((row) => ({ id: row.id, email: row.email, expiresAt: row.expires_at }));
+  return rows.map((row) => ({ id: row.id, email: ctx.cipher.decrypt('invitation.email_enc', row.email_enc),
+    expiresAt: row.expires_at }));
 };
 
 /** UC10 3a: revoking deletes the row, so the link stops at once (DF4). */
@@ -87,7 +91,7 @@ export const revokeInvitation = (ctx, actor, association, invitationId) => withT
     action: 'INVITATION_REVOKED', targetRef: invitationId });
 });
 
-const VALID_INVITATION = `SELECT i.id, i.email, i.association_id, a.name, a.slug FROM invitation i
+const VALID_INVITATION = `SELECT i.id, i.email_enc, i.association_id, a.name, a.slug FROM invitation i
   JOIN association a ON a.id = i.association_id
   WHERE i.status = 'PENDING' AND i.expires_at > $2 AND a.status = 'ACTIVE'`;
 
@@ -97,12 +101,14 @@ export const lookupInvitation = async (ctx, token) => {
   const { rows: [invitation] } = await ctx.db.query(`${VALID_INVITATION} AND i.token_hash = $1`,
     [hashToken(token), new Date(ctx.now())]);
   if (!invitation) throw new DomainError(410, GONE);
-  return { associationName: invitation.name, associationSlug: invitation.slug, email: invitation.email };
+  return { associationName: invitation.name, associationSlug: invitation.slug,
+    email: ctx.cipher.decrypt('invitation.email_enc', invitation.email_enc) };
 };
 
 /** Pending, unexpired invitations for a verified address, offered after UC2 (UC11 4c). */
-export const pendingInvitationsFor = async (db, email, now) => {
-  const { rows } = await db.query(`${VALID_INVITATION} AND i.email = $1 ORDER BY a.name`, [email, new Date(now)]);
+export const pendingInvitationsFor = async (db, cipher, email, now) => {
+  const { rows } = await db.query(`${VALID_INVITATION} AND i.email_bidx = $1 ORDER BY a.name`,
+    [cipher.blindIndex(email), new Date(now)]);
   return rows.map((row) => ({ id: row.id, associationName: row.name, associationSlug: row.slug }));
 };
 
@@ -122,9 +128,11 @@ export const acceptInvitation = (ctx, account, { token, invitationId }) => withT
       [invitationId, new Date(ctx.now())]));
   }
   if (!invitation) throw new DomainError(410, GONE);
-  if (invitation.email !== account.email)
-    throw new DomainError(403, `This invitation is for ${maskEmail(invitation.email)}. Ask the association to invite your address.`,
-      { hint: maskEmail(invitation.email) });
+  // Both sides are folded before storage (foldEmail), so decrypted values compare directly.
+  const invitedEmail = ctx.cipher.decrypt('invitation.email_enc', invitation.email_enc);
+  if (invitedEmail !== account.email)
+    throw new DomainError(403, `This invitation is for ${maskEmail(invitedEmail)}. Ask the association to invite your address.`,
+      { hint: maskEmail(invitedEmail) });
   await client.query(
     'INSERT INTO membership (account_id, association_id, joined_at) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
     [account.id, invitation.association_id, new Date(ctx.now())]);

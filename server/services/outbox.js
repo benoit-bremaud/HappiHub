@@ -11,24 +11,30 @@ const CAPPED_TEMPLATES = new Set(['VERIFY', 'RESET', 'ACCOUNT_EXISTS']);
 export const queueEmail = async (client, ctx, { recipient, template, payload }) => {
   if (CAPPED_TEMPLATES.has(template) && !ctx.limits.recipient.take(recipient, ctx.now())) return false;
   await client.query(
-    'INSERT INTO outbox_message (recipient, template, payload, created_at) VALUES ($1, $2, $3, $4)',
-    [recipient, template, payload, new Date(ctx.now())]);
+    'INSERT INTO outbox_message (recipient_enc, recipient_bidx, template, payload_enc, created_at) VALUES ($1, $2, $3, $4, $5)',
+    [ctx.cipher.encrypt('outbox_message.recipient_enc', recipient), ctx.cipher.blindIndex(recipient), template,
+      payload === undefined || payload === null ? null : ctx.cipher.encrypt('outbox_message.payload_enc', JSON.stringify(payload)),
+      new Date(ctx.now())]);
   return true;
 };
 
 /**
  * Deliver due rows through the transport port. A sent row is deleted (DF1); after
  * MAX_ATTEMPTS failures the row keeps no payload (it holds the token link) and is purged by F25.
+ * The transport receives the decrypted message; the database only holds envelopes (§ 8).
  */
-export const deliverOutbox = (pool, transport, { now = Date.now, batch = 20 } = {}) =>
+export const deliverOutbox = (pool, transport, { cipher, now = Date.now, batch = 20 }) =>
   withTransaction(pool, async (client) => {
     let delivered = 0;
     const { rows } = await client.query(
-      `SELECT id, recipient, template, payload, attempts FROM outbox_message
+      `SELECT id, recipient_enc, template, payload_enc, attempts FROM outbox_message
        WHERE failed_at IS NULL ORDER BY created_at LIMIT $1 FOR UPDATE SKIP LOCKED`, [batch]);
     for (const row of rows) {
       try {
-        await transport.send(row);
+        const payload = cipher.decrypt('outbox_message.payload_enc', row.payload_enc);
+        await transport.send({ id: row.id, template: row.template,
+          recipient: cipher.decrypt('outbox_message.recipient_enc', row.recipient_enc),
+          payload: payload === null ? null : JSON.parse(payload) });
         await client.query('DELETE FROM outbox_message WHERE id = $1', [row.id]);
         delivered += 1;
       } catch {
@@ -36,7 +42,7 @@ export const deliverOutbox = (pool, transport, { now = Date.now, batch = 20 } = 
         await client.query(
           `UPDATE outbox_message SET attempts = attempts + 1,
              failed_at = CASE WHEN $2 THEN $3::timestamptz ELSE NULL END,
-             payload = CASE WHEN $2 THEN NULL ELSE payload END
+             payload_enc = CASE WHEN $2 THEN NULL ELSE payload_enc END
            WHERE id = $1`, [row.id, final, new Date(now())]);
       }
     }

@@ -21,7 +21,7 @@ export const runMaintenance = async (ctx) => {
   counts.tokensPurged = (await ctx.db.query('DELETE FROM auth_token WHERE expires_at <= $1', [at(0)])).rowCount;
 
   const { rows: toRemind } = await ctx.db.query(
-    `SELECT id, email FROM account WHERE email_verified_at IS NULL AND verification_reminder_at IS NULL
+    `SELECT id, email_enc FROM account WHERE email_verified_at IS NULL AND verification_reminder_at IS NULL
      AND created_at <= $1 AND created_at > $2`, [at(23 * DAY_MS), at(30 * DAY_MS)]);
   for (const account of toRemind) {
     await withTransaction(ctx.db, async (client) => {
@@ -29,7 +29,7 @@ export const runMaintenance = async (ctx) => {
       await client.query("DELETE FROM auth_token WHERE account_id = $1 AND purpose = 'VERIFY'", [account.id]);
       await client.query("INSERT INTO auth_token (account_id, purpose, token_hash, expires_at) VALUES ($1, 'VERIFY', $2, $3)",
         [account.id, hash, new Date(now + TOKEN_TTL_MS.VERIFY)]);
-      await queueEmail(client, ctx, { recipient: account.email, template: 'VERIFY_REMINDER',
+      await queueEmail(client, ctx, { recipient: ctx.cipher.decrypt('account.email_enc', account.email_enc), template: 'VERIFY_REMINDER',
         payload: { link: ctx.links.verify(token) } });
       await client.query('UPDATE account SET verification_reminder_at = $2 WHERE id = $1', [account.id, new Date(now)]);
     });
