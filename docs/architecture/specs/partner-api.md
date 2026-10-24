@@ -77,6 +77,16 @@ Derived rules (consequences of D0–D4, validated with the whole conception):
 - R8 When the creator of an `events:write` key leaves the association, is removed or deletes the
   account (UC6, UC12), the key is revoked in the same transaction and logged
   `API_KEY_AUTO_REVOKED` with `detail.reason = CREATOR_LEFT`.
+- R10 Removal signal for polling: with `updatedSince`, the response adds `removed: [{id, removedAt}]`
+  for events of the key's association that were visible to partners and became invisible since
+  then (hidden by moderation, UC29). Hiding and unhiding set `updated_at`; an unhidden event comes
+  back in `events`. Tombstones carry only the public id, are kept as long as the event row, and
+  never reveal why the event was removed. Association suspension or closure already answers 403
+  on every route (AC12), which tells the partner to clear its whole cache.
+- R11 Authorization is rechecked inside the write transaction: after `BEGIN`, the key and its
+  association are re-read `FOR SHARE`; a key revoked (UC27 3a, I1, R8) or an association suspended
+  or closed between authentication and the write rolls back with the same 401 or 403. Revocation
+  and suspension therefore take effect for every write that commits after them.
 - R9 Brick B merge amendment: a changed field whose current value already equals the requested
   value counts as applied, not as a conflict, so a retried `PATCH` after a lost response succeeds
   (also benefits members).
@@ -97,6 +107,7 @@ Derived rules (consequences of D0–D4, validated with the whole conception):
 | AC10 | Secrets are shown once, stored as SHA-256 hashes, never logged (request logs redact `Authorization`). |
 | AC11 | An OpenAPI 3.1 description `docs/api/partner-v1.openapi.yaml` is the authoritative contract and is checked against the implementation in tests (every route, status and error code). |
 | AC12 | Association suspended or closed: `403 ASSOCIATION_UNAVAILABLE` on every `/v1` route (UC28 2c). It is checked at authentication, before any event lookup; the member-side `409 ASSOCIATION_CLOSED` of brick B is unchanged. |
+| AC13 | A partner polling with `updatedSince` receives an id-only tombstone for every event hidden by moderation since that time (R10); a write racing a revocation or suspension never commits (R11). |
 
 ## 4. Contract (`/api/v1`, JSON, server-to-server only)
 
@@ -106,7 +117,7 @@ Authentication: `Authorization: Bearer hh_live_<keyId>_<secret>` (02c format). L
 
 | Method and path | Scope | Success | Notes |
 | --- | --- | --- | --- |
-| `GET /api/v1/events` | read | 200 | UC28: upcoming published + cancelled, soonest first; `include=past`, `updatedSince`, `cursor`, `limit` (≤ 100) |
+| `GET /api/v1/events` | read | 200 | UC28: upcoming published + cancelled, soonest first; `include=past`, `updatedSince`, `cursor`, `limit` (≤ 100); with `updatedSince`, also `removed` tombstones (R10) |
 | `GET /api/v1/events/:id` | read | 200 | UC28 3; public fields + `status`, `updatedAt` |
 | `POST /api/v1/drafts` | write | 201 | UC34; `Idempotency-Key` header (1–255 printable ASCII) required; body = brick B editable fields, `title` and `type` required; answer adds `version` and `Location: /api/v1/drafts/:id` |
 | `GET /api/v1/drafts` | write | 200 | Drafts created by this key and still drafts (D4), with `version` |
@@ -165,6 +176,7 @@ hashed. No new personal column.
 | T9 | Browser abuse (CSRF, XSS exfiltration with cookie) | No cookie auth on `/v1`, no CORS (AC9) |
 | T10 | Replay creating duplicates | Idempotency store (D2) |
 | T11 | Stored XSS on public pages via partner content | Same plain-text validation as brick B (control and bidi characters refused); output encoding on the client |
+| T12 | Moderated content kept on partner sites; write racing a revocation | Tombstones in `updatedSince` (R10); recheck under lock in the write transaction (R11) |
 
 Residual risks: a leaked write key can create up to 10 drafts per 24 h (R3) until it
 is revoked (visible in the activity log); no anomaly detection in V1.
@@ -245,3 +257,6 @@ platform integration clients (D1 runner-up).
   for own published drafts (440 tie with 404 everywhere, broken by the API-quality priority),
   M4 `lastEditedBy` as `{kind, name}` (440 over removing it 410); S1–S7 and Nice as proposed
   (R1 trade-off, R3 per-key cap, R4 exclusive attribution, R8, R9, routes, UML, `can_write`).
+- 2026-10-24: PR #327 review raised two valid gaps, fixed with Benoît's approval (440/500):
+  R10 removal tombstones in `updatedSince` polling, R11 authorization recheck inside the write
+  transaction (AC13, T12).

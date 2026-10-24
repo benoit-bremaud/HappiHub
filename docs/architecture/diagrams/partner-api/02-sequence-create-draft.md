@@ -35,6 +35,11 @@ sequenceDiagram
   R->>R: per-key write limit
   R->>E: createDraft(associationId, fields, actor = key, k1, sha256(body))
   E->>DB: BEGIN
+  E->>DB: SELECT api_key, association FOR SHARE (R11)
+  break key revoked or association unavailable since authentication
+    E->>DB: ROLLBACK
+    E-->>P: 401 API_KEY_INVALID or 403 ASSOCIATION_UNAVAILABLE
+  end
   E->>DB: INSERT api_idempotency (key, k1, hash) ON CONFLICT DO NOTHING
   Note right of DB: a concurrent duplicate waits here<br/>until the first transaction ends
   alt row already committed, same hash
@@ -59,6 +64,7 @@ sequenceDiagram
   R->>K: authenticate, scope, association (as above)
   R->>R: per-key write limit
   R->>E: mergeEdit(id, actor = key)
+  E->>DB: BEGIN, then recheck key and association FOR SHARE (R11)
   E->>DB: SELECT event FOR UPDATE WHERE id AND created_by_api_key_id = key
   alt not found (other key, member event, other association, deleted)
     E-->>P: 404 EVENT_NOT_FOUND
