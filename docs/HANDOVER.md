@@ -14,7 +14,7 @@ for current behavior, not historical tutorials or old issue titles.
 
 Repository: benoit-bremaud/HappiHub. On the current machine the working checkout is
 `/home/vev/Documents/02_personal/HappiHub`; the chat's default directory may differ.
-At this update origin/main resolves to `9cb6a3d` (#319/#320 edge hardening merge, PR #326). The recovery
+At this update origin/main resolves to `3c56657` (#244 partner API study, PR #327). The recovery
 branch fix/security-boundaries was merged through PR #257 (`c831c6b` is in main). Inspect `git status`/`git log` and open PRs at resumption rather than trusting these SHAs.
 
 Owner: Benoît (benoit-bremaud). Retained collaborator: Clément/Yazii
@@ -121,8 +121,9 @@ folders as an approved implementation plan.
 
 QA backlog from the 2026-10-24 inspector pass: #319 (edge security headers) and #320 (source maps)
 are fixed and merged (PR #326, squash `9cb6a3d`, both issues closed); #321–#324 (P3) remain.
-#244 partner API conception validated 2026-10-24 ([spec](architecture/specs/partner-api.md));
-its implementation is a later brick. Next brick: #251 demo data and test accounts.
+#244 partner API conception validated and merged 2026-10-24 (PR #327, `3c56657`, [spec](architecture/specs/partner-api.md));
+its implementation is a later brick. Next brick: #251 demo data and test accounts. Global review 2026-10-24
+([report](architecture/review-global-2026-10-24.md)) added P1 bugs #328, #329 and CI gaps #295, #307.
 
 1. Done 2026-10-15: V1 framing, personas and journeys J1–J6 validated.
 2. Research synthesis is superseded for V1 by the validated framing.
