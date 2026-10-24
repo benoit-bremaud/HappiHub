@@ -7,6 +7,16 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-24
 
+- **#251 test environment — conception validated** — [spec](docs/architecture/specs/test-environment.md),
+  diagrams `docs/architecture/diagrams/test-environment/`. Owner chose D1 Node seed job through the
+  services (435/500, keeps ADR-0004 encryption), D2 generated per-machine passwords in an ignored
+  `0600` file (415, closest: fixed `.env.example` passwords 395), D3 idempotent upsert in the reserved
+  `demo.happihub.test` namespace (460), D4 valid database states plus a rejection catalogue run by
+  the integration suite (460, also feeds #307), D5 DEV tier, `_demo` database name and `--confirm`
+  guard (460). review-local corrected the rejection catalogue against the code and added D6
+  (clock injection + maintenance job, SQL only for the moderation flag, 460). PR #340 review: expired/revoked invitations are rejection cases only, public reads stay
+  open across associations, D7 idempotent rerun without an outer transaction (455). Implementation is a later brick.
+
 - **Global local review of the whole repository** ([report](docs/architecture/review-global-2026-10-24.md)):
   every suite green locally (server unit 142, PostgreSQL integration 111 at 91.0 % stmts, client 84,
   build, gitleaks). No blocking security flaw; Must: maintenance purge race #328, current-password
