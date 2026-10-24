@@ -1,6 +1,6 @@
 # Test environment — demo seed, test accounts and persona scenarios (#251)
 
-Status: **validated by Benoît on 2026-10-24** (D1–D5 top scores, weights accepted). This
+Status: **validated by Benoît on 2026-10-24** (D1–D6 top scores, weights accepted). This
 validates the conception only; implementation follows in its own brick (AGENTS.md gate).
 
 UML: [diagrams/test-environment/](../diagrams/test-environment/).
@@ -46,7 +46,8 @@ start unless all of these hold, and exits non-zero with a message otherwise:
 2. the database name in `DATABASE_URL_DEV` ends in `_demo` (for example `happihub_demo`);
 3. the host is loopback or a local Docker service name (no remote host);
 4. `--confirm` is passed on the command line;
-5. the keyring file is the DEV keyring (`FIELD_KEYRING_FILE_DEV`), never a PROD path.
+5. `DATABASE_URL_PROD` is not set, and the keyring path `FIELD_KEYRING_FILE_DEV` differs from
+   `FIELD_KEYRING_FILE_PROD` when that variable is set.
 
 Test fixtures stay where they are: the integration harness keeps its own container and
 `resetData`; the seed never runs against it and the tests never depend on the seed.
@@ -63,7 +64,7 @@ can reach a real person, and this namespace marks every seeded row (§ 6).
 | P2 | Malik, web volunteer | verified, member of A1 | second organizer of the same association, concurrent edits (`version`) |
 | P3 | Sofia, organizer of another association | verified, member of A2 | ownership boundary: must not edit A1 events |
 | P4 | Hugo, participant | verified, no association | signed-in visitor, participation when available |
-| P5 | Nora, new signup | **unverified** | verification reminder, restricted actions |
+| P5 | Nora, new signup | **unverified** | sign-in refused (401) until verified, resend-verification flow |
 | P6 | Paul, pending email change | verified, `pending_email` set | email-change flow |
 | P7 | Léa, moderator | verified, `platform_role = MODERATOR` | moderation visibility |
 | P8 | Marc, quota reached | verified, `associations_created = 5` | association creation quota |
@@ -81,10 +82,10 @@ rest. "Edge" rows are valid but sit at a limit.
 
 | Key | Name | Status | Members | Notes |
 | --- | --- | --- | --- | --- |
-| A1 | Théâtre des Lilas (fictional) | ACTIVE | P1, P2 | main scenario |
-| A2 | Chorale du Canal (fictional) | ACTIVE | P3 | second owner |
-| A3 | Atelier fermé (fictional) | CLOSED, `closed_at` set | — | closed-association handling |
-| A4 | 5 associations created by P8 | ACTIVE | P8 | quota edge |
+| A1 | Demo Tréteaux du Quartier (the V1 persona troupe) | ACTIVE | P1, P2 | main scenario |
+| A2 | Demo Chorale du Canal (fictional) | ACTIVE | P3 | second owner |
+| A3 | Demo Atelier fermé (fictional) | CLOSED, `closed_at` set | — | closed-association handling |
+| A4 | Demo Marc 1 … Demo Marc 5, created by P8 | ACTIVE | P8 | quota edge (five created) |
 
 Plus one PENDING invitation from A1 to P4, one EXPIRED and one REVOKED invitation.
 
@@ -94,9 +95,9 @@ Plus one PENDING invitation from A1 to P4, one EXPIRED and one REVOKED invitatio
 | --- | --- | --- | --- | --- |
 | E1–E10 | A1 / A2 | PUBLISHED, future | all eight types | the ten public demo events; prices FREE, AMOUNT, PAY_WHAT_YOU_WANT; all six poster styles |
 | E11 | A1 | PUBLISHED | THEATRE | title of exactly 120 characters, short description of 280, long description near 10 000 |
-| E12 | A1 | PUBLISHED | CONCERT | starts in the past, no `ends_at` (24 h effective-end rule) |
+| E12 | A1 | PUBLISHED | CONCERT | started more than 24 h ago, no `ends_at` (effective end = `starts_at` + 24 h) |
 | E13 | A1 | PUBLISHED | DANCE | `ends_at = starts_at` (zero duration) |
-| E14 | A2 | PUBLISHED | EXHIBITION | Corsican postal code `20A00`-style city pattern, accented venue |
+| E14 | A2 | PUBLISHED | EXHIBITION | Corsican INSEE commune code `2A004` (Ajaccio), accented venue |
 | E15 | A1 | DRAFT | WORKSHOP | minimal draft (title only), invisible to the public |
 | E16 | A1 | DRAFT | TALK | old draft with `cleanup_notice_at` set |
 | E17 | A1 | CANCELLED | CINEMA | `cancellation_reason` of 500 characters |
@@ -106,7 +107,15 @@ Plus one PENDING invitation from A1 to P4, one EXPIRED and one REVOKED invitatio
 
 Text fixtures include HTML/script-looking strings (`<script>alert(1)</script>`), emoji and
 right-to-left characters, so the client's escaping can be checked by eye. Dates are computed
-relative to the run date so "future" events stay future.
+relative to the run date so "future" events stay future. Each association receives fewer
+than 20 events per 24 h window (the `EVENT_QUOTA` limit of brick B), so a seed or reseed
+never hits 429.
+
+Decision **D6** (states the services cannot create directly), option A: E12, E17 and E18 are
+created and published or cancelled with the seed's injectable clock (`ctx.now`) set in the
+past, then E16 and E18 reach their state through `jobs/maintenance` run with that clock. E19
+is the only documented direct-SQL exception (`hidden_by_moderation`), because moderation has
+no API yet; it is replaced by the moderation service once that exists.
 
 ### 4.3 Supporting rows
 
@@ -125,23 +134,25 @@ the demo database.
 | R-AUTH-1 | sign-in | known email, wrong password | 401, generic message (no account enumeration) |
 | R-AUTH-2 | sign-in | unknown email | 401, same message and similar timing |
 | R-AUTH-3 | sign-in | email with different case and spaces | accepted (`foldEmail`) |
-| R-AUTH-4 | sign-in | repeated failures | rate limit answer (429) |
-| R-AUTH-5 | sign-in | empty password, 1 MB password | 400 validation error |
-| R-AUTH-6 | sign-in | unverified account (P5) | behaviour of brick D (signed in, restricted actions) |
+| R-AUTH-4 | sign-in | 5 failures per (email, IP) or 20 per IP in 15 min | 429 |
+| R-AUTH-5 | sign-in | empty or ≥ 1025-character password; body over 100 kB | 400; 413 |
+| R-AUTH-6 | sign-in | unverified account (P5) | 401, same neutral message as R-AUTH-1 |
+| R-AUTH-6b | verification | resend for P5 | 202 |
 | R-AUTH-7 | session | write without CSRF token or with a foreign Origin | 403 |
-| R-AUTH-8 | password change | wrong current password | 400/401, no change |
+| R-AUTH-8 | password change | wrong current password; 5 failures in 15 min | 403, no change; 429 |
 | R-SIGN-1 | signup | existing email | same answer as a new signup, `ACCOUNT_EXISTS` email queued |
-| R-SIGN-2 | signup | password below the minimum length | 400 |
+| R-SIGN-2 | signup | 14 characters; 65 characters or over 72 bytes; blocklisted password | 400 with `field` and `hint` |
 | R-EVT-1 | events | title empty or 121 characters | 400 |
 | R-EVT-2 | events | `ends_at` before `starts_at` | 400 |
-| R-EVT-3 | events | publish a draft missing venue or city | 400/409 |
+| R-EVT-3 | events | publish a draft missing venue or city; start in the past | 422 `PUBLICATION_REFUSED` (`START_IN_PAST`) |
 | R-EVT-4 | events | price AMOUNT with 0 or negative cents | 400 |
-| R-EVT-5 | events | invalid city code `ABCDE` | 400 |
-| R-EVT-6 | events | stale `version` | 409 |
-| R-EVT-7 | ownership | P3 edits an A1 event | 403/404, no data leak |
-| R-EVT-8 | identity | body carries an author or association id that is not the caller's | ignored or rejected |
-| R-ASSO-1 | associations | P8 creates a sixth association | quota error |
-| R-ASSO-2 | invitations | accept an expired or revoked invitation | 410/409 |
+| R-EVT-5 | events | malformed city code `ABCDE`; well-formed code that is no commune | 400 `INVALID_FIELD` |
+| R-EVT-6 | events | stale `version` on publish or cancel | 409 `STALE_VERSION` |
+| R-EVT-6b | events | edit with a stale `base` value; edit without `base` | 409 `EDIT_CONFLICT`; 400 `BASE_REQUIRED` |
+| R-EVT-7 | ownership | P3 edits an A1 event | 404 "Association not found", no data leak |
+| R-EVT-8 | identity | body carries an author or association id | 400 `UNKNOWN_FIELD` |
+| R-ASSO-1 | associations | P8 creates a sixth association | 409 |
+| R-ASSO-2 | invitations | accept an expired, revoked or unknown invitation | 410 |
 | R-PUB-1 | public API | draft, hidden or other-owner ids | 404, no owner identifiers in any projection |
 
 The exact status codes are those of the current API contract
@@ -171,7 +182,7 @@ Sensitivity: D2 is the closest decision (A 415 vs B 395); B wins if "ease for te
 
 The seed is a Node job that calls the same services as the API (decision **D1**, option A), so
 every personal column goes through `fieldCipher` with the DEV keyring: AES-256-GCM envelopes,
-blind indexes for email lookups, bcrypt password hashes. No SQL file writes clear personal
+blind indexes for email lookups, bcrypt password hashes. Apart from the E19 flag (D6), no SQL writes data; no SQL file writes clear personal
 data, and no envelope is precomputed in git (it would bind the repository to one key).
 
 - The DEV keyring is generated with `npm run keyring:generate`; losing it only loses demo data:
@@ -183,7 +194,8 @@ data, and no envelope is precomputed in git (it would bind the repository to one
 ## 8. Reset and idempotency
 
 Decision **D3**, option A: every seeded row has a **natural key** inside the reserved namespace:
-account email blind index for `@demo.happihub.test`, association slug prefixed `demo-`, event
+account email blind index for `@demo.happihub.test`, association name prefixed `Demo ` (slugs are
+derived by `slugify`, so they start with `demo-`), event
 identified by (association, title) of the seed definition. A run:
 
 1. checks the guard (§ 2) and the migrations level;
@@ -260,6 +272,18 @@ Sensitivity: kept 24/24.
 
 Sensitivity: kept 24/24.
 
+### D6 — states the services cannot create (added after review-local)
+
+| Criterion (weight) | A clock + maintenance job, SQL for hidden only | B direct SQL for all | C drop those fixtures |
+| --- | --- | --- | --- |
+| Fidelity to real rules (35) | 5 | 2 | 5 |
+| Coverage of states (25) | 5 | 5 | 1 |
+| Simplicity (20) | 3 | 4 | 5 |
+| Safety (20) | 5 | 3 | 5 |
+| **Total** | **460** | 335 | 400 |
+
+Sensitivity: kept 24/24. Owner chose A on 2026-10-24.
+
 ### D5 — target guard
 
 | Criterion (weight) | A DEV + `_demo` name + `--confirm` | B refuse `NODE_ENV=production` only | C new DEMO tier suffix |
@@ -280,7 +304,9 @@ Sensitivity: kept 24/24.
 - AC3: each guard condition of § 2 refuses the run with a non-zero exit and writes nothing.
 - AC4: no clear email exists in `account`, `invitation` or `outbox_message` after the run.
 - AC5: Claire, Malik and Sofia sign in through the browser with the generated passwords;
-  Sofia cannot edit Théâtre des Lilas events; Inès sees exactly what the brick B visibility rules allow (the published, non-hidden events)
+  Sofia cannot edit Demo Tréteaux du Quartier events (404); Inès sees exactly what the brick B visibility rules allow (the published, non-hidden events)
   and never the drafts E15–E16 or the hidden E19.
 - AC6: every rejection case of § 5 has a passing integration test.
-- AC7: `git status` stays clean after a run (credentials file ignored).
+- AC7: `server/.demo-credentials.local.json` is added to `.gitignore`; `git status` stays clean
+  after a run.
+- AC8: a `--reset` followed by a reseed stays below the `EVENT_QUOTA` limit (no 429).

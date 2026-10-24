@@ -12,7 +12,7 @@ flowchart TD
   G1 -- no --> X([Refuse, exit 1, nothing written])
   G1 -- yes --> G2{DB name ends in _demo and host local?}
   G2 -- no --> X
-  G2 -- yes --> G3{--confirm and DEV keyring?}
+  G2 -- yes --> G3{"--confirm, no PROD URL, DEV keyring?"}
   G3 -- no --> X
   G3 -- yes --> M{Migrations up to date?}
   M -- no --> X
@@ -20,7 +20,9 @@ flowchart TD
   R -- yes --> D[Delete namespace rows only]
   R -- no --> C
   D --> C[Load or generate passwords<br/>credentials file 0600]
-  C --> U[Upsert per persona block in a transaction<br/>accounts → associations → memberships<br/>→ invitations → events → activity/outbox<br/>through services and fieldCipher]
-  U --> V[Verify: envelope stored, counts]
+  C --> U[Upsert per persona block in a transaction<br/>accounts → associations → memberships<br/>→ invitations → events → activity/outbox<br/>through services and fieldCipher, injectable clock]
+  U --> J[Run maintenance job with the seed clock<br/>archive, cleanup notice; SQL hidden flag E19]
+  J --> V
+  V[Verify: envelope stored, counts]
   V --> E([Report created / unchanged, exit 0])
 ```
