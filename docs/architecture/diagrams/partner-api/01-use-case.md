@@ -2,7 +2,7 @@
 
 > **Source spec**: [partner API](../../specs/partner-api.md) § 2, § 8
 
-Status: proposed, awaiting Benoît's validation.
+Status: validated by Benoît on 2026-10-24.
 
 Question answered: what can a partner site do with a key, and which actions stay with members?
 

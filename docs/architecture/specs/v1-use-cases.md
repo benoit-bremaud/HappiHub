@@ -650,6 +650,9 @@ CORS headers, so browsers cannot call them from another origin.
   - 3a. Event of another association, draft or unknown: 404 (no existence leak).
 - **Source**: J6 D3, S2.
 
+Amended 2026-10-24 by the [partner API spec](partner-api.md): keys gain scopes (UC27) and
+write keys create and edit their own drafts (UC34, UC35).
+
 ### Decisions — Website integration (validated 2026-10-15)
 
 - **I1** Automatic revocation of keys unused for 180 days, with an email to members 14 days

@@ -2,7 +2,7 @@
 
 > **Source spec**: [partner API](../../specs/partner-api.md) § 4, UC34, UC35
 
-Status: proposed, awaiting Benoît's validation.
+Status: validated by Benoît on 2026-10-24.
 
 Question answered: how does a retried creation stay single, and how do key and member edits meet?
 

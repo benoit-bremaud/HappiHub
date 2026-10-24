@@ -1,8 +1,7 @@
 # Partner API: server-to-server event integration (#244)
 
-Status: **decisions D0–D4 validated by Benoît on 2026-10-24** (all top MCDA scores); the whole
-conception awaits his explicit validation after review. No code is authorized by this document
-until then; implementation is the V1 brick C of the [implementation gate](v1-implementation-gate.md),
+Status: **conception validated by Benoît on 2026-10-24** (D0–D4 top MCDA scores, D0 reconfirmed
+after a sensitivity correction). Implementation is a separate brick under this spec; implementation is the V1 brick C of the [implementation gate](v1-implementation-gate.md),
 extended by D0. Diagrams: [partner-api/](../diagrams/partner-api/).
 
 ## 1. Need and scope
@@ -221,5 +220,6 @@ platform integration clients (D1 runner-up).
 ## 11. Validation record
 
 - 2026-10-24: D0–D4 chosen by Benoît (top scores). D0 sensitivity corrected after the vote
-  (security weight 35 favours read-only A 390 over C 370); reconfirmation pending.
-- Whole conception: pending review-local and Benoît's explicit validation.
+  (security weight 35 favours read-only A 390 over C 370); Benoît reconfirmed C with the base weights.
+- 2026-10-24: whole conception validated by Benoît before review-local; review findings are
+  recorded below.

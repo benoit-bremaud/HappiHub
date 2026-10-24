@@ -42,7 +42,8 @@ association remain out of scope.
 - Registration, capacity and attendance; the existing participation feature is frozen.
 - Community extensions: new comments features, ranks, follows, notifications, AI assistance,
   recurring events and templates.
-- Write API, multi-organizer aggregator access and a native mobile app.
+- Write API, multi-organizer aggregator access and a native mobile app. Amended 2026-10-24:
+  a draft-only write API for partner keys is in scope ([partner API](partner-api.md) D0).
 - Fine-grained roles inside an association.
 - Audience analytics requiring consent (#61).
 

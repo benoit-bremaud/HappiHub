@@ -3,7 +3,7 @@
 > **Source spec**: [partner API](../../specs/partner-api.md) § 5
 > **Base**: [v1 class diagram](../v1-events/04-class.md) (`ApiKey`, `Event`, `ActivityEntry`)
 
-Status: proposed, awaiting Benoît's validation.
+Status: validated by Benoît on 2026-10-24.
 
 Question answered: which attributes and associations are added for scopes, key attribution and
 idempotency?

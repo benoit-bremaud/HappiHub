@@ -2,7 +2,7 @@
 
 > **Source spec**: [partner API](../../specs/partner-api.md) § 4, § 10
 
-Status: proposed, awaiting Benoît's validation.
+Status: validated by Benoît on 2026-10-24.
 
 Question answered: which modules are new, what do they reuse, and does the dependency rule hold?
 
