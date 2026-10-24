@@ -7,7 +7,7 @@
 | # | Probe | Result | Backlog |
 |---|---|---|---|
 | S1 | Security headers | ❌ API: `X-Powered-By: Express`, no `nosniff`. nginx: no security header at all (CSP, XFO, nosniff, Permissions-Policy, HSTS), and `server_tokens` is on | #321, #319 |
-| S2 | Cookies | ✅ `happihub.sid` is HttpOnly, SameSite=Lax, path `/`, with an expiry; it is Secure in production | — |
+| S2 | Cookies | ✅ Local cookie `happihub.sid` is HttpOnly, SameSite=Lax, path `/`, with an expiry; production uses `__Host-happihub.sid` with Secure (config, not observed) | — |
 | S3 | CORS | ✅ A foreign origin gets no permissive ACAO; a write from it gets 403 | — |
 | S4 | XSS | ✅ Payloads in display name, city and presentation render as text; a `javascript:` website is refused with 400 ([screenshot](2026-10-24-01-xss-as-text.jpg)) | — |
 | S5 | Authn / authz | ✅ No session gets 401; no CSRF token gets 403; another user's association gets 404 (no IDOR); a mass-assigned `platformRole` gets 400 | — |

@@ -5,6 +5,12 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-10-24
+
+- **Inspector + security QA pass on main `b1445c5`** ([report](docs/architecture/qa/2026-10-24-inspector-pass.md)):
+  probes S2–S5, S7 and S10 green. Findings filed: #319 nginx security headers, #320 source maps
+  in the image, #321 X-Powered-By/nosniff, #322 JSON 404, #323 display-name hint, #324 meta description.
+
 ## 2026-10-23
 
 - **#310 encryption at rest — implemented on `feat/310-db-encryption` (PR pending)** — pure
