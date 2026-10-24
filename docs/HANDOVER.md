@@ -1,6 +1,6 @@
 # HappiHub handover
 
-Updated: 2026-10-23. The recovery work and V1 bricks D (accounts/associations), B (event
+Updated: 2026-10-24. The recovery work and V1 bricks D (accounts/associations), B (event
 lifecycle backend) and the event client (#252) are merged to main. No further application code is authorized without the
 owner's completed UML approval gate for that increment.
 
@@ -119,7 +119,8 @@ folders as an approved implementation plan.
 
 ## Next actions
 
-QA backlog from the 2026-10-24 inspector pass: #319–#324 (security headers and source maps are P2).
+QA backlog from the 2026-10-24 inspector pass: #319 (edge security headers) and #320 (source maps)
+are fixed on `fix/319-320-nginx-security-headers` (PR pending); #321–#324 (P3) remain. Next brick: #244.
 
 1. Done 2026-10-15: V1 framing, personas and journeys J1–J6 validated.
 2. Research synthesis is superseded for V1 by the validated framing.

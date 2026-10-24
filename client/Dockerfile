@@ -15,6 +15,8 @@ FROM dependencies AS build
 COPY --chown=node:node . .
 ARG REACT_APP_API_URL=/api
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
+# No public source maps; no inline runtime script, so the edge CSP needs no 'unsafe-inline'.
+ENV GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:56b8272e43a0525f67aed68d1e0794a712d10e3e45a563e118e9a77c817e6f86 AS runtime
