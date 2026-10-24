@@ -17,7 +17,8 @@ more than 5 passwords per window.
 - R1. Before the comparison, the request **reserves** one attempt on the account key
   (`take`). A refused reservation answers 429 with `Retry-After`, without comparing.
 - R2. A correct password **releases** the reservation (`release`): successes never consume
-  the quota, as today.
+  the quota once answered. While compares are in flight they hold a slot, so more than 5
+  simultaneous correct requests can see a 429 (not reachable from the UI).
 - R3. A wrong or missing password (or a failed compare) keeps the reservation (it is the counted failure) and
   answers the existing 403.
 - R4. `release` never takes the counter below 0. A release after the window reset applies to

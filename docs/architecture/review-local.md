@@ -13,8 +13,8 @@
 | 2 Coverage | server integration 91.07 % stmts / 73.13 % branches / 96.53 % funcs / 93.8 % lines · client 92.61 / 81.99 / 93.61 / 96.09 · lcov merged under `server/coverage/` (unit + integration + client copy) · docs: every touched function carries a JSDoc |
 | 3 SonarQube | ✅ PASSED (local, project `happihub`) |
 | 4 Secrets | ✅ gitleaks clean (origin/main..HEAD) · no tracked .env · diff read: nothing sensitive |
-| 5 QA pass | ⚠️ API-level only: the HTTP routes are exercised end to end over a real PostgreSQL by AC329-1/3; no UI change; no live browser pass run |
-- Gate: **GREEN except step 5 pending owner waiver or live pass**
+| 5 QA pass | ✅ pass (qa-tester, Opus) · 8 parallel wrong PATCH and DELETE → 5×403, 3×429 + Retry-After · successes free · UI 1440/390 ok · SEC 6 ✅, SEC-01 #321 / SEC-08 #322 pre-existing · Nice: in-flight correct requests hold a slot (spec R2 now says so), UI hides Retry-After wait, >1024-char password hint (#323) · report: docs/architecture/qa/2026-10-24-current-password-reservation.md |
+- Gate: **GREEN — merge authorised** (pending owner approval)
 
 ## 🔴 Must Have
 _None._
