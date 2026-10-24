@@ -15,13 +15,12 @@ flowchart TB
     V1["/api/v1 router «new»<br/>no session, no CORS"]
     KA["apiKeyAuth middleware «new»<br/>Bearer parse, hash compare, scope"]
     RL["rate limiters<br/>per IP · per key"]
-    IDEM["idempotency «new»"]
     KEYS["/api/associations/:slug/api-keys «new»<br/>session + CSRF (UC27)"]
     APP["existing /api routes<br/>session + CSRF"]
   end
 
   subgraph services["services/"]
-    EVS["events service (brick B)<br/>validation, merge, quota, activity"]
+    EVS["events service (brick B)<br/>validation, merge, quota, activity<br/>+ idempotency row in the same transaction «new»"]
     AKS["apiKeys service «new»<br/>create, list, revoke"]
     PUB["public projection (UC22/UC28)"]
   end
@@ -37,9 +36,8 @@ flowchart TB
   Partner -- "HTTPS JSON" --> V1
   Browser --> KEYS
   Browser --> APP
-  V1 --> RL --> KA --> IDEM
+  V1 --> RL --> KA --> EVS
   V1 --> PUB
-  IDEM --> EVS
   KEYS --> AKS
   APP --> EVS
   KA --> AKS
@@ -48,7 +46,6 @@ flowchart TB
   EVS --> DB
   AKS --> DB
   PUB --> DB
-  IDEM --> DB
   MJ --> DB
 ```
 

@@ -18,7 +18,6 @@ flowchart LR
     UC34(["UC34 Create an event draft"])
     UC35(["UC35 Edit an own event draft"])
     UC18(["UC18 Publish an event"])
-    AUTH(["Authenticate key<br/>and check scope"])
   end
 
   Malik --- UC27
@@ -27,14 +26,13 @@ flowchart LR
   Site --- UC34
   Site --- UC35
   Job --- UC27
-  UC28 -. "«include»" .-> AUTH
-  UC34 -. "«include»" .-> AUTH
-  UC35 -. "«include»" .-> AUTH
 ```
 
 ## Notes
 
-- The maintenance job takes part in UC27 only for automatic revocation (I1).
+- The maintenance job takes part in UC27 only through extension 3c (automatic revocation, I1).
+- Key authentication and scope checks are preconditions of UC28, UC34 and UC35 (spec § 8),
+  not use cases of their own.
 - UC18 is the unchanged member publication: a partner never publishes (D0). It appears here
   because it ends every UC34 flow.
 - No use case lets a key manage keys, members, or cancel and delete events (threat T8).

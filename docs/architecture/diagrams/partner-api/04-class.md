@@ -15,16 +15,11 @@ classDiagram
   class ApiKey {
     name
     secretHash
-    scopes : Scope[1..2]
+    canWrite : Boolean
     createdAt
     lastUsedAt [0..1]
     revokedAt [0..1]
     revocationNoticeAt [0..1]
-  }
-  class Scope {
-    <<enumeration>>
-    EVENTS_READ
-    EVENTS_WRITE
   }
   class Event {
     status
@@ -33,22 +28,22 @@ classDiagram
   class IdempotencyRecord {
     idempotencyKey
     requestHash
-    responseStatus [0..1]
-    responseBody [0..1]
+    responseBody
     createdAt
   }
-  Association "1" *-- "0..5" ApiKey : active keys
+  Association "1" *-- "0..*" ApiKey : keys
   ApiKey "0..*" --> "0..1" Account : createdBy
-  ApiKey ..> Scope
   Event "0..*" --> "0..1" Account : createdBy
   Event "0..*" --> "0..1" ApiKey : createdByKey «new»
   Event "0..*" --> "0..1" ApiKey : lastEditedByKey «new»
-  ApiKey "1" *-- "0..*" IdempotencyRecord «new»
+  ApiKey "1" *-- "0..*" IdempotencyRecord : replays «new»
 ```
 
 ## Constraints
 
-- `scopes` always contains `EVENTS_READ`; it is fixed at creation (R1).
-- An event has `createdBy` or `createdByKey`, never both (R4).
-- A key reaches an event through `createdByKey` only while the event is a `DRAFT` (D4, R6).
-- `IdempotencyRecord` lives 24 h; `responseStatus` null means "in progress".
+- At most 5 keys per association have `revokedAt` null (UC27 1a); revoked keys are kept (R5).
+- Every key reads; `canWrite` adds `events:write`, fixed at creation (R1). The API shows it as `scopes`.
+- An event has at most one of `createdBy` / `createdByKey`, and at most one of
+  `lastEditedBy` / `lastEditedByKey` (R4).
+- A key edits an event through `createdByKey` only while it is a `DRAFT` (D4, R6).
+- `IdempotencyRecord` is written with its event in one transaction and lives 24 h (§ 4).
