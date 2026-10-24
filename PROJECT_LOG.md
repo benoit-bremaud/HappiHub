@@ -7,6 +7,14 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-24
 
+- **Global local review of the whole repository** ([report](docs/architecture/review-global-2026-10-24.md)):
+  every suite green locally (server unit 142, PostgreSQL integration 111 at 91.0 % stmts, client 84,
+  build, gitleaks). No blocking security flaw; Must: maintenance purge race #328, current-password
+  limit race #329, CI coverage globs #295 and CI without integration tests #307 (both raised to P1).
+  Should/Nice filed as #330–#335. Owner chose the handling (MCDA A 450/500).
+- **#244 merged** (PR #327, squash `3c56657`); follow-ups filed: webhooks #336, `externalId` sync
+  #337, platform integration clients #338.
+
 - **#244 partner API — conception validated** — branch `docs/244-partner-api-study`,
   [spec](docs/architecture/specs/partner-api.md), diagrams `docs/architecture/diagrams/partner-api/`.
   Owner chose D0 draft-only write API (370/500 over read-only 350, full write 340; sensitivity
