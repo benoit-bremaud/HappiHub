@@ -49,6 +49,9 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Fixed
 
+- Maintenance no longer deletes, or sends a day-23 reminder to, an account verified while the
+  job runs: each candidate is rechecked under lock, and counts report real effects (#328).
+
 - Bodiless writes sent with `Content-Length: 0` (leave an association, resend an invitation)
   no longer fail with 415; only a non-empty body must be JSON (#283).
 - Password-verification bypass, public administrator signup, caller-controlled authorship,
