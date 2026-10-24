@@ -119,6 +119,8 @@ folders as an approved implementation plan.
 
 ## Next actions
 
+QA backlog from the 2026-10-24 inspector pass: #319–#324 (security headers and source maps are P2).
+
 1. Done 2026-10-15: V1 framing, personas and journeys J1–J6 validated.
 2. Research synthesis is superseded for V1 by the validated framing.
 3. Done 2026-10-15: audience, first-release scope, ownership and publication choices.
