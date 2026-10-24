@@ -221,7 +221,7 @@ Each criterion maps to at least one automated test (section 8).
 | AC16 | Migrations apply from empty to latest and down to empty on a disposable database | L2 |
 | AC17 | Every limit of the [quotas table](v1-use-cases.md) that applies to UC1–UC12 answers 429 with `Retry-After`; the per-recipient email cap answers neutrally and sends nothing | T2 |
 | AC18 | No token appears in ingress or API logs; invitation, verify and reset links carry the token in the fragment | DF3 |
-| AC19 | The maintenance job expires invitations, reminds at day 23 and deletes never-verified accounts at day 30 with UC6 effects, purges outbox failures > 30 days, expired tokens and activity entries > 12 months | F19–F25 |
+| AC19 | The maintenance job expires invitations, reminds at day 23 and deletes never-verified accounts at day 30 with UC6 effects, purges outbox failures > 30 days, expired tokens and activity entries > 12 months (amended by [#328](maintenance-unverified-race.md): per-row recheck under lock) | F19–F25 |
 
 ## 8. Test plan
 

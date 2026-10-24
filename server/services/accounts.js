@@ -87,8 +87,6 @@ export const verifyEmail = (ctx, token) => withTransaction(ctx.db, async (client
   if (!accountId) throw new DomainError(410, 'This link is expired or was already used. Ask for a new one.');
   const { rows: [row] } = await client.query(
     'SELECT pending_email_enc, pending_email_bidx FROM account WHERE id = $1 FOR UPDATE', [accountId]);
-  // #328 R5: a purge that won the lock leaves no row; answer as for a used link.
-  if (!row) throw new DomainError(410, 'This link is expired or was already used. Ask for a new one.');
   const now = new Date(ctx.now());
   if (row.pending_email_bidx) {
     const { rows: taken } = await client.query('SELECT 1 FROM account WHERE email_bidx = $1', [row.pending_email_bidx]);

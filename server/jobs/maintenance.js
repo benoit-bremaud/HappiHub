@@ -58,8 +58,10 @@ export const runMaintenance = async (ctx) => {
     'SELECT id FROM account WHERE email_verified_at IS NULL AND created_at <= $1', [at(30 * DAY_MS)]);
   counts.unverifiedAccountsDeleted = 0;
   for (const { id } of expired) {
-    counts.unverifiedAccountsDeleted += await withTransaction(ctx.db, async (client) =>
-      (await lockUnverified(client, id) && await deleteAccountRow(client, ctx, id) ? 1 : 0));
+    counts.unverifiedAccountsDeleted += await withTransaction(ctx.db, async (client) => {
+      if (!(await lockUnverified(client, id))) return 0;
+      return (await deleteAccountRow(client, ctx, id)) ? 1 : 0;
+    });
   }
 
   counts.outboxFailuresPurged = (await ctx.db.query(

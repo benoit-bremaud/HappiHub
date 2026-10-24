@@ -21,7 +21,7 @@ sequenceDiagram
   else still unverified
     J->>DB: deleteAccountRow (UC6 effects); COMMIT; count += 1
   end
-  Note over V,J: if J locks first, V's DELETE auth_token finds nothing after J commits → neutral 410
+  Note over V,J: if J locks first, V's DELETE auth_token finds nothing after J commits (cascade-deleted with the account) → neutral 410
 ```
 
 The day-23 reminder follows the same pattern, with `verification_reminder_at IS NULL`
