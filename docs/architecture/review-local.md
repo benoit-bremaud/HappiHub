@@ -4,17 +4,17 @@
 - Commit: 14488ca + review fixes cc46bf2
 - Scope: branch diff main...HEAD (`server/jobs/maintenance.js`, `server/services/accounts.js`, maintenance integration tests, #328 spec + sequence diagram, AC19 link)
 - Checks run: correctness + security (Opus), design · docs · tests (one combined pass), execution checks
-- Verdict: ship after owner decision on S9382 · Must 1 · Should 6 · Nice 6 — all fixed or dispositioned below
+- Verdict: ship · Must 1 · Should 6 · Nice 6 — all fixed or dispositioned below
 
 ## Pre-merge gate (head SHA cc46bf2)
 | Step | Result |
 |---|---|
 | 1 Tests | ✅ server unit 142/142 · ✅ server integration 114/114 (3 runs, stable) · ✅ client 84/84 |
 | 2 Coverage | integration: 91.05 % stmts / 73.42 % branches / 96.53 % funcs / 93.79 % lines; `maintenance.js` 100 % lines, 90 % branches · docs: every new function carries a doc comment (no doc-coverage counter in this repo) |
-| 3 SonarQube | ❌ FAILED on `new_violations` = 2 (S9382 "await inside a loop", `maintenance.js:43`, `:61`); new coverage 94.5 % ✅, duplication 0 % ✅. Same intentional per-row transaction loop accepted on 14d1001 (#252); acceptance is the owner's call |
+| 3 SonarQube | ✅ PASSED — new coverage 94.5 %, duplication 0 %, violations 0 after the owner accepted the two S9382 (sequential per-row transactions, `maintenance.js:43`, `:61`) as intentional, MCDA A 485/500, precedent 14d1001 |
 | 4 Secrets | ✅ gitleaks clean (main..HEAD) · no tracked .env · diff read: nothing sensitive |
-| 5 QA pass | ⚠️ not run: hourly server job with no UI or HTTP route; behavior proven by the PostgreSQL race tests (AC328-1..3) |
-- Gate: **RED — SonarQube S9382 pending owner decision; QA step not applicable (owner to confirm)**
+| 5 QA pass | n/a (owner-confirmed 2026-10-24): hourly server job with no UI or HTTP route; behavior proven by the PostgreSQL race tests (AC328-1..3) |
+- Gate: **GREEN — merge authorised after CI and owner approval**
 
 ## 🔴 Must Have
 - `server/tests/integration/maintenance.test.js:23` `[tests]` · a bulk text replace had swapped the AC19 `auth_token` purge assertion · restored (cc46bf2).
@@ -25,7 +25,7 @@
 - `maintenance.test.js` AC328-3 `[tests|docs]` · covers the verification side only · test and AC328-3 reworded.
 - `docs/architecture/specs/maintenance-unverified-race.md` R1 `[docs]` · "recheck in code" inaccurate · reworded.
 - `docs/architecture/specs/v1-brick-d-accounts-associations.md:224` `[docs]` · AC19 not linked to the amendment · linked.
-- SonarQube S9382 `[design]` · sequential per-row transactions are intentional (one lock set at a time, bounded pool use) · owner decision.
+- SonarQube S9382 `[design]` · sequential per-row transactions are intentional (one lock set at a time, bounded pool use) · accepted in SonarQube by the owner.
 
 ## 🔵 Nice to Have
 - `maintenance.test.js:58` `[tests]` · lock-wait probe matched any session · now excludes the probing backend.
