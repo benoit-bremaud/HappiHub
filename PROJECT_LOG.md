@@ -7,6 +7,15 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-24
 
+- **#319 + #320 edge hardening — branch `fix/319-320-nginx-security-headers`** — owner validated
+  the [spec](docs/architecture/specs/edge-security-headers.md) (MCDA A 480/500: strict CSP with
+  `INLINE_RUNTIME_CHUNK=false`, over a per-build script hash 360 and Report-Only 290).
+  `client/nginx.conf`: `server_tokens off`, CSP (`script-src 'self'`, Bootstrap CDN allowed in
+  `style-src` only, `connect-src 'self'` since production builds with `/api`,
+  `frame-ancestors 'none'`), X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy,
+  HSTS 1 year. `client/Dockerfile`: `GENERATE_SOURCEMAP=false`. Verified on the built runtime
+  image: all six headers on `/` and SPA routes, `Server: nginx` without version, 0 `.map`
+  files, 0 inline `<script>`, SPA renders with no CSP violation in the browser console.
 - **Inspector + security QA pass on main `b1445c5`** ([report](docs/architecture/qa/2026-10-24-inspector-pass.md)):
   probes S2–S5, S7 and S10 green. Findings filed: #319 nginx security headers, #320 source maps
   in the image, #321 X-Powered-By/nosniff, #322 JSON 404, #323 display-name hint, #324 meta description.
