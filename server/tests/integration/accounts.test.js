@@ -249,6 +249,22 @@ describe('UC4 account update (AC6)', () => {
     expect(limited.status).toBe(429);
     expect(Number(limited.headers['retry-after'])).toBeGreaterThan(0);
   });
+
+  test('AC329-1: concurrent wrong current passwords cannot exceed the 5 attempts', async () => {
+    const client = await signUpVerified(app, pool, 'race@example.org');
+    const answers = await Promise.all(Array.from({ length: 8 },
+      () => client.patch('/api/account', { email: 'z@example.org', currentPassword: 'nope' })));
+    const statuses = answers.map((answer) => answer.status).sort();
+    expect(statuses).toEqual([403, 403, 403, 403, 403, 429, 429, 429]);
+  });
+
+  test('AC329-3: a correct password does not consume the quota', async () => {
+    const client = await signUpVerified(app, pool, 'free@example.org');
+    for (let i = 0; i < 4; i += 1) expect((await client.patch('/api/account', { email: 'z@example.org', currentPassword: 'nope' })).status).toBe(403);
+    expect((await client.patch('/api/account', { email: 'free2@example.org', currentPassword: PASSWORD })).status).toBe(200);
+    expect((await client.patch('/api/account', { email: 'z@example.org', currentPassword: 'nope' })).status).toBe(403);
+    expect((await client.patch('/api/account', { email: 'z@example.org', currentPassword: 'nope' })).status).toBe(429);
+  });
 });
 
 describe('UC5 export (AC7)', () => {

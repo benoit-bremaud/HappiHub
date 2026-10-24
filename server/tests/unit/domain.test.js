@@ -76,11 +76,23 @@ describe('keyed limiter', () => {
   test('counts per key and resets after the window', () => {
     const limiter = createKeyedLimiter({ limit: 2, windowMs: 1000 });
     expect(limiter.take('a', 0)).toBe(true);
-    limiter.hit('a', 0);
+    expect(limiter.take('a', 0)).toBe(true);
     expect(limiter.take('a', 10)).toBe(false);
     expect(limiter.retryAfter('a', 10)).toBe(1);
     expect(limiter.take('b', 10)).toBe(true);
     expect(limiter.retryAfter('a', 1000)).toBe(0);
+  });
+
+  test('AC329-2: release frees a reserved attempt, never below 0, no-op after reset', () => {
+    const limiter = createKeyedLimiter({ limit: 1, windowMs: 1000 });
+    expect(limiter.take('a', 0)).toBe(true);
+    limiter.release('a', 0);
+    limiter.release('a', 0);
+    expect(limiter.take('a', 0)).toBe(true);
+    expect(limiter.take('a', 0)).toBe(false);
+    limiter.release('a', 1000);
+    expect(limiter.take('a', 1000)).toBe(true);
+    expect(limiter.take('a', 1000)).toBe(false);
   });
 });
 

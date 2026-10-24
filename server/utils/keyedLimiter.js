@@ -17,13 +17,17 @@ export const createKeyedLimiter = ({ limit, windowMs }) => {
       const entry = current(key, now);
       return entry.count >= limit ? Math.ceil((entry.resetAt - now) / 1000) : 0;
     },
-    hit: (key, now) => { current(key, now).count += 1; },
     /** Count one attempt; false when the limit was already reached. */
     take: (key, now) => {
       const entry = current(key, now);
       if (entry.count >= limit) return false;
       entry.count += 1;
       return true;
+    },
+    /** Give back an attempt taken in this window (a success); never below 0. */
+    release: (key, now) => {
+      const entry = current(key, now);
+      entry.count = Math.max(0, entry.count - 1);
     },
   };
 };
