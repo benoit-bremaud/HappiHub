@@ -7,6 +7,14 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-24
 
+- **#328 maintenance purge race — conception validated and implemented** (PR #342,
+  [spec](docs/architecture/specs/maintenance-unverified-race.md)). Owner chose A, per-row recheck
+  under lock with the `verifyEmail` lock order tokens → account (480/500 over account-only lock 395,
+  SERIALIZABLE + retry 355); counts report committed effects. Race tests are red on the old code.
+  The two SonarQube S9382 (sequential per-row transactions) were accepted as intentional
+  (485/500, precedent 14d1001). Follow-up: resend racing the purge #341.
+- **#251 test-environment study merged** (PR #340, squash `6fef7ee`).
+
 - **#251 test environment — conception validated** — [spec](docs/architecture/specs/test-environment.md),
   diagrams `docs/architecture/diagrams/test-environment/`. Owner chose D1 Node seed job through the
   services (435/500, keeps ADR-0004 encryption), D2 generated per-machine passwords in an ignored

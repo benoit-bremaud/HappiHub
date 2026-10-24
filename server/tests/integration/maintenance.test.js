@@ -52,6 +52,67 @@ describe('maintenance job (AC19)', () => {
   });
 });
 
+describe('verification racing the never-verified tasks (#328)', () => {
+  const waitForLockWait = async () => {
+    for (let i = 0; i < 200; i += 1) {
+      if (await n("SELECT 1 FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database() AND pid <> pg_backend_pid()")) return;
+      await new Promise((resolve) => { setTimeout(resolve, 10); });
+    }
+    throw new Error('no session ever waited on a lock');
+  };
+  const signUp = async (email) => {
+    await (await browser(app)).post('/api/signup', { email, password: PASSWORD, associationName: 'Late' });
+    return (await pool.query('SELECT id FROM account WHERE email_bidx = $1', [bidx(email)])).rows[0].id;
+  };
+  /**
+   * Runs the job while an uncommitted verification holds the account row lock (verifyEmail's
+   * second lock). Its token is left unlocked: the VERIFY token has expired by day 23, and
+   * locking it would block the job's expired-token purge before the scan, hiding the race.
+   */
+  const runDuringVerification = async (accountId) => {
+    const tx = await pool.connect();
+    try {
+      await tx.query('BEGIN');
+      await tx.query('UPDATE account SET email_verified_at = $2 WHERE id = $1', [accountId, new Date(clock.now)]);
+      const job = run();
+      await waitForLockWait();
+      await tx.query('COMMIT');
+      return await job;
+    } finally { tx.release(); }
+  };
+
+  test('AC328-1: an account verified while the day-30 purge waits survives', async () => {
+    const id = await signUp('late@example.org');
+    await pool.query('UPDATE account SET verification_reminder_at = created_at WHERE id = $1', [id]); // day-30 path only
+    clock.now += 30 * DAY + 1;
+    expect((await runDuringVerification(id)).unverifiedAccountsDeleted).toBe(0);
+    expect(await n('SELECT 1 FROM account WHERE email_verified_at IS NOT NULL')).toBe(1);
+  });
+
+  test('AC328-2: an account verified while the day-23 reminder waits gets no reminder', async () => {
+    const id = await signUp('late@example.org');
+    clock.now += 23 * DAY + 1;
+    expect((await runDuringVerification(id)).remindersQueued).toBe(0);
+    expect(await lastEmail(pool, 'late@example.org', 'VERIFY_REMINDER')).toBeUndefined();
+    expect(await n('SELECT 1 FROM account WHERE verification_reminder_at IS NOT NULL')).toBe(0);
+  });
+
+  test('AC328-3: a verification waiting on a purge that commits first answers the neutral 410', async () => {
+    const id = await signUp('late@example.org');
+    const { token } = await lastEmail(pool, 'late@example.org', 'VERIFY');
+    const tx = await pool.connect();
+    try {
+      await tx.query('BEGIN');
+      await tx.query('SELECT 1 FROM auth_token WHERE account_id = $1 FOR UPDATE', [id]);
+      const verification = (await browser(app)).post('/api/email-verification', { token }).then((r) => r);
+      await waitForLockWait();
+      await tx.query('DELETE FROM account WHERE id = $1', [id]);
+      await tx.query('COMMIT');
+      expect((await verification).status).toBe(410);
+    } finally { tx.release(); }
+  });
+});
+
 describe('event tasks (brick B BC13, C1)', () => {
   const EVENTS = '/api/associations/troupe/events';
   const status = async (id) => (await pool.query('SELECT status FROM event WHERE id = $1', [id])).rows[0]?.status;
