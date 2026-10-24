@@ -20,7 +20,7 @@ flowchart TD
   R -- yes --> D[Delete namespace rows only]
   R -- no --> C
   D --> C[Load or generate passwords<br/>credentials file 0600]
-  C --> U[Upsert per persona block in a transaction<br/>accounts → associations → memberships<br/>→ invitations → events → activity/outbox<br/>through services and fieldCipher, injectable clock]
+  C --> U[Upsert one service call at a time, rerun completes a partial run<br/>accounts → associations → memberships<br/>→ invitations → events → activity/outbox<br/>through services and fieldCipher, injectable clock]
   U --> J[Run maintenance job with the seed clock<br/>archive, cleanup notice; SQL hidden flag E19]
   J --> V
   V[Verify: envelope stored, counts]

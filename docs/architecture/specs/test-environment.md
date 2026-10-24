@@ -1,6 +1,6 @@
 # Test environment — demo seed, test accounts and persona scenarios (#251)
 
-Status: **validated by Benoît on 2026-10-24** (D1–D6 top scores, weights accepted). This
+Status: **validated by Benoît on 2026-10-24** (D1–D7 top scores, weights accepted). This
 validates the conception only; implementation follows in its own brick (AGENTS.md gate).
 
 UML: [diagrams/test-environment/](../diagrams/test-environment/).
@@ -87,7 +87,8 @@ rest. "Edge" rows are valid but sit at a limit.
 | A3 | Demo Atelier fermé (fictional) | CLOSED, `closed_at` set | — | closed-association handling |
 | A4 | Demo Marc 1 … Demo Marc 5, created by P8 | ACTIVE | P8 | quota edge (five created) |
 
-Plus one PENDING invitation from A1 to P4, one EXPIRED and one REVOKED invitation.
+Plus one PENDING invitation from A1 to P4. Expired and revoked invitations are not stored: revocation
+and the maintenance job delete those rows (brick D), so they are rejection cases (R-ASSO-2).
 
 ### 4.2 Events
 
@@ -153,7 +154,7 @@ the demo database.
 | R-EVT-8 | identity | body carries an author or association id | 400 `UNKNOWN_FIELD` |
 | R-ASSO-1 | associations | P8 creates a sixth association | 409 |
 | R-ASSO-2 | invitations | accept an expired, revoked or unknown invitation | 410 |
-| R-PUB-1 | public API | draft, hidden or other-owner ids | 404, no owner identifiers in any projection |
+| R-PUB-1 | public API | draft or hidden event; event of the closed association A3 | 404; published events of any association stay readable (200), with no owner identifiers in any projection |
 
 The exact status codes are those of the current API contract
 ([API_DOCUMENTATION.md](../../API_DOCUMENTATION.md)); where it differs from this table, the
@@ -200,10 +201,11 @@ identified by (association, title) of the seed definition. A run:
 
 1. checks the guard (§ 2) and the migrations level;
 2. upserts accounts, associations, memberships, invitations and events in dependency order,
-   in one transaction per persona block;
+   one service call at a time (each service commits its own transaction, D7);
 3. never updates or deletes rows outside the namespace (unrelated developer data is kept);
 4. `--reset` deletes only namespace rows (cascade through foreign keys) before reseeding.
 
+A run that fails part-way leaves the rows already written; rerunning completes the rest (D7).
 Running twice yields the same row counts; the second run reports "0 created, N unchanged".
 
 ## 9. Link to the CI gaps #307 and #295
@@ -283,6 +285,18 @@ Sensitivity: kept 24/24.
 | **Total** | **460** | 335 | 400 |
 
 Sensitivity: kept 24/24. Owner chose A on 2026-10-24.
+
+### D7 — seed atomicity (added after the PR review)
+
+| Criterion (weight) | A idempotent rerun, no outer transaction | B unit-of-work refactor of services |
+| --- | --- | --- |
+| Simplicity (30) | 5 | 2 |
+| Recovery after a failure (30) | 5 rerun completes | 5 |
+| No production code change (25) | 5 | 1 |
+| Strict atomicity (15) | 2 | 5 |
+| **Total** | **455** | 310 |
+
+Sensitivity: winner kept for every ±10 weight shift. Owner chose A on 2026-10-24.
 
 ### D5 — target guard
 
