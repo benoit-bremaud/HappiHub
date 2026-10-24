@@ -127,14 +127,18 @@ export const getAccount = handle(async (req, res) => res.json({
   soleMemberOf: await soleMemberAssociations(req.app.locals.ctx.db, req.account.id),
 }));
 
-/** Current password checked under the per-account limit (UC4 2a, UC6 2b). */
+/**
+ * Current password checked under the per-account limit (UC4 2a, UC6 2b). The attempt is
+ * reserved before the slow compare so parallel requests cannot bypass it (#329).
+ */
 const requireCurrentPassword = async (req, password) => {
   const { ctx } = req.app.locals;
-  guardLimit(ctx.limits.currentPassword, req.account.id, ctx.now());
-  if (password === undefined || !(await checkPassword(ctx.db, req.account.id, password))) {
-    ctx.limits.currentPassword.hit(req.account.id, ctx.now());
+  const limiter = ctx.limits.currentPassword;
+  // A refused reservation means the limit is reached: guardLimit always throws the 429 here.
+  if (!limiter.take(req.account.id, ctx.now())) guardLimit(limiter, req.account.id, ctx.now());
+  if (password === undefined || !(await checkPassword(ctx.db, req.account.id, password)))
     throw new DomainError(403, 'The current password is incorrect.');
-  }
+  limiter.release(req.account.id, ctx.now());
 };
 
 const updateSchema = Joi.object({

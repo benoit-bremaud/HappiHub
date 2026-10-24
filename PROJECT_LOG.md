@@ -7,6 +7,13 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-24
 
+- **#329 current-password attempt race — conception validated and implemented**
+  ([spec](docs/architecture/specs/current-password-reservation.md)). Owner chose A: reserve the
+  attempt with `take` before the bcrypt compare and `release` on success (465/500 over adding a
+  per-IP limiter 395 and a per-account mutex 330; A first in 10/10 ±10 weight variants). No per-IP
+  limiter on `PATCH`/`DELETE /account` (R5). The concurrency test (8 parallel wrong passwords →
+  5 × 403, 3 × 429) is red on the old code. Unused `hit` removed from the keyed limiter.
+- **#328 merged** (PR #342, squash `96e5535`).
 - **#328 maintenance purge race — conception validated and implemented** (PR #342,
   [spec](docs/architecture/specs/maintenance-unverified-race.md)). Owner chose A, per-row recheck
   under lock with the `verifyEmail` lock order tokens → account (480/500 over account-only lock 395,
