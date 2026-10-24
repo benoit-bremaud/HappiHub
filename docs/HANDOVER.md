@@ -14,7 +14,7 @@ for current behavior, not historical tutorials or old issue titles.
 
 Repository: benoit-bremaud/HappiHub. On the current machine the working checkout is
 `/home/vev/Documents/02_personal/HappiHub`; the chat's default directory may differ.
-At this update origin/main resolves to `8ff8177` (#252 event client merge, PR #309). The recovery
+At this update origin/main resolves to `9cb6a3d` (#319/#320 edge hardening merge, PR #326). The recovery
 branch fix/security-boundaries was merged through PR #257 (`c831c6b` is in main). Inspect `git status`/`git log` and open PRs at resumption rather than trusting these SHAs.
 
 Owner: Benoît (benoit-bremaud). Retained collaborator: Clément/Yazii
@@ -120,7 +120,9 @@ folders as an approved implementation plan.
 ## Next actions
 
 QA backlog from the 2026-10-24 inspector pass: #319 (edge security headers) and #320 (source maps)
-are fixed on `fix/319-320-nginx-security-headers` (PR pending); #321–#324 (P3) remain. Next brick: #244.
+are fixed and merged (PR #326, squash `9cb6a3d`, both issues closed); #321–#324 (P3) remain.
+#244 partner API conception validated 2026-10-24 ([spec](architecture/specs/partner-api.md));
+its implementation is a later brick. Next brick: #251 demo data and test accounts.
 
 1. Done 2026-10-15: V1 framing, personas and journeys J1–J6 validated.
 2. Research synthesis is superseded for V1 by the validated framing.
@@ -141,7 +143,7 @@ are fixed on `fix/319-320-nginx-security-headers` (PR pending); #321–#324 (P3)
    Done 2026-10-23: event client #252 merged (PR #309, 8ff8177).
    #310 encryption at rest: conception validated 2026-10-23
    ([spec](architecture/specs/db-encryption-at-rest.md), ADR-0004 accepted). Implementation on
-   `feat/310-db-encryption` (PR pending owner approval); one design gap (Compose production
+   `feat/310-db-encryption`, merged (PR #312, `b1445c5`); one design gap (Compose production
    transport, socket volume option A 425/500) validated 2026-10-23 and recorded in spec § 7. Then #244 partner API and #251 persona scenarios (P1), each after conception approval.
    T11a blocks deployment. Open: email provider, hosting/backups (must provide EU PostgreSQL) and Géoplateforme quota (T11). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.

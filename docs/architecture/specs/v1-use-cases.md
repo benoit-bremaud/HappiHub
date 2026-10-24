@@ -187,7 +187,7 @@ single API instance (ADR-0001 consequences). Limits apply per normalized client 
 | Reports | 10 per hour per IP | UC26 3a |
 | Data export | 3 per day per account | UC5 2a |
 | API keys | 5 per association | UC27 1a |
-| Partner API | 60 per minute per IP before lookup, 600 per hour per key | UC28 2b, SQ3 |
+| Partner API | 60 per minute per IP before lookup, 600 reads per hour per key, 60 writes per hour per key (separate counter), 10 draft creations per key per 24 h | UC28 2b, SQ3, [partner API](partner-api.md) R3 |
 | Address suggestions | 30 per minute per account | CP2 |
 
 ## Account and association
@@ -602,7 +602,8 @@ server-rendered or prerendered enough to carry Open Graph metadata.
 
 ## Website integration
 
-Read-only, server-to-server, scoped to one association (J6). Key-authenticated routes send no
+Server-to-server, scoped to one association (J6); read-only in V1, extended on 2026-10-24
+with draft writes by scoped keys ([partner API](partner-api.md)). Key-authenticated routes send no
 CORS headers, so browsers cannot call them from another origin.
 
 ### UC27 — Manage API keys
@@ -649,6 +650,9 @@ CORS headers, so browsers cannot call them from another origin.
   - 2c. Association suspended or closed: 403 with a stable error code.
   - 3a. Event of another association, draft or unknown: 404 (no existence leak).
 - **Source**: J6 D3, S2.
+
+Amended 2026-10-24 by the [partner API spec](partner-api.md): keys gain scopes (UC27) and
+write keys create and edit their own drafts (UC34, UC35).
 
 ### Decisions — Website integration (validated 2026-10-15)
 

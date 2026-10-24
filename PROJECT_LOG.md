@@ -7,7 +7,15 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-24
 
-- **#319 + #320 edge hardening — branch `fix/319-320-nginx-security-headers`** — owner validated
+- **#244 partner API — conception validated** — branch `docs/244-partner-api-study`,
+  [spec](docs/architecture/specs/partner-api.md), diagrams `docs/architecture/diagrams/partner-api/`.
+  Owner chose D0 draft-only write API (370/500 over read-only 350, full write 340; sensitivity
+  corrected after the vote, read-only wins at security weight 35, owner reconfirmed C), D1 scoped
+  association keys (430), D2 `Idempotency-Key` 24 h (405, `externalId` upsert 400 kept as known
+  trade-off), D3 no webhooks, polling `updatedSince` (450), D4 a key edits only its own drafts
+  (465). Amends the V1 framing (write API) and UC27; new UC34/UC35. Implementation is a later brick.
+
+- **#319 + #320 edge hardening — merged (PR #326, squash `9cb6a3d`; both issues closed)** — owner validated
   the [spec](docs/architecture/specs/edge-security-headers.md) (MCDA A 480/500: strict CSP with
   `INLINE_RUNTIME_CHUNK=false`, over a per-build script hash 360 and Report-Only 290).
   `client/nginx.conf`: `server_tokens off`, CSP (`script-src 'self'`, Bootstrap CDN allowed in
