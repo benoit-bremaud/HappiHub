@@ -1,61 +1,41 @@
-# Local review — HappiHub (#310 database encryption at rest)
+# Local review — HappiHub (#319 + #320 edge security headers and source maps)
 
-- Date: 2026-10-23
-- Commit: 123e895
-- Scope: branch diff `main...feat/310-db-encryption`
-- Checks run: design · docs · tests · security · correctness
-- Verdict: ship (Must and Should resolved after review, Nice open)  ·  Must 4 ✅ · Should 9 ✅ · Nice 7 open
+- Date: 2026-10-24
+- Commit: 96e2762 + Referrer-Policy fix (head of `fix/319-320-nginx-security-headers`)
+- Scope: branch diff `main...fix/319-320-nginx-security-headers`
+- Checks run: design · docs · tests · security · correctness (one combined Opus pass, proportional
+  to a config-only diff: `client/nginx.conf`, `client/Dockerfile`, docs)
+- Verdict: ship  ·  Must 0 · Should 1 ✅ · Nice 2 ✅ · Disagree 1
 
-## Pre-merge gate (after the fixes)
+## Pre-merge gate
+
 | Step | Result |
 |---|---|
-| 1 Tests | ✅ server unit 142 · ✅ server integration 111 · ✅ client 84 |
-| 2 Coverage | server integration 90.97 % stmts / 73.09 % branches / 96.52 % funcs / 93.73 % lines (floor 80) · client 92.61 % stmts · docs not measured (no counter in the project) |
-| 3 SonarQube | ✅ PASSED. S6582 was fixed. The four S9382 issues were accepted as intentional (owner, MCDA option A 500/500; precedent #252). Hotspots ⚠️ were not read (the analysis token lacks the right to browse them). |
-| 4 Secrets | ✅ gitleaks clean (`main..HEAD`, dir scan) · no tracked .env · diff read: nothing sensitive |
-| 5 QA pass | ✅ full, on a disposable PostgreSQL 16 with the dev keyring. Covered: sign-up with a mixed-case address, verification, sign-in with another case, display name, association contact email, invitation, export (`qa/2026-10-23-310-export.json`), deletion (0 rows left). `pg_dump` holds no plaintext address or name. Console clean; network has no 4xx/5xx. Screenshots: `qa/2026-10-23-310-*.jpg` |
-- Gate: **GREEN, pending owner merge approval**
+| 1 Tests | ✅ client 84/84 · server unit 142/142 · no product code changed (integration suite unaffected, not rerun) |
+| 2 Coverage | client 92.61 % stmts / 81.99 % branches / 93.61 % funcs / 96.09 % lines · docs unchanged (no code) |
+| 3 SonarQube | ✅ main gate OK (new coverage 94.4 %, 0 violations); the diff touches no `sonar.sources` path |
+| 4 Secrets | ✅ gitleaks clean (origin/main..HEAD) · no tracked .env · diff read: nothing sensitive |
+| 5 QA pass | ✅ smoke on the built runtime image: six headers on `/`, SPA route, `/api/` (403) and a missing asset; `Server: nginx` without version; 0 `.map` files; 0 inline `<script>`; SPA renders with Bootstrap and no CSP violation in the console |
 
-## 🔴 Must Have (all fixed)
-- `server/config/databaseUrl.js:15,18` `[security|design]` · A repeated `host` or `sslmode` parameter bypasses D7. `URLSearchParams.get()` reads the first value, while `pg-connection-string` uses the last. So `?sslmode=verify-full&sslmode=disable` is accepted in production and the driver connects without TLS. · Refuse `getAll(key).length > 1` for `host` and `sslmode`, and add unit tests with both URLs.
-- `docs/API_DOCUMENTATION.md` `[docs]` · States that `npm run migrate` needs the keyring; `migrate.js` never reads it. · Remove the claim.
-- `docs/architecture/specs/db-encryption-at-rest.md` § 8 `[docs]` · The heading still says "not authorized yet", and the line anchors are stale. · Update the heading and anchors.
-- SonarQube new violations `[correctness]`:
-  - `server/domain/fieldCipher.js:23`: S6582 (use an optional chain).
-  - `server/jobs/reencrypt.js:37,59,60` and `server/services/outbox.js:35`: S9382 (await in a loop). The sequential order is intentional (batched row locks, ordered delivery), and #252 set a precedent of accepting S9382.
-  - Fix S6582 in code; S9382 needs an owner decision: accept it as intentional, or refactor.
+Also: Hadolint clean on `client/Dockerfile`.
 
-## 🟡 Should Have (all fixed)
-- `server/domain/fieldCipher.js` + services/jobs `[design]` · The AAD column names are repeated as raw strings, and a typo still passes the regex. · Use exported `FIELD` constants with a membership check.
-- `server/services/invitations.js:131` `[design|tests]` · There is no test that stored addresses are folded (spec § 5), and the comment credits `foldEmail` with work `emailSchema` does. · Add an integration test and correct the comment.
-- `server/domain/fieldCipher.js:68` `[design|correctness]` · `String(value)` silently stores `[object Object]`. · Reject non-string values with FieldCipherError.
-- `server/services/outbox.js:26` `[design|docs]` · A missing cipher turns into delivery failures, and after the retries the payloads are set to NULL. · Add a guard, `if (!cipher) throw`.
-- `server/scripts/generate-keyring.js` `[design|docs]` · The script is missing from the spec § 8 impact table. · Add the row and record the owner's acknowledgement.
-- `server/jobs/reencrypt.js:28` `[correctness]` · One malformed envelope aborts the whole run. · Document this as fail-closed, or report the failing row id.
-- Migration up `[docs]` · The migration requires empty tables and gives no explicit message. · Add a note in CONFIGURATION/HANDOVER.
-- `server/tests/integration/encryption.test.js` `[tests]` · Gaps: the blind index after rotation, paging past one batch, `remaining > 0`, and a fail-closed check at API level. · Add those cases.
-- `server/tests/unit/fieldCipher.test.js:127` `[tests]` · The negative-lookahead regex is a weak assertion. · Assert the exact message and check that `secret-value` is absent.
+- Gate: **GREEN** for push; merge after owner approval.
+
+## 🔴 Must Have
+_None._
+
+## 🟡 Should Have
+- `client/nginx.conf` `[security]` · Express already sends `Referrer-Policy: no-referrer`
+  (`server/app.js:49`); a weaker edge value would win on `/api` · ✅ edge set to `no-referrer`
+  (owner MCDA A 480/500), spec updated.
 
 ## 🔵 Nice to Have
-- `server/jobs/reencrypt.js:6` `[docs]` · "AC15" refers to brick D's spec. · Change it to "brick D AC15".
-- `docker-compose.yml:42` `[correctness]` · The short bind syntax creates a directory when the keyring file is missing. · Use the long syntax with `create_host_path: false`.
-- `docs/DOCKER.md` `[docs]` · The "least-privilege role" sentence is now misplaced. · Move it.
-- `server/services/events.js` `[design]` · The public page decrypts an editor name it never shows. · Add a comment.
-- Cipher argument style `[design]` · The `(db, cipher)` and `(client, ctx)` styles are mixed. · Align them when these functions are next touched.
-- `server/tests/unit/fieldCipher.test.js` `[tests]` · The config tests would be easier to find in `config.test.js`.
-- Keyring readability for uid 1000 in the container `[docs]` · Add a note in DOCKER.md.
+- `docs/architecture/specs/edge-security-headers.md` `[docs]` · document the `/api` interaction · ✅ done.
+- Same spec `[tests]` · verify an `/api/` response and an error path too · ✅ added and run.
 
 ## ⚪ Disagree / Intentional
-- Using `node:crypto` in `domain/` keeps it pure: there is no file, environment or database access (spec § 8, § 16).
-- Keyring validation lives in the cipher, and the loader only reads (§ 16).
-- The literal SQL per table in `reencrypt.js` follows brick D AC15 (constant query text).
-- The down migration uses `TRUNCATE … CASCADE` (§ 8: restore the clear shapes empty).
-- `migrate.js` calls `databasePoolConfig` only for its check, which keeps one helper for every entry point (§ 7).
-- Unix socket in Compose prod: the owner validated option A (425/500).
+- CSP `img-src data:` and `font-src 'self'` · kept: Bootstrap 4.5 uses `data:` SVG backgrounds.
 
 ## Per-dimension summary
-- Design: no over-engineering. One check fails open, plus magic strings.
-- Docs: two inaccurate statements and one stale spec heading.
-- Tests: the suites are green, with rotation and folding gaps.
-- Security: one fail-open D7 bypass. Everything else fails closed.
-- Correctness: there are 5 Sonar violations, and reencrypt is brittle on a malformed envelope.
+- Design: server-block headers only, minimal. · Docs: spec matches the code. · Tests: manual curl/find
+  checks fit an infra change. · Security: closes S1 and S9. · Correctness: nothing breaks the SPA.

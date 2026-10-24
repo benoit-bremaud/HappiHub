@@ -12,7 +12,8 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   `INLINE_RUNTIME_CHUNK=false`, over a per-build script hash 360 and Report-Only 290).
   `client/nginx.conf`: `server_tokens off`, CSP (`script-src 'self'`, Bootstrap CDN allowed in
   `style-src` only, `connect-src 'self'` since production builds with `/api`,
-  `frame-ancestors 'none'`), X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy,
+  `frame-ancestors 'none'`), X-Frame-Options DENY, nosniff, Referrer-Policy `no-referrer` (aligned with Express after review-local found a
+  weaker duplicate on `/api`; owner MCDA A 480/500), Permissions-Policy,
   HSTS 1 year. `client/Dockerfile`: `GENERATE_SOURCEMAP=false`. Verified on the built runtime
   image: all six headers on `/` and SPA routes, `Server: nginx` without version, 0 `.map`
   files, 0 inline `<script>`, SPA renders with no CSP violation in the browser console.
