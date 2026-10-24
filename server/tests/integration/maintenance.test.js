@@ -1,6 +1,6 @@
 import { runMaintenance } from '../../jobs/maintenance.js';
 import { createLogTransport, deliverOutbox } from '../../services/outbox.js';
-import { browser, buildApp, createPool, lastEmail, migrate, PASSWORD, resetData, signUpVerified } from './harness.js';
+import { bidx, browser, buildApp, cipher, createPool, lastEmail, migrate, PASSWORD, resetData, signUpVerified } from './harness.js';
 
 const DAY = 24 * 3600e3;
 let pool, app, clock;
@@ -36,12 +36,13 @@ describe('maintenance job (AC19)', () => {
     expect((await run()).unverifiedAccountsDeleted).toBe(1);
     expect(await n('SELECT 1 FROM account')).toBe(0);
     expect(await n("SELECT 1 FROM association WHERE status = 'CLOSED'")).toBe(1);
-    expect(await n("SELECT 1 FROM outbox_message WHERE recipient = 'late@example.org'")).toBe(0);
+    expect((await pool.query('SELECT 1 FROM outbox_message WHERE recipient_bidx = $1', [bidx('late@example.org')])).rows).toHaveLength(0);
   });
 
   test('purges outbox failures after 30 days, activity after 12 months, closed associations after 30 days', async () => {
     const claire = await signUpVerified(app, pool, 'claire@example.org', 'Troupe');
-    await pool.query("INSERT INTO outbox_message (recipient, template, failed_at) VALUES ('x@example.org', 'RESET', $1)", [new Date(clock.now)]);
+    await pool.query("INSERT INTO outbox_message (recipient_enc, recipient_bidx, template, failed_at) VALUES ($2, $3, 'RESET', $1)",
+      [new Date(clock.now), cipher.encrypt('outbox_message.recipient_enc', 'x@example.org'), bidx('x@example.org')]);
     await claire.post('/api/associations', { name: 'Closing' });
     await claire.post('/api/associations/closing/close', { confirm: true });
     clock.now += 31 * DAY;
@@ -108,7 +109,7 @@ describe('outbox delivery (DF1)', () => {
   test('the log transport writes the link and deletes the row', async () => {
     await (await browser(app)).post('/api/signup', { email: 'o@example.org', password: PASSWORD, associationName: 'Out' });
     const lines = [];
-    expect(await deliverOutbox(pool, createLogTransport({ production: false, write: (line) => lines.push(line) }))).toBe(1);
+    expect(await deliverOutbox(pool, createLogTransport({ production: false, write: (line) => lines.push(line) }), { cipher })).toBe(1);
     expect(lines[0]).toMatch(/^\[outbox\] VERIFY to o@example.org: .*verify-email#/);
     expect(await n('SELECT 1 FROM outbox_message')).toBe(0);
   });
@@ -116,11 +117,11 @@ describe('outbox delivery (DF1)', () => {
   test('failures are retried, then the payload is dropped after 5 attempts', async () => {
     await (await browser(app)).post('/api/signup', { email: 'f@example.org', password: PASSWORD, associationName: 'Fail' });
     const failing = { send: async () => { throw new Error('provider down'); } };
-    for (let i = 0; i < 5; i += 1) await deliverOutbox(pool, failing, { now: () => clock.now });
-    const { rows: [row] } = await pool.query('SELECT attempts, failed_at, payload FROM outbox_message');
-    expect(row).toMatchObject({ attempts: 5, payload: null });
+    for (let i = 0; i < 5; i += 1) await deliverOutbox(pool, failing, { cipher, now: () => clock.now });
+    const { rows: [row] } = await pool.query('SELECT attempts, failed_at, payload_enc FROM outbox_message');
+    expect(row).toMatchObject({ attempts: 5, payload_enc: null });
     expect(row.failed_at).not.toBeNull();
-    expect(await deliverOutbox(pool, failing)).toBe(0);
+    expect(await deliverOutbox(pool, failing, { cipher })).toBe(0);
   });
 
   test('the log transport is refused in production', () => {

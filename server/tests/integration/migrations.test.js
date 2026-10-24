@@ -10,7 +10,7 @@ test('migrations apply up, down to zero and up again', async () => {
     migrate('up');
     expect(await tables()).toEqual(['account', 'activity_entry', 'association', 'auth_token', 'event', 'invitation',
       'membership', 'outbox_message', 'session']);
-    migrate('down');
+    migrate('down', ['2']);
     expect(await tables()).not.toContain('event');
     migrate('down', ['Infinity']);
     expect(await tables()).toEqual([]);
@@ -71,9 +71,9 @@ describe('event constraints (BC17)', () => {
   });
 
   test('the outbox accepts the new template and still rejects unknown ones', async () => {
-    await expect(pool.query("INSERT INTO outbox_message (recipient, template) VALUES ('a@b.c', 'DRAFT_CLEANUP_NOTICE')"))
+    await expect(pool.query("INSERT INTO outbox_message (recipient_enc, recipient_bidx, template) VALUES ('hh1.k1.x', '\\x00', 'DRAFT_CLEANUP_NOTICE')"))
       .resolves.toBeDefined();
-    await expect(pool.query("INSERT INTO outbox_message (recipient, template) VALUES ('a@b.c', 'SPAM')"))
+    await expect(pool.query("INSERT INTO outbox_message (recipient_enc, recipient_bidx, template) VALUES ('hh1.k1.x', '\\x00', 'SPAM')"))
       .rejects.toMatchObject({ code: '23514' });
   });
 });

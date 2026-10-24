@@ -29,6 +29,25 @@ Session idle lifetime is 30 minutes and absolute lifetime eight hours. Anonymous
 lifetime is 30 minutes. Expiry policy is checked before authority is granted, independent
 of physical TTL deletion. Session-store failures fail closed for protected requests.
 
+Supply `FIELD_KEYRING_FILE_<suffix>`, the path of the JSON field keyring that encrypts personal
+columns at rest ([spec](architecture/specs/db-encryption-at-rest.md) § 6, ADR-0004). Generate it
+with `npm run keyring:generate -- <path>` (from `server/`; it refuses to overwrite and writes mode
+0400); local development uses the git-ignored `server/.keys/field-keyring.dev.json`. Start is
+refused when the file is missing or invalid. Keep a copy of the production keyring in the
+password manager, never with backups: losing it loses the data. Key rotation is staged: add the
+new key to `keys` and restart every process; switch `active` and restart again; run
+`npm run reencrypt` until every count is zero (a value it cannot decrypt stops the run with
+a generic error, fail closed: restore that row from a backup before retrying); then remove the old key from the runtime keyring
+and keep an archived copy until the last pre-rotation backup has expired. Integration tests use
+an in-memory keyring and need no file.
+
+In production the database URL must point to a Unix socket (`?host=/path`) or a loopback
+address, or carry the literal `sslmode=verify-full`; the API, `npm run maintenance`,
+`npm run migrate` and `npm run reencrypt` refuse anything else. Databases created before #310
+must be recreated (no backfill: V1 holds no deployed data). The #310 migration adds NOT NULL
+columns without defaults, so on a database that still holds accounts, invitations or outbox
+rows it fails with a PostgreSQL "contains null values" error: reset the local database first.
+
 Local Docker uses the ignored server/.env.docker.local file. Follow [Docker workflows](DOCKER.md)
 for secret permissions, HTTPS gateway requirements and isolated volumes.
 

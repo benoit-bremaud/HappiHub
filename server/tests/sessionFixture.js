@@ -1,3 +1,4 @@
+import { testCipher } from './testCipher.js';
 import session from 'express-session';
 import signature from 'cookie-signature';
 export const origin = 'http://localhost:3000';
@@ -7,8 +8,9 @@ export const makeStore = () => new session.MemoryStore();
 export const owner = '7d9f2c56-1d6e-4c43-9b55-0a1c2d3e4f5a';
 /** Database boundary stub: `rows` answers every query (unit tests never reach PostgreSQL). */
 export const stubDb = (rows = []) => ({ query: jest.fn(async () => ({ rows, rowCount: rows.length })) });
-export const accountRow = (overrides = {}) => ({ id: owner, email: 'owner@example.com', email_verified_at: new Date(),
-  pending_email: null, display_name: null, platform_role: 'NONE', auth_version: 0, ...overrides });
+export const accountRow = (overrides = {}) => ({ id: owner,
+  email_enc: testCipher.encrypt('account.email_enc', 'owner@example.com'), email_verified_at: new Date(),
+  pending_email_enc: null, display_name_enc: null, platform_role: 'NONE', auth_version: 0, ...overrides });
 export const csrf = 'a'.repeat(64);
 export const fixtureCookie = (id = 'fixture') => `happihub.sid=${encodeURIComponent('s:' + signature.sign(id, config.sessionSecret))}`;
 export const seedSession = (store, accountId) => new Promise((resolve, reject) => store.set('fixture', {

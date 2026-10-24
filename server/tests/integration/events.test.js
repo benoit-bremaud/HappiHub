@@ -1,4 +1,4 @@
-import { browser, buildApp, createPool, lastEmail, migrate, resetData, signUpVerified } from './harness.js';
+import { bidx, browser, buildApp, createPool, lastEmail, migrate, resetData, signUpVerified } from './harness.js';
 
 // Brick B acceptance criteria BC1–BC12, BC14–BC16, BC18, BC19 (spec § 8) against the Express
 // app and a disposable PostgreSQL. BC13 is in maintenance.test.js, BC17 in migrations.test.js.
@@ -15,7 +15,7 @@ const future = () => new Date(clock.now + 7 * DAY).toISOString();
 const complete = () => ({ title: 'Concert', type: 'CONCERT', shortDescription: 'Live music', startsAt: future(),
   venueLabel: 'Salle des fêtes', venueCity: '69123' });
 const row = async (id) => (await pool.query('SELECT * FROM event WHERE id = $1', [id])).rows[0];
-const accountId = async (email) => (await pool.query('SELECT id FROM account WHERE email = $1', [email])).rows[0].id;
+const accountId = async (email) => (await pool.query('SELECT id FROM account WHERE email_bidx = $1', [bidx(email)])).rows[0].id;
 const activity = async (action) =>
   (await pool.query('SELECT * FROM activity_entry WHERE action = $1 ORDER BY occurred_at', [action])).rows;
 
@@ -154,11 +154,11 @@ describe('UC18 publish (BC8, BC9)', () => {
       'MISSING_FIELD:startsAt', 'MISSING_FIELD:venueLabel', 'MISSING_FIELD:venueCity'] } });
 
     const event = await create(claire);
-    await pool.query("UPDATE account SET email_verified_at = NULL WHERE email = 'claire@example.org'");
+    await pool.query("UPDATE account SET email_verified_at = NULL WHERE email_bidx = $1", [bidx('claire@example.org')]);
     await pool.query("UPDATE event SET starts_at = $2 WHERE id = $1", [event.id, new Date(clock.now - HOUR)]);
     expect((await claire.post(`${EVENTS}/${event.id}/publish`, { baseVersion: 1 })).body.details.failures)
       .toEqual(['EMAIL_NOT_VERIFIED', 'START_IN_PAST']);
-    await pool.query("UPDATE account SET email_verified_at = now() WHERE email = 'claire@example.org'");
+    await pool.query("UPDATE account SET email_verified_at = now() WHERE email_bidx = $1", [bidx('claire@example.org')]);
     await pool.query("UPDATE event SET starts_at = $2 WHERE id = $1", [event.id, future()]);
 
     expect((await claire.post(`${EVENTS}/${event.id}/publish`, { baseVersion: 7 })).body)
@@ -356,7 +356,7 @@ describe('membership under lock', () => {
   test('a member removed after loading the association can no longer write', async () => {
     const { claire, malik } = await twoMembers();
     const event = await create(claire);
-    await pool.query("DELETE FROM membership WHERE account_id = (SELECT id FROM account WHERE email = 'malik@example.org')");
+    await pool.query("DELETE FROM membership WHERE account_id = (SELECT id FROM account WHERE email_bidx = $1)", [bidx('malik@example.org')]);
     expect((await malik.patch(`${EVENTS}/${event.id}`, { baseVersion: 1, changes: { title: 'X' } })).status).toBe(404);
     expect((await row(event.id)).version).toBe(1);
   });

@@ -8,7 +8,7 @@ export const authenticateSession = async (req, res, next) => {
   if (!req.session?.accountId || !isSessionCurrent(req.session, req.app.locals.now()))
     return res.status(401).json({ message: 'Authentication required' });
   try {
-    const account = await findAccount(req.app.locals.ctx.db, req.session.accountId);
+    const account = await findAccount(req.app.locals.ctx.db, req.app.locals.ctx.cipher, req.session.accountId);
     if (!account || account.authVersion !== req.session.authVersion) {
       await sessionOperation(req.session, 'destroy'); clearSessionCookie(req, res);
       return res.status(401).json({ message: 'Authentication required' });

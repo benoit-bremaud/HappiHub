@@ -7,6 +7,19 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-23
 
+- **#310 encryption at rest — implemented on `feat/310-db-encryption` (PR pending)** — pure
+  `server/domain/fieldCipher.js` (AES-256-GCM, 12-byte IV, AAD `table.column`, envelope
+  `hh1.<kid>.<b64url>`, HMAC-SHA256 blind index over `foldEmail`, generic `FieldCipherError`);
+  `config/fieldKeyring.js` and the shared D7 check `config/databaseUrl.js` used by `server.js`,
+  `runMaintenance.js`, `migrate.js` and the new `runReencrypt.js`; migration
+  `1761177600000_db-encryption-at-rest.sql` replaces the clear columns without backfill; services
+  per spec § 8; `jobs/reencrypt.js` (batches of 200, `FOR UPDATE SKIP LOCKED`, remaining counts);
+  `npm run keyring:generate`. Design gap found while documenting: the production Compose reached
+  PostgreSQL by service name, refused by D7; owner validated option A (shared Unix socket volume,
+  `--auth-local=scram-sha-256`, 425/500 over defer 360, private-CA TLS 325, host allow-list 290),
+  recorded in spec § 7. Tests: server unit 139, integration 107 (no-plaintext AC1, bidx
+  uniqueness, AC7 erasure, rotation idempotence AC5, `sess` key allowlist D4, boot refusals
+  AC4/D7), client 84. AC8: 100 decryptions ≈ 0.74 ms on Node 22.23.3.
 - **#310 encryption at rest — conception study opened** — branch `docs/310-db-encryption-study`,
   spec `docs/architecture/specs/db-encryption-at-rest.md`, proposed ADR-0004 and diagrams
   `docs/architecture/diagrams/db-encryption/`. Scope chosen by the owner on 2026-10-22

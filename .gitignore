@@ -137,3 +137,6 @@ node_modules
 # Local quality tooling intermediates.
 __pycache__/
 .scannerwork/
+# Field encryption keyrings (spec db-encryption-at-rest § 6.1) never enter version control.
+.keys/
+*keyring*.json

@@ -115,7 +115,17 @@ removed meanwhile gets `404`.
 Emails go to an outbox table. Until T11a delivers a real transport, only a development log
 transport exists and production start is refused.
 
+## Data at rest
+
+Request and response formats are unchanged. Personal values (account and invitation emails,
+pending email, display name, association contact email, outbox recipient and payload) are
+stored as AES-256-GCM envelopes, with HMAC blind indexes for email lookups and uniqueness
+([spec](architecture/specs/db-encryption-at-rest.md), ADR-0004). Emails are still compared
+case-insensitively (`foldEmail`).
+
 ## Verification commands
 
 From `server/`: `npm run migrate`, `npm test -- --runInBand`, `npm run test:integration`
-(needs Docker), `npm run maintenance`.
+(needs Docker), `npm run maintenance`, `npm run reencrypt` (key rotation). The server, `maintenance`
+and `reencrypt` need `FIELD_KEYRING_FILE_<suffix>` ([configuration](CONFIGURATION.md));
+`migrate` and the test suites do not.

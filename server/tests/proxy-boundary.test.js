@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { createApp } from '../app.js';
+import { testCipher } from './testCipher.js';
 import { config, origin, makeStore, seedSession, browserWrite, stubDb } from './sessionFixture.js';
 
 let app, db;
@@ -8,7 +9,7 @@ beforeEach(async () => {
   await seedSession(store);
   // Supertest's loopback socket stands in for the explicitly trusted Nginx peer.
   db = stubDb();
-  app = createApp({ ...config, trustedProxy: '127.0.0.1' }, { store, db });
+  app = createApp({ ...config, trustedProxy: '127.0.0.1' }, { cipher: testCipher, store, db });
 });
 afterEach(() => jest.restoreAllMocks());
 
@@ -21,7 +22,7 @@ test('trusted canonical IPv4 and IPv6 addresses determine the client identity', 
 });
 
 test('an untrusted direct peer cannot choose identity or scheme through headers', async () => {
-  app = createApp({ ...config, trustedProxy: '192.0.2.254' }, { store: makeStore(), db: stubDb() });
+  app = createApp({ ...config, trustedProxy: '192.0.2.254' }, { cipher: testCipher, store: makeStore(), db: stubDb() });
   app.get('/fixture/client-ip', (req, res) => res.json({ ip: req.ip, secure: req.secure }));
   const response = await request(app).get('/fixture/client-ip')
     .set('X-Forwarded-For', '192.0.2.10').set('X-Forwarded-Proto', 'https');

@@ -137,7 +137,18 @@ warning, but its v3 returns to weaker libpq semantics), reads a Unix socket from
 query parameter, and forbids an explicit `ssl` option in the Pool config, which would override
 `sslmode`.
 
-## 8. Impact on code (for the implementation brick, not authorized yet)
+**Compose production baseline (design gap found during implementation, validated by Benoît on
+2026-10-23, option A 425/500)**: `docker-compose.prod.yml` reached PostgreSQL by its service name
+`postgres` on an internal Docker network, which this rule refuses. The API now reaches it only
+through the Unix socket on a shared `postgres_socket` volume (`?host=/var/run/postgresql`) and
+leaves the database network; `POSTGRES_INITDB_ARGS=--auth-local=scram-sha-256` keeps a password on
+the socket (the image trusts local connections by default). MCDA (security 30, D7 kept unchanged 25,
+KISS 25, operations 10, testability 10): A socket volume 425, D defer to hosting 360 (baseline would
+not boot), B TLS with a private CA 325, C allow-list of internal host names 290 (weakens D7).
+Sensitivity: KISS 40 / security 15 keeps A first (425 vs 390). The URL is parsed with WHATWG `URL`:
+the user-only form `postgres://u:p@/db` is refused (fail closed); use `@localhost/db?host=…`.
+
+## 8. Impact on code (implemented in #310)
 
 New pure module `server/domain/fieldCipher.js` (named exports: `createFieldCipher(keyring)` →
 `{ encrypt(column, value), decrypt(column, envelope), blindIndex(value), needsRotation(envelope) }`),
@@ -150,14 +161,16 @@ and `links`. Services call it at their SQL boundary; no ORM, no repository layer
 | accounts.authenticate, requestPasswordReset | `WHERE email_bidx = $1` |
 | accounts.resendVerification | `WHERE (email_bidx = $1 AND …) OR pending_email_bidx = $1` |
 | accounts verify / updateAccount | move `pending_email_*` pair; uniqueness check by bidx |
-| accounts.toAccount, export | decrypt email, pending email, display name, and `invitation.email_enc` in `invitationsSent` (`accounts.js:186-196`) |
+| accounts.toAccount, export | decrypt email, pending email, display name, and `invitation.email_enc` in `invitationsSent` (`accounts.js:209`) |
 | accounts.deleteAccount | `DELETE … WHERE email_bidx = ANY($1)` / `recipient_bidx = ANY($1)` |
 | invitations.* | insert/list/accept with `email_enc`/`email_bidx`; `invitation.email !== account.email` compares decrypted folded values |
 | associations | member list decrypts names/emails; `contact_email_enc` read/write |
 | outbox.queueEmail / deliverOutbox | encrypt recipient+payload; transport receives decrypted message; failure path nulls `payload_enc` |
-| events | `last_edited_by_name` projection decrypts `display_name_enc` (`events.js:16`); draft-cleanup notice decrypts member emails before `queueEmail` (`events.js:294-297`) |
+| events | `last_edited_by_name` projection decrypts `display_name_enc` (`events.js:30`); draft-cleanup notice decrypts member emails before `queueEmail` (`events.js:298-299`) |
 | jobs/maintenance | reminder selects `email_enc` and decrypts |
 | new jobs/reencrypt.js | rotation job (§ 6.2) |
+| new scripts/generate-keyring.js | `npm run keyring:generate -- <path>`: fresh keyring (§ 6.1), mode 0400, refuses to overwrite, never prints the keys (added during implementation, acknowledged by the owner 2026-10-23) |
+| docker-compose.prod.yml / docker-compose.yml | socket volume and `field_keyring` secret (§ 7); local keyring bind mount |
 
 Logging: decrypted values are never logged in production (the log transport is already refused
 there); decrypt errors throw a generic `FieldCipherError` without values.

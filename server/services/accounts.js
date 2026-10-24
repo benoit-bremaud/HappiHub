@@ -7,19 +7,22 @@ import { exportEvents } from './events.js';
 import { pendingInvitationsFor } from './invitations.js';
 import { queueEmail } from './outbox.js';
 import { DomainError } from './errors.js';
+import { FIELD } from '../domain/fieldCipher.js';
 
 const BCRYPT_COST = 12;
 // Compared when no account matches, so both paths cost one bcrypt verification (AC2).
 const DUMMY_HASH = bcrypt.hashSync('dummy password for constant-time paths', BCRYPT_COST);
 
-const ACCOUNT_COLUMNS = 'id, email, email_verified_at, pending_email, display_name, platform_role, auth_version';
-export const toAccount = (row) => ({ id: row.id, email: row.email, emailVerifiedAt: row.email_verified_at,
-  pendingEmail: row.pending_email, displayName: row.display_name, platformRole: row.platform_role,
+const ACCOUNT_COLUMNS = 'id, email_enc, email_verified_at, pending_email_enc, display_name_enc, platform_role, auth_version';
+/** Account row to the domain shape, decrypting its personal columns at the SQL boundary (§ 8). */
+export const toAccount = (cipher, row) => ({ id: row.id, email: cipher.decrypt(FIELD.accountEmail, row.email_enc),
+  emailVerifiedAt: row.email_verified_at, pendingEmail: cipher.decrypt(FIELD.accountPendingEmail, row.pending_email_enc),
+  displayName: cipher.decrypt(FIELD.accountDisplayName, row.display_name_enc), platformRole: row.platform_role,
   authVersion: row.auth_version });
 
-export const findAccount = async (db, id) => {
+export const findAccount = async (db, cipher, id) => {
   const { rows: [row] } = await db.query(`SELECT ${ACCOUNT_COLUMNS} FROM account WHERE id = $1`, [id]);
-  return row ? toAccount(row) : null;
+  return row ? toAccount(cipher, row) : null;
 };
 
 const issueToken = async (client, ctx, accountId, purpose) => {
@@ -49,8 +52,9 @@ export const signUp = async (ctx, { email, password, associationName }) => {
   const similarAssociation = associationName !== undefined && await similarAssociationExists(ctx.db, associationName);
   await withTransaction(ctx.db, async (client) => {
     const { rows: [created] } = await client.query(
-      'INSERT INTO account (email, password_hash, created_at) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING RETURNING id',
-      [email, passwordHash, new Date(ctx.now())]);
+      `INSERT INTO account (email_enc, email_bidx, password_hash, created_at) VALUES ($1, $2, $3, $4)
+       ON CONFLICT (email_bidx) DO NOTHING RETURNING id`,
+      [ctx.cipher.encrypt(FIELD.accountEmail, email), ctx.cipher.blindIndex(email), passwordHash, new Date(ctx.now())]);
     if (!created) {
       await queueEmail(client, ctx, { recipient: email, template: 'ACCOUNT_EXISTS',
         payload: { signInLink: ctx.links.signIn(), resetLink: ctx.links.forgotPassword() } });
@@ -68,9 +72,10 @@ export const signUp = async (ctx, { email, password, associationName }) => {
  * unverified email cannot sign in (S1-C), so a pre-registered address never yields a session.
  */
 export const authenticate = async (ctx, email, password) => {
-  const { rows: [row] } = await ctx.db.query(`SELECT ${ACCOUNT_COLUMNS}, password_hash FROM account WHERE email = $1`, [email]);
+  const { rows: [row] } = await ctx.db.query(`SELECT ${ACCOUNT_COLUMNS}, password_hash FROM account WHERE email_bidx = $1`,
+    [ctx.cipher.blindIndex(email)]);
   const valid = await bcrypt.compare(password, row?.password_hash ?? DUMMY_HASH);
-  return row && valid && row.email_verified_at ? toAccount(row) : null;
+  return row && valid && row.email_verified_at ? toAccount(ctx.cipher, row) : null;
 };
 
 /**
@@ -80,27 +85,32 @@ export const authenticate = async (ctx, email, password) => {
 export const verifyEmail = (ctx, token) => withTransaction(ctx.db, async (client) => {
   const accountId = await consumeToken(client, ctx, token, 'VERIFY');
   if (!accountId) throw new DomainError(410, 'This link is expired or was already used. Ask for a new one.');
-  const { rows: [row] } = await client.query(`SELECT ${ACCOUNT_COLUMNS} FROM account WHERE id = $1 FOR UPDATE`, [accountId]);
+  const { rows: [row] } = await client.query(
+    'SELECT pending_email_enc, pending_email_bidx FROM account WHERE id = $1 FOR UPDATE', [accountId]);
   const now = new Date(ctx.now());
-  if (row.pending_email) {
-    const { rows: taken } = await client.query('SELECT 1 FROM account WHERE email = $1', [row.pending_email]);
+  if (row.pending_email_bidx) {
+    const { rows: taken } = await client.query('SELECT 1 FROM account WHERE email_bidx = $1', [row.pending_email_bidx]);
     if (taken.length) {
-      await client.query('UPDATE account SET pending_email = NULL WHERE id = $1', [accountId]);
+      await client.query('UPDATE account SET pending_email_enc = NULL, pending_email_bidx = NULL WHERE id = $1', [accountId]);
       throw new DomainError(410, 'This link is expired or was already used. Ask for a new one.');
     }
-    await client.query('UPDATE account SET email = pending_email, pending_email = NULL, email_verified_at = $2 WHERE id = $1',
-      [accountId, now]);
+    // The column-bound AAD forbids copying the envelope: decrypt, then encrypt for account.email_enc.
+    const email = ctx.cipher.decrypt(FIELD.accountPendingEmail, row.pending_email_enc);
+    await client.query(
+      `UPDATE account SET email_enc = $3, email_bidx = pending_email_bidx, pending_email_enc = NULL,
+         pending_email_bidx = NULL, email_verified_at = $2 WHERE id = $1`,
+      [accountId, now, ctx.cipher.encrypt(FIELD.accountEmail, email)]);
   } else {
     await client.query('UPDATE account SET email_verified_at = COALESCE(email_verified_at, $2) WHERE id = $1', [accountId, now]);
   }
-  return findAccount(client, accountId);
+  return findAccount(client, ctx.cipher, accountId);
 });
 
 /** UC2 1a/2a: neutral resend for an unverified account email or a pending new email. */
 export const resendVerification = (ctx, email) => withTransaction(ctx.db, async (client) => {
   const { rows: [row] } = await client.query(
-    'SELECT id, email, pending_email FROM account WHERE (email = $1 AND email_verified_at IS NULL) OR pending_email = $1 LIMIT 1',
-    [email]);
+    'SELECT id FROM account WHERE (email_bidx = $1 AND email_verified_at IS NULL) OR pending_email_bidx = $1 LIMIT 1',
+    [ctx.cipher.blindIndex(email)]);
   if (!row) return;
   const token = await issueToken(client, ctx, row.id, 'VERIFY');
   await queueEmail(client, ctx, { recipient: email, template: 'VERIFY', payload: { link: ctx.links.verify(token) } });
@@ -108,7 +118,7 @@ export const resendVerification = (ctx, email) => withTransaction(ctx.db, async 
 
 /** UC3 step 2: neutral; a link is queued only when the account exists. */
 export const requestPasswordReset = (ctx, email) => withTransaction(ctx.db, async (client) => {
-  const { rows: [row] } = await client.query('SELECT id FROM account WHERE email = $1', [email]);
+  const { rows: [row] } = await client.query('SELECT id FROM account WHERE email_bidx = $1', [ctx.cipher.blindIndex(email)]);
   if (!row) return;
   const token = await issueToken(client, ctx, row.id, 'RESET');
   await queueEmail(client, ctx, { recipient: email, template: 'RESET', payload: { link: ctx.links.reset(token) } });
@@ -128,7 +138,7 @@ export const confirmPasswordReset = async (ctx, token, password) => {
       `UPDATE account SET password_hash = $2, auth_version = auth_version + 1,
          email_verified_at = COALESCE(email_verified_at, $3) WHERE id = $1 RETURNING ${ACCOUNT_COLUMNS}`,
       [accountId, passwordHash, new Date(ctx.now())]);
-    return toAccount(row);
+    return toAccount(ctx.cipher, row);
   });
 };
 
@@ -147,10 +157,13 @@ export const updateAccount = async (ctx, account, { displayName, email, newPassw
   return withTransaction(ctx.db, async (client) => {
     await client.query('SELECT id FROM account WHERE id = $1 FOR UPDATE', [account.id]);
     if (displayName !== undefined)
-      await client.query('UPDATE account SET display_name = $2 WHERE id = $1', [account.id, displayName || null]);
+      await client.query('UPDATE account SET display_name_enc = $2 WHERE id = $1',
+        [account.id, ctx.cipher.encrypt(FIELD.accountDisplayName, displayName || null)]);
     if (email !== undefined && email !== account.email) {
-      await client.query('UPDATE account SET pending_email = $2 WHERE id = $1', [account.id, email]);
-      const { rows: taken } = await client.query('SELECT 1 FROM account WHERE email = $1', [email]);
+      const emailBidx = ctx.cipher.blindIndex(email);
+      await client.query('UPDATE account SET pending_email_enc = $2, pending_email_bidx = $3 WHERE id = $1',
+        [account.id, ctx.cipher.encrypt(FIELD.accountPendingEmail, email), emailBidx]);
+      const { rows: taken } = await client.query('SELECT 1 FROM account WHERE email_bidx = $1', [emailBidx]);
       const token = await issueToken(client, ctx, account.id, 'VERIFY');
       if (!taken.length)
         await queueEmail(client, ctx, { recipient: email, template: 'VERIFY', payload: { link: ctx.links.verify(token) } });
@@ -159,7 +172,7 @@ export const updateAccount = async (ctx, account, { displayName, email, newPassw
     if (passwordHash)
       await client.query('UPDATE account SET password_hash = $2, auth_version = auth_version + 1 WHERE id = $1',
         [account.id, passwordHash]);
-    return findAccount(client, account.id);
+    return findAccount(client, ctx.cipher, account.id);
   });
 };
 
@@ -182,9 +195,9 @@ export const accountMemberships = async (db, accountId) => {
 
 /** UC5: only the requester's own data (AC7). Participation and comments join with their brick. */
 export const exportAccount = async (ctx, accountId) => {
-  const account = await findAccount(ctx.db, accountId);
+  const account = await findAccount(ctx.db, ctx.cipher, accountId);
   const { rows: invitations } = await ctx.db.query(
-    `SELECT a.slug AS association, i.email, i.expires_at FROM invitation i JOIN association a ON a.id = i.association_id
+    `SELECT a.slug AS association, i.email_enc, i.expires_at FROM invitation i JOIN association a ON a.id = i.association_id
      WHERE i.invited_by = $1 ORDER BY i.expires_at`, [accountId]);
   const { rows: activity } = await ctx.db.query(
     `SELECT a.slug AS association, e.action, e.target_ref, e.detail, e.occurred_at FROM activity_entry e
@@ -193,7 +206,8 @@ export const exportAccount = async (ctx, accountId) => {
     account: { email: account.email, emailVerifiedAt: account.emailVerifiedAt, pendingEmail: account.pendingEmail,
       displayName: account.displayName },
     memberships: await accountMemberships(ctx.db, accountId),
-    invitationsSent: invitations.map((i) => ({ association: i.association, email: i.email, expiresAt: i.expires_at })),
+    invitationsSent: invitations.map((i) => ({ association: i.association,
+      email: ctx.cipher.decrypt(FIELD.invitationEmail, i.email_enc), expiresAt: i.expires_at })),
     activity: activity.map((e) => ({ association: e.association, action: e.action, targetRef: e.target_ref,
       detail: e.detail, occurredAt: e.occurred_at })),
     events: await exportEvents(ctx.db, accountId),
@@ -207,7 +221,7 @@ export const exportAccount = async (ctx, accountId) => {
  */
 export const deleteAccountRow = async (client, ctx, accountId) => {
   const { rows: [row] } = await client.query(
-    'SELECT id, email, pending_email, platform_role FROM account WHERE id = $1 FOR UPDATE', [accountId]);
+    'SELECT id, email_bidx, pending_email_bidx, platform_role FROM account WHERE id = $1 FOR UPDATE', [accountId]);
   if (!row) return false;
   const { rows: [{ count }] } = await client.query(
     "SELECT count(*)::int AS count FROM account WHERE platform_role = 'SUPER_ADMIN' AND id <> $1", [accountId]);
@@ -221,9 +235,10 @@ export const deleteAccountRow = async (client, ctx, accountId) => {
       'SELECT count(*)::int AS members FROM membership WHERE association_id = $1', [association.id]);
     if (members === 1 && association.status === 'ACTIVE') await closeAssociationRow(client, ctx, association, accountId);
   }
-  const addresses = [row.email, row.pending_email].filter(Boolean);
-  await client.query('DELETE FROM invitation WHERE email = ANY($1)', [addresses]);
-  await client.query('DELETE FROM outbox_message WHERE recipient = ANY($1)', [addresses]);
+  // Blind indexes find every row holding the person's addresses without decrypting (AC7).
+  const addresses = [row.email_bidx, row.pending_email_bidx].filter(Boolean);
+  await client.query('DELETE FROM invitation WHERE email_bidx = ANY($1::bytea[])', [addresses]);
+  await client.query('DELETE FROM outbox_message WHERE recipient_bidx = ANY($1::bytea[])', [addresses]);
   await client.query('DELETE FROM account WHERE id = $1', [accountId]);
   return true;
 };

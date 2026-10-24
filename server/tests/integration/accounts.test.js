@@ -1,4 +1,4 @@
-import { browser, sessionId, buildApp, createPool, lastEmail, migrate, PASSWORD, resetData, signUpVerified } from './harness.js';
+import { bidx, browser, cipher, sessionId, buildApp, createPool, lastEmail, migrate, PASSWORD, resetData, signUpVerified } from './harness.js';
 
 let pool, app, clock;
 beforeAll(() => { migrate(); pool = createPool(); });
@@ -16,14 +16,16 @@ describe('UC1 sign-up (AC1, AC2)', () => {
     const { rows: [association] } = await pool.query('SELECT slug FROM association');
     expect(association.slug).toBe('les-treteaux');
     expect(await count('membership')).toBe(1);
-    expect((await pool.query('SELECT email FROM account')).rows[0].email).toBe('claire@example.org');
+    expect(cipher.decrypt('account.email_enc', (await pool.query('SELECT email_enc FROM account')).rows[0].email_enc))
+      .toBe('claire@example.org');
     expect((await client.get('/api/account')).status).toBe(401);
     const email = await lastEmail(pool, 'claire@example.org', 'VERIFY');
     expect(email.payload.link).toMatch(/^http:\/\/localhost:3000\/verify-email#[A-Za-z0-9_-]{43}$/);
   });
 
   test('a failure inside the transaction leaves nothing behind', async () => {
-    await pool.query("INSERT INTO account (email, password_hash) VALUES ('blocker@example.org', 'x')");
+    await pool.query("INSERT INTO account (email_enc, email_bidx, password_hash) VALUES ($1, $2, 'x')",
+      [cipher.encrypt('account.email_enc', 'blocker@example.org'), bidx('blocker@example.org')]);
     // Force the association insert to fail after the account insert.
     await pool.query('ALTER TABLE association ADD CONSTRAINT test_block CHECK (name <> $$Boom$$)');
     try {
@@ -226,7 +228,7 @@ describe('UC4 account update (AC6)', () => {
     const client = await signUpVerified(app, pool, 'mover@example.org', 'Mover');
     const updated = await client.patch('/api/account', { email: 'taken@example.org', currentPassword: PASSWORD });
     expect(updated.status).toBe(200);
-    const { rows } = await pool.query("SELECT count(*)::int AS n FROM outbox_message WHERE recipient = 'taken@example.org' AND template = 'VERIFY'");
+    const { rows } = await pool.query("SELECT count(*)::int AS n FROM outbox_message WHERE recipient_bidx = $1 AND template = 'VERIFY'", [bidx('taken@example.org')]);
     expect(rows[0].n).toBe(1); // only the sign-up email of the existing account
     expect((await client.get('/api/account')).body.email).toBe('mover@example.org');
   });
@@ -280,8 +282,8 @@ describe('UC6 deletion (AC8)', () => {
     expect((await client.get('/api/account')).body.soleMemberOf).toEqual([{ name: 'Solo', slug: 'solo' }]);
     expect((await client.del('/api/account', { password: PASSWORD, confirm: true })).status).toBe(204);
     expect((await pool.query("SELECT status FROM association WHERE slug = 'solo'")).rows[0].status).toBe('CLOSED');
-    expect((await pool.query("SELECT 1 FROM invitation WHERE email = 'gone@example.org'")).rows).toHaveLength(0);
-    expect((await pool.query("SELECT 1 FROM outbox_message WHERE recipient = 'gone@example.org'")).rows).toHaveLength(0);
+    expect((await pool.query("SELECT 1 FROM invitation WHERE email_bidx = $1", [bidx('gone@example.org')])).rows).toHaveLength(0);
+    expect((await pool.query("SELECT 1 FROM outbox_message WHERE recipient_bidx = $1", [bidx('gone@example.org')])).rows).toHaveLength(0);
     const { rows } = await pool.query("SELECT actor_id FROM activity_entry e JOIN association a ON a.id = e.association_id WHERE a.slug = 'solo'");
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((r) => r.actor_id === null)).toBe(true);
@@ -324,7 +326,7 @@ describe('quotas (AC17)', () => {
         .set('X-Forwarded-For', `203.0.113.${i + 1}`);
       expect(response.status).toBe(202);
     }
-    const { rows } = await pool.query("SELECT count(*)::int AS n FROM outbox_message WHERE recipient = 'victim@example.org' AND template IN ('VERIFY', 'RESET')");
+    const { rows } = await pool.query("SELECT count(*)::int AS n FROM outbox_message WHERE recipient_bidx = $1 AND template IN ('VERIFY', 'RESET')", [bidx('victim@example.org')]);
     expect(rows[0].n).toBe(10); // 1 sign-up verification + 9 resets, then silently capped
   });
 });

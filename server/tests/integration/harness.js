@@ -3,6 +3,11 @@ import pg from 'pg';
 import request from 'supertest';
 import { createApp } from '../../app.js';
 import { createSessionStore } from '../../config/session.js';
+import { testCipher } from '../testCipher.js';
+
+export const cipher = testCipher;
+/** Blind index of an address, for raw lookups in assertions. */
+export const bidx = (email) => cipher.blindIndex(email);
 
 export const origin = 'http://localhost:3000';
 export const config = Object.freeze({ sessionSecret: 'synthetic-test-session-secret-32bytes', production: false,
@@ -21,7 +26,7 @@ export const resetData = (pool) => pool.query(
 /** Fresh app per test with a controllable clock and the real PostgreSQL session store. */
 export const buildApp = (pool, clock = { now: Date.now() }, overrides = {}) => {
   const store = createSessionStore(pool, () => {});
-  const app = createApp({ ...config, ...overrides }, { store, db: pool, now: () => clock.now });
+  const app = createApp({ ...config, ...overrides }, { store, db: pool, cipher, now: () => clock.now });
   return { app, store, clock };
 };
 
@@ -50,9 +55,11 @@ export const browser = async (app) => {
 /** Last queued email to a recipient, with its token taken from the link fragment. */
 export const lastEmail = async (pool, recipient, template) => {
   const { rows: [row] } = await pool.query(
-    'SELECT template, payload FROM outbox_message WHERE recipient = $1 AND template = $2 ORDER BY created_at DESC, id LIMIT 1',
-    [recipient, template]);
-  return row && { ...row, token: row.payload?.link?.split('#')[1] };
+    'SELECT template, payload_enc FROM outbox_message WHERE recipient_bidx = $1 AND template = $2 ORDER BY created_at DESC, id LIMIT 1',
+    [cipher.blindIndex(recipient), template]);
+  if (!row) return row;
+  const payload = JSON.parse(cipher.decrypt('outbox_message.payload_enc', row.payload_enc) ?? 'null');
+  return { template: row.template, payload, token: payload?.link?.split('#')[1] };
 };
 
 /** Sign up, verify through the queued link, sign in (S1-C) and return the signed-in browser. */

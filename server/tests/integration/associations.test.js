@@ -1,4 +1,4 @@
-import { browser, buildApp, createPool, lastEmail, migrate, PASSWORD, resetData, signUpVerified } from './harness.js';
+import { bidx, browser, buildApp, createPool, lastEmail, migrate, PASSWORD, resetData, signUpVerified } from './harness.js';
 
 let pool, app, clock;
 beforeAll(() => { migrate(); pool = createPool(); });
@@ -12,7 +12,7 @@ const twoMembers = async () => {
   const { token } = await lastEmail(pool, 'malik@example.org', 'INVITATION');
   const malik = await signUpVerified(app, pool, 'malik@example.org', 'Malik solo');
   expect((await malik.post('/api/invitations/accept', { token })).status).toBe(200);
-  const malikId = (await pool.query("SELECT id FROM account WHERE email = 'malik@example.org'")).rows[0].id;
+  const malikId = (await pool.query("SELECT id FROM account WHERE email_bidx = $1", [bidx('malik@example.org')])).rows[0].id;
   return { claire, malik, malikId };
 };
 
@@ -108,7 +108,7 @@ describe('UC11 joining (AC12)', () => {
     const malik = await browser(app);
     // UC11 3a: the invitee signs up without an association name.
     expect((await malik.post('/api/signup', { email: 'malik@gmail.com', password: PASSWORD })).status).toBe(202);
-    expect((await pool.query("SELECT associations_created FROM account WHERE email = 'malik@gmail.com'")).rows[0].associations_created).toBe(0);
+    expect((await pool.query("SELECT associations_created FROM account WHERE email_bidx = $1", [bidx('malik@gmail.com')])).rows[0].associations_created).toBe(0);
     expect((await malik.post('/api/session', { email: 'malik@gmail.com', password: PASSWORD })).status).toBe(401);
     const stranger = await signUpVerified(app, pool, 'other@example.org', 'Stranger');
     const foreign = await stranger.post('/api/invitations/accept', { token });

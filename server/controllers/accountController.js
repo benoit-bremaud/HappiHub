@@ -18,22 +18,22 @@ const CHECK_INBOX = 'Check your inbox to continue.';
 const associationName = Joi.string().trim().min(2).max(100);
 
 /** Signed-in view; `invitations` are the pending ones for this address (UC11 4c "Join"). */
-const accountView = async (db, account, now) => ({
+const accountView = async ({ db, cipher }, account, now) => ({
   id: account.id, email: account.email, emailVerified: Boolean(account.emailVerifiedAt),
   pendingEmail: account.pendingEmail, displayName: account.displayName,
   associations: await accountMemberships(db, account.id),
-  invitations: await pendingInvitationsFor(db, account.email, now),
+  invitations: await pendingInvitationsFor(db, cipher, account.email, now),
 });
 
 /** Bootstrap a CSRF-protected visit without issuing a browser-readable credential. */
 export const getSession = async (req, res) => {
   if (!trustedOrigin(req)) return res.status(403).json({ message: 'Request origin rejected' });
   try {
-    const { db } = req.app.locals.ctx;
+    const { ctx } = req.app.locals;
     if (req.session.accountId) {
-      const account = await findAccount(db, req.session.accountId);
+      const account = await findAccount(ctx.db, ctx.cipher, req.session.accountId);
       if (account && account.authVersion === req.session.authVersion)
-        return res.json({ account: await accountView(db, account, req.app.locals.now()), csrfToken: req.session.csrfToken });
+        return res.json({ account: await accountView(ctx, account, req.app.locals.now()), csrfToken: req.session.csrfToken });
       await sessionOperation(req.session, 'regenerate');
     }
     if (!req.session.csrfToken) {
@@ -54,7 +54,7 @@ export const signIn = async (req, res) => {
     const account = await authenticate(req.app.locals.ctx, value.email, value.password);
     if (!account) return res.status(401).json({ message: 'Invalid email or password, or email not verified yet.' });
     await openAccountSession(req, account);
-    return res.json({ account: await accountView(req.app.locals.ctx.db, account, req.app.locals.now()), csrfToken: req.session.csrfToken });
+    return res.json({ account: await accountView(req.app.locals.ctx, account, req.app.locals.now()), csrfToken: req.session.csrfToken });
   } catch {
     req.session = null; clearSessionCookie(req, res);
     return res.status(503).json({ message: 'Unable to sign in' });
@@ -123,7 +123,7 @@ export const confirmResetHandler = handle(async (req, res) => {
 });
 
 export const getAccount = handle(async (req, res) => res.json({
-  ...(await accountView(req.app.locals.ctx.db, req.account, req.app.locals.now())),
+  ...(await accountView(req.app.locals.ctx, req.account, req.app.locals.now())),
   soleMemberOf: await soleMemberAssociations(req.app.locals.ctx.db, req.account.id),
 }));
 
@@ -153,7 +153,7 @@ export const updateAccountHandler = handle(async (req, res) => {
     req.session.authVersion = account.authVersion;
     await sessionOperation(req.session, 'save');
   }
-  return res.json(await accountView(req.app.locals.ctx.db, account, req.app.locals.now()));
+  return res.json(await accountView(req.app.locals.ctx, account, req.app.locals.now()));
 });
 
 /** UC5: a JSON download, limited to 3 per day per account. */

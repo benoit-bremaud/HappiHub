@@ -6,6 +6,7 @@ import {
 } from '../domain/event.js';
 import { recordActivity } from './activity.js';
 import { queueEmail } from './outbox.js';
+import { FIELD } from '../domain/fieldCipher.js';
 
 // Brick B persistence and transactions (spec § 5). Lock order everywhere: association row,
 // then event row, so UC8 closure (which locks the association first) never deadlocks an edit.
@@ -13,13 +14,13 @@ import { queueEmail } from './outbox.js';
 const EVENT_COLUMNS = `e.id, e.association_id, e.type, e.title, e.short_description, e.long_description, e.starts_at,
   e.ends_at, e.venue_label, e.venue_address, e.venue_normalized_city, e.price_kind, e.price_amount_cents, e.poster_style,
   e.status, e.cancellation_reason, e.published_at, e.schedule_changed_at, e.version, e.created_at, e.updated_at,
-  editor.display_name AS last_edited_by_name, e.last_edited_by IS NULL AS last_editor_deleted`;
+  editor.display_name_enc AS last_edited_by_name_enc, e.last_edited_by IS NULL AS last_editor_deleted`;
 const EVENT_SOURCE = 'event e LEFT JOIN account editor ON editor.id = e.last_edited_by';
 
 const iso = (value) => (value ? value.toISOString() : null);
 
 /** Row to the domain shape used by the rules in domain/event.js. */
-const toEvent = (row) => ({
+const toEvent = (cipher, row) => ({
   id: row.id, status: row.status, version: row.version,
   title: row.title, type: row.type, shortDescription: row.short_description, longDescription: row.long_description,
   startsAt: iso(row.starts_at), endsAt: iso(row.ends_at), venueLabel: row.venue_label, venueAddress: row.venue_address,
@@ -27,7 +28,8 @@ const toEvent = (row) => ({
   posterStyle: row.poster_style, cancellationReason: row.cancellation_reason, publishedAt: iso(row.published_at),
   scheduleChangedAt: iso(row.schedule_changed_at), createdAt: iso(row.created_at), updatedAt: iso(row.updated_at),
   // A deleted account nulls last_edited_by; a member without a display name only has no name.
-  lastEditedBy: row.last_edited_by_name ?? null, lastEditedByFormerMember: row.last_editor_deleted === true,
+  lastEditedBy: cipher.decrypt(FIELD.accountDisplayName, row.last_edited_by_name_enc),
+  lastEditedByFormerMember: row.last_editor_deleted === true,
 });
 
 /** Content shared by the member and public views; the city is shown with its name (V). */
@@ -77,23 +79,23 @@ const lockMemberWrite = async (client, accountId, association, { exclusive = fal
 };
 
 /** An event of this association, locked for the transaction; another association's id is 404 (BC19). */
-const lockEvent = async (client, association, id) => {
+const lockEvent = async (client, cipher, association, id) => {
   const { rows: [row] } = await client.query(
     `SELECT ${EVENT_COLUMNS} FROM ${EVENT_SOURCE} WHERE e.id = $1 AND e.association_id = $2 FOR UPDATE OF e`,
     [id, association.id]);
   if (!row) throw notFound();
-  return toEvent(row);
+  return toEvent(cipher, row);
 };
 
-const findEvent = async (db, association, id) => {
+const findEvent = async (db, cipher, association, id) => {
   const { rows: [row] } = await db.query(
     `SELECT ${EVENT_COLUMNS} FROM ${EVENT_SOURCE} WHERE e.id = $1 AND e.association_id = $2`, [id, association.id]);
   if (!row) throw notFound();
-  return toEvent(row);
+  return toEvent(cipher, row);
 };
 
 /** Member view of the event as written by this transaction. */
-const viewAfterWrite = async (client, ctx, association, id) => memberView(await findEvent(client, association, id), ctx.now());
+const viewAfterWrite = async (client, ctx, association, id) => memberView(await findEvent(client, ctx.cipher, association, id), ctx.now());
 
 /**
  * UC15: first save creates the draft, within 20 creations per association per 24 h (Q).
@@ -128,13 +130,13 @@ export const listEvents = async (ctx, association, status) => {
      WHERE e.association_id = $1 AND ($2::text IS NULL OR e.status = $2) ORDER BY e.updated_at DESC, e.id`,
     [association.id, status ?? null]);
   const now = ctx.now();
-  return rows.map(toEvent).map((event) => ({ id: event.id, title: event.title, type: event.type, status: event.status,
+  return rows.map((row) => toEvent(ctx.cipher, row)).map((event) => ({ id: event.id, title: event.title, type: event.type, status: event.status,
     startsAt: event.startsAt, ended: hasEnded(event, now), updatedAt: event.updatedAt, lastEditedBy: event.lastEditedBy,
     lastEditedByFormerMember: event.lastEditedByFormerMember }));
 };
 
 /** Editor read; an event of another association is 404 EVENT_NOT_FOUND (BC19). */
-export const readEvent = async (ctx, association, id) => memberView(await findEvent(ctx.db, association, id), ctx.now());
+export const readEvent = async (ctx, association, id) => memberView(await findEvent(ctx.db, ctx.cipher, association, id), ctx.now());
 
 /**
  * EVENT_EDITED coalescing (§ 5 M step 6): the actor's latest edit entry on this event within
@@ -164,7 +166,7 @@ const recordEdit = async (client, ctx, association, accountId, eventId, fields) 
 export const editEvent = (ctx, accountId, association, id, request) =>
   withTransaction(ctx.db, async (client) => {
     await lockMemberWrite(client, accountId, association);
-    const event = await lockEvent(client, association, id);
+    const event = await lockEvent(client, ctx.cipher, association, id);
     const { merged, fields, scheduleChanged } = mergeEdit(event, request);
     const now = new Date(ctx.now());
     await client.query(
@@ -184,7 +186,7 @@ export const editEvent = (ctx, accountId, association, id, request) =>
 export const publishEvent = (ctx, accountId, association, id, baseVersion) =>
   withTransaction(ctx.db, async (client) => {
     const account = await lockMemberWrite(client, accountId, association);
-    const event = await lockEvent(client, association, id);
+    const event = await lockEvent(client, ctx.cipher, association, id);
     const now = ctx.now();
     assertTransition(event, 'publish', baseVersion, now);
     const failures = publicationFailures(event, { emailVerified: Boolean(account.email_verified_at), now });
@@ -201,7 +203,7 @@ export const publishEvent = (ctx, accountId, association, id, baseVersion) =>
 export const cancelEvent = (ctx, accountId, association, id, { baseVersion, reason }) =>
   withTransaction(ctx.db, async (client) => {
     await lockMemberWrite(client, accountId, association);
-    const event = await lockEvent(client, association, id);
+    const event = await lockEvent(client, ctx.cipher, association, id);
     const now = ctx.now();
     assertTransition(event, 'cancel', baseVersion, now);
     await client.query(
@@ -216,7 +218,7 @@ export const cancelEvent = (ctx, accountId, association, id, { baseVersion, reas
 export const deleteEvent = (ctx, accountId, association, id, baseVersion) =>
   withTransaction(ctx.db, async (client) => {
     await lockMemberWrite(client, accountId, association);
-    const event = await lockEvent(client, association, id);
+    const event = await lockEvent(client, ctx.cipher, association, id);
     assertTransition(event, 'delete', baseVersion, ctx.now());
     await client.query('DELETE FROM event WHERE id = $1', [id]);
     await recordActivity(client, ctx, { associationId: association.id, actorId: accountId,
@@ -234,7 +236,7 @@ export const readPublicEvent = async (ctx, id) => {
      WHERE e.id = $1 AND e.status IN ('PUBLISHED', 'CANCELLED', 'ARCHIVED') AND NOT e.hidden_by_moderation
        AND a.status = 'ACTIVE'`, [id]);
   if (!row) throw notFound();
-  return { ...contentView(toEvent(row), ctx.now()),
+  return { ...contentView(toEvent(ctx.cipher, row), ctx.now()),
     association: { name: row.association_name, slug: row.association_slug } };
 };
 
@@ -292,9 +294,10 @@ export const runEventMaintenance = async (ctx) => {
          RETURNING e.association_id, e.title, a.name AS association_name`, [id, new Date(now)]);
       if (!draft) return 0;
       const { rows: members } = await client.query(
-        'SELECT a.email FROM membership m JOIN account a ON a.id = m.account_id WHERE m.association_id = $1',
+        'SELECT a.email_enc FROM membership m JOIN account a ON a.id = m.account_id WHERE m.association_id = $1',
         [draft.association_id]);
-      await Promise.all(members.map(({ email }) => queueEmail(client, ctx, { recipient: email,
+      await Promise.all(members.map(({ email_enc: emailEnc }) => queueEmail(client, ctx,
+        { recipient: ctx.cipher.decrypt(FIELD.accountEmail, emailEnc),
         template: 'DRAFT_CLEANUP_NOTICE', payload: { associationName: draft.association_name, eventTitle: draft.title } })));
       return 1;
     });

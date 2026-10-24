@@ -1,7 +1,13 @@
+/** Variable suffix of the runtime mode: `PROD`, `TEST` or `DEV`. */
+export const envSuffix = (env) => {
+  if (env.NODE_ENV === 'production') return 'PROD';
+  return env.NODE_ENV === 'test' ? 'TEST' : 'DEV';
+};
+
 /** Validate environment configuration once, without exposing secret values in errors. */
 export const readAppConfig = (env) => {
   const production = env.NODE_ENV === 'production';
-  const suffix = production ? 'PROD' : env.NODE_ENV === 'test' ? 'TEST' : 'DEV';
+  const suffix = envSuffix(env);
   const config = { sessionSecret: env[`SESSION_SECRET_${suffix}`], production,
     cookieName: production ? '__Host-happihub.sid' : 'happihub.sid',
     origin: env[`APP_URL_${suffix}`], port: Number(env[`PORT_${suffix}`] || 5000),
