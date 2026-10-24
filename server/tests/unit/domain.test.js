@@ -83,7 +83,7 @@ describe('keyed limiter', () => {
     expect(limiter.retryAfter('a', 1000)).toBe(0);
   });
 
-  test('AC329-2: release frees a reserved attempt, never below 0, no-op after reset', () => {
+  test('AC329-2: release frees a reserved attempt and never goes below 0', () => {
     const limiter = createKeyedLimiter({ limit: 1, windowMs: 1000 });
     expect(limiter.take('a', 0)).toBe(true);
     limiter.release('a', 0);

@@ -134,6 +134,7 @@ export const getAccount = handle(async (req, res) => res.json({
 const requireCurrentPassword = async (req, password) => {
   const { ctx } = req.app.locals;
   const limiter = ctx.limits.currentPassword;
+  // A refused reservation means the limit is reached: guardLimit always throws the 429 here.
   if (!limiter.take(req.account.id, ctx.now())) guardLimit(limiter, req.account.id, ctx.now());
   if (password === undefined || !(await checkPassword(ctx.db, req.account.id, password)))
     throw new DomainError(403, 'The current password is incorrect.');

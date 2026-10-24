@@ -20,7 +20,8 @@ more than 5 passwords per window.
   the quota, as today.
 - R3. A wrong or missing password (or a failed compare) keeps the reservation (it is the counted failure) and
   answers the existing 403.
-- R4. `release` never takes the counter below 0 and is a no-op once the window has reset.
+- R4. `release` never takes the counter below 0. A release after the window reset applies to
+  the new window; it only follows a correct password, so it grants an attacker nothing.
 - R5. The limiter stays process-local (ADR-0001); no per-IP limiter is added on
   `PATCH`/`DELETE /account`: the attack needs a session, and the per-account key bounds
   every session of that account. Revisit with multi-instance deployment.
@@ -31,8 +32,8 @@ The now-unused `hit` method is removed. No API, schema or migration change.
 
 - AC329-1. Integration test: 8 concurrent wrong-password `PATCH /api/account` requests on
   one session → exactly 5 answer 403 and 3 answer 429 (red on the old code: 8 × 403).
-- AC329-2. Unit test: `release` frees a reserved attempt, never goes below 0, and is a
-  no-op after window reset.
+- AC329-2. Unit test: `release` frees a reserved attempt, and never goes below 0, also
+  across a window reset.
 - AC329-3. A correct password after 4 failures still succeeds and leaves the counter at 4.
 - AC329-4. Existing UC4/UC6 tests stay green.
 
