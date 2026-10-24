@@ -4,7 +4,7 @@
 - Commit: 8e501f6 (`docs/244-partner-api-study`, application code identical to main `9cb6a3d`)
 - Scope: whole repository, read-only
 - Checks run: security (Opus) · design and correctness · test quality and documentation · every test suite
-- Verdict: no blocking security flaw; 2 correctness Must and 2 CI Must to plan  ·  Must 4 · Should 14 · Nice 9
+- Verdict: no blocking security flaw; 2 correctness Must and 2 CI Must to plan  ·  Must 4 · Should 13 · Nice 9
 
 ## Execution
 
@@ -42,7 +42,6 @@
 - `server/app.js:32-58` `[security]` · `X-Powered-By`, no `nosniff` on direct API access · #321. Unknown `/api` routes answer HTML 404 · #322.
 - `client/src/events/events.test.jsx:37,215` `[tests]` · `Date.now` spy never restored: order-dependent tests · `jest.restoreAllMocks()` in `afterEach`. #334.
 - `server/jest.config.cjs`, `client/package.json` `[tests]` · No coverage thresholds · Add after the glob fix. #272.
-- `server/tests/integration/maintenance.test.js:137-139` `[tests]` · Console/stdout spies restored only on success · `restoreMocks: true`. #334.
 - `server/services/errors.js`, `jobs/migrate.js`, `jobs/runMaintenance.js`, `jobs/runReencrypt.js`, `domain/passwordBlocklist.js` `[docs]` · No doc comments · #295.
 
 ## 🔵 Nice to Have

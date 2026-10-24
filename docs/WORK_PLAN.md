@@ -197,7 +197,8 @@ identify implemented behavior, proposals and missing approvals without chat hist
 ## Immediate next work
 
 V1 conception is approved (implementation gate 2026-10-16); bricks D, B and the event client
-(#252) are merged. P1 order after the 2026-10-23 triage: #310 encryption at rest (conception
-validated 2026-10-23, [spec](architecture/specs/db-encryption-at-rest.md); implementation next), then #244 partner API
-and #251 persona scenarios, each after its own conception is approved. P2/P3 labels on the
+(#252) are merged, #310 encryption at rest is merged (PR #312) and the #244 partner API
+conception is approved and merged (PR #327; implementation is a later brick). Next P1:
+#251 demo data, test accounts and persona scenarios, after its own conception is approved.
+P2/P3 labels on the
 remaining QA and audit issues. See [HANDOVER](HANDOVER.md) for the live state.
