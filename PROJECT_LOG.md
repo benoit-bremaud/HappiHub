@@ -7,7 +7,7 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-24
 
-- **#319 + #320 edge hardening — branch `fix/319-320-nginx-security-headers`** — owner validated
+- **#319 + #320 edge hardening — merged (PR #326, squash `9cb6a3d`; both issues closed)** — owner validated
   the [spec](docs/architecture/specs/edge-security-headers.md) (MCDA A 480/500: strict CSP with
   `INLINE_RUNTIME_CHUNK=false`, over a per-build script hash 360 and Report-Only 290).
   `client/nginx.conf`: `server_tokens off`, CSP (`script-src 'self'`, Bootstrap CDN allowed in
