@@ -1,42 +1,35 @@
-# Local review — HappiHub (branch claude/fix-328-purge-race-7a0d63)
+# Local review — HappiHub (branch fix/329-current-password-reservation)
 
 - Date: 2026-10-24
-- Commit: 14488ca + review fixes cc46bf2
-- Scope: branch diff main...HEAD (`server/jobs/maintenance.js`, `server/services/accounts.js`, maintenance integration tests, #328 spec + sequence diagram, AC19 link)
-- Checks run: correctness + security (Opus), design · docs · tests (one combined pass), execution checks
-- Verdict: ship · Must 1 · Should 6 · Nice 6 — all fixed or dispositioned below
+- Commit: c42f74d + review fixes 8fff81b
+- Scope: branch diff origin/main...HEAD (`server/controllers/accountController.js`, `server/utils/keyedLimiter.js`, unit + integration tests, #329 spec + sequence diagram, AC17 link, log/handover/changelog)
+- Checks run: correctness · security · design · docs · tests (one combined Opus pass), execution checks
+- Verdict: ship · Must 0 · Should 1 · Nice 4 — Should and one Nice fixed, rest dispositioned below
 
-## Pre-merge gate (head SHA cc46bf2)
+## Pre-merge gate (head SHA 8fff81b)
 | Step | Result |
 |---|---|
-| 1 Tests | ✅ server unit 142/142 · ✅ server integration 114/114 (3 runs, stable) · ✅ client 84/84 |
-| 2 Coverage | integration: 91.05 % stmts / 73.42 % branches / 96.53 % funcs / 93.79 % lines; `maintenance.js` 100 % lines, 90 % branches · docs: every new function carries a doc comment (no doc-coverage counter in this repo) |
-| 3 SonarQube | ✅ PASSED — new coverage 94.5 %, duplication 0 %, violations 0 after the owner accepted the two S9382 (sequential per-row transactions, `maintenance.js:43`, `:61`) as intentional, MCDA A 485/500, precedent 14d1001 |
-| 4 Secrets | ✅ gitleaks clean (main..HEAD) · no tracked .env · diff read: nothing sensitive |
-| 5 QA pass | n/a (owner-confirmed 2026-10-24): hourly server job with no UI or HTTP route; behavior proven by the PostgreSQL race tests (AC328-1..3) |
-- Gate: **GREEN — merge authorised after CI and owner approval**
+| 1 Tests | ✅ server unit 143/143 · ✅ server integration 116/116 (PostgreSQL) · ✅ client 84/84 |
+| 2 Coverage | server integration 91.07 % stmts / 73.13 % branches / 96.53 % funcs / 93.8 % lines · client 92.61 / 81.99 / 93.61 / 96.09 · lcov merged under `server/coverage/` (unit + integration + client copy) · docs: every touched function carries a JSDoc |
+| 3 SonarQube | ✅ PASSED (local, project `happihub`) |
+| 4 Secrets | ✅ gitleaks clean (origin/main..HEAD) · no tracked .env · diff read: nothing sensitive |
+| 5 QA pass | ⚠️ API-level only: the HTTP routes are exercised end to end over a real PostgreSQL by AC329-1/3; no UI change; no live browser pass run |
+- Gate: **GREEN except step 5 pending owner waiver or live pass**
 
 ## 🔴 Must Have
-- `server/tests/integration/maintenance.test.js:23` `[tests]` · a bulk text replace had swapped the AC19 `auth_token` purge assertion · restored (cc46bf2).
-
-## 🟡 Should Have
-- `server/services/accounts.js:90` `[correctness|tests]` · R5 "missing row → 410" guard unreachable (token cascade answers 410 first), uncovered · removed with R5 (cc46bf2).
-- `server/tests/integration/maintenance.test.js:63` `[tests]` · helper claimed to mimic verifyEmail but locks only the account · comment now explains why (locking the expired token blocks the token purge before the scan and hides the race).
-- `maintenance.test.js` AC328-3 `[tests|docs]` · covers the verification side only · test and AC328-3 reworded.
-- `docs/architecture/specs/maintenance-unverified-race.md` R1 `[docs]` · "recheck in code" inaccurate · reworded.
-- `docs/architecture/specs/v1-brick-d-accounts-associations.md:224` `[docs]` · AC19 not linked to the amendment · linked.
-- SonarQube S9382 `[design]` · sequential per-row transactions are intentional (one lock set at a time, bounded pool use) · accepted in SonarQube by the owner.
-
-## 🔵 Nice to Have
-- `maintenance.test.js:58` `[tests]` · lock-wait probe matched any session · now excludes the probing backend.
-- `server/jobs/maintenance.js:61` `[design]` · `&& ? :` precedence hard to read · split into two statements.
-- Sequence diagram `[docs]` · 410 note now names the token cascade.
-- `server/services/accounts.js:113-119` `[correctness]` · a resend racing the purge can hit an FK error (500) · out of scope, follow-up issue proposed.
-- `server/jobs/maintenance.js` `[design]` · a 409 from `deleteAccountRow` stops the run · tracked by #330.
-- `lockUnverified` selects columns unused by the delete path · harmless, kept for one helper.
-
-## ⚪ Disagree / Intentional
 _None._
 
+## 🟡 Should Have
+- `server/utils/keyedLimiter.js:28` `[correctness|docs]` · A release after a window reset decrements the new window, contradicting R4 "no-op after reset" · Fixed (8fff81b): R4 reworded; it only follows a correct password, so it grants nothing (KISS over tracking `resetAt`).
+
+## 🔵 Nice to Have
+- `server/controllers/accountController.js:137` `[design]` · 429 path relies on `guardLimit` always throwing · Fixed: comment added.
+- `server/utils/keyedLimiter.js:29` `[correctness]` · release after reset creates a fresh window · Harmless, kept.
+- `server/tests/integration/accounts.test.js:253` `[tests]` · no concurrent `DELETE` case · Same code path as PATCH; kept.
+- `server/tests/integration/accounts.test.js:262` `[tests]` · counter 4 checked indirectly · Behavioral assertion is intentional.
+
+## ⚪ Disagree / Intentional
+- No per-IP limiter on `PATCH`/`DELETE /account` · owner decision R5 (MCDA A 465/500).
+
 ## Per-dimension summary
-- Design: one helper, lock order shared with verifyEmail, no schema change · Docs: spec, diagram and AC19 aligned · Tests: race reproduced (red on old code, green on fix) · Security: parameterised SQL, neutral 410, no deadlock path found · Correctness: counts now report committed effects.
+- Design: 3-line `release`, mirrors `exports.take`, unused `hit` removed · Docs: spec/JSDoc accurate after R4 fix · Tests: deterministic concurrency test red on old code · Security: bypass closed, fail-closed on compare error · Correctness: no reachable release without take.
