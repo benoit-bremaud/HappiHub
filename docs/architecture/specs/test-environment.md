@@ -340,3 +340,21 @@ Sensitivity: kept 24/24.
 - AC7: `server/.demo-credentials.local.json` is added to `.gitignore`; `git status` stays clean
   after a run.
 - AC8: a `--reset` followed by a reseed stays below the `EVENT_QUOTA` limit (no 429).
+
+## 12. Implementation amendments (validated by Benoît on 2026-10-26)
+
+Gaps found while reading the services before coding:
+
+- **G1 (P7 moderator)**, option A (470/500): no service sets `platform_role`, so P7's
+  `MODERATOR` role is the second documented direct-SQL exception, beside the E19 flag (D6); both
+  are replaced by the moderation service once it exists.
+- **G2 (A3 members)**: closing an association requires its last member, and the membership stays
+  after closure. Léa (P7) creates A3 and closes it, so A3 keeps P7 as its only member.
+- **G3 (E12 transient)**: the API runs the maintenance job hourly, which archives E12 at its
+  next tick. E12 shows "started more than 24 h ago, still published" only until then.
+- **G4 (failed outbox row)**, option A (460/500): the failed and pending outbox rows are made with
+  `deliverOutbox` and a seed transport that fails for one demo recipient. The delivery pass would
+  also touch rows outside the namespace (§ 8.3), so the step is skipped with a warning when any
+  non-demo row is pending.
+- **G5 (verification)**: accounts are verified through `verifyEmail` with the token read from the
+  queued VERIFY email, as the integration harness does.
