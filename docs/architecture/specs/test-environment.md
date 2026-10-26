@@ -1,6 +1,7 @@
 # Test environment — demo seed, test accounts and persona scenarios (#251)
 
-Status: **validated by Benoît on 2026-10-24** (D1–D7 top scores, weights accepted). This
+Status: **validated by Benoît on 2026-10-24** (D1–D7 top scores, weights accepted); D8
+amended and validated on 2026-10-26. This
 validates the conception only; implementation follows in its own brick (AGENTS.md gate).
 
 UML: [diagrams/test-environment/](../diagrams/test-environment/).
@@ -55,8 +56,10 @@ Test fixtures stay where they are: the integration harness keeps its own contain
 ## 3. Personas
 
 The demo reuses the V1 personas ([v1-personas.md](v1-personas.md)) and adds the roles the
-rules need. All addresses use the reserved `.test` top-level domain (RFC 2606), so no mail
-can reach a real person, and this namespace marks every seeded row (§ 6).
+rules need. All addresses use `demo.example.com`, under the RFC 2606 reserved domain
+`example.com` (null MX), so no mail can reach a real person, and this namespace marks every
+seeded row (§ 8). Decision **D8**: the reserved `.test` TLD is refused by the email schema (#345),
+so the spec moves the domain instead of changing production validation.
 
 | Key | Persona | Account state | Purpose |
 | --- | --- | --- | --- |
@@ -70,7 +73,7 @@ can reach a real person, and this namespace marks every seeded row (§ 6).
 | P8 | Marc, quota reached | verified, `associations_created = 5` | association creation quota |
 | — | Inès, visitor | no account | public pages only |
 
-Emails follow `<first-name>@demo.happihub.test`; display names include accents and one
+Emails follow `<first-name>@demo.example.com` (ASCII local part); display names include accents and one
 long name (edge cases, § 5).
 
 ## 4. Dataset matrix (valid data in the database)
@@ -195,7 +198,7 @@ data, and no envelope is precomputed in git (it would bind the repository to one
 ## 8. Reset and idempotency
 
 Decision **D3**, option A: every seeded row has a **natural key** inside the reserved namespace:
-account email blind index for `@demo.happihub.test`, association name prefixed `Demo ` (slugs are
+account email blind index for each `@demo.example.com` address of the seed list, association name prefixed `Demo ` (slugs are
 derived by `slugify`, so they start with `demo-`), event
 identified by (association, title) of the seed definition. A run:
 
@@ -297,6 +300,19 @@ Sensitivity: kept 24/24. Owner chose A on 2026-10-24.
 | **Total** | **455** | 310 |
 
 Sensitivity: winner kept for every ±10 weight shift. Owner chose A on 2026-10-24.
+
+### D8 — demo email domain (added 2026-10-26, #345)
+
+| Criterion (weight) | A accept `.test` everywhere | B accept `.test` in DEV only | C spec moves to `@demo.example.com` |
+| --- | --- | --- | --- |
+| No production code change (30) | 2 | 4 | 5 |
+| No mail can leave (30) | 5 | 5 | 4 null MX, reserved name |
+| Fidelity to the validated spec (20) | 5 | 5 | 4 |
+| Simplicity (20) | 4 | 2 tier-dependent validation | 5 |
+| **Total** | 390 | 410 | **450** |
+
+Sensitivity: C stays first for every ±10 shift unless fidelity weighs 40 or more. Owner chose C
+on 2026-10-26.
 
 ### D5 — target guard
 
