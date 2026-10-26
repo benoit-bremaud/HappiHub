@@ -35,7 +35,8 @@
     "maintenance": "node jobs/runMaintenance.js",
     "start": "node server.js",
     "reencrypt": "node jobs/runReencrypt.js",
-    "keyring:generate": "node scripts/generate-keyring.js"
+    "keyring:generate": "node scripts/generate-keyring.js",
+    "seed:demo": "node jobs/runSeedDemo.js"
   },
   "repository": {
     "type": "git",

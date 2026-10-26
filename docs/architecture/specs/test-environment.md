@@ -1,6 +1,7 @@
 # Test environment — demo seed, test accounts and persona scenarios (#251)
 
-Status: **validated by Benoît on 2026-10-24** (D1–D7 top scores, weights accepted). This
+Status: **validated by Benoît on 2026-10-24** (D1–D7 top scores, weights accepted); D8
+amended and validated on 2026-10-26. This
 validates the conception only; implementation follows in its own brick (AGENTS.md gate).
 
 UML: [diagrams/test-environment/](../diagrams/test-environment/).
@@ -55,8 +56,10 @@ Test fixtures stay where they are: the integration harness keeps its own contain
 ## 3. Personas
 
 The demo reuses the V1 personas ([v1-personas.md](v1-personas.md)) and adds the roles the
-rules need. All addresses use the reserved `.test` top-level domain (RFC 2606), so no mail
-can reach a real person, and this namespace marks every seeded row (§ 6).
+rules need. All addresses use `demo.example.com`, under the RFC 2606 reserved domain
+`example.com` (null MX), so no mail can reach a real person, and this namespace marks every
+seeded row (§ 8). Decision **D8**: the reserved `.test` TLD is refused by the email schema (#345),
+so the spec moves the domain instead of changing production validation.
 
 | Key | Persona | Account state | Purpose |
 | --- | --- | --- | --- |
@@ -70,7 +73,7 @@ can reach a real person, and this namespace marks every seeded row (§ 6).
 | P8 | Marc, quota reached | verified, `associations_created = 5` | association creation quota |
 | — | Inès, visitor | no account | public pages only |
 
-Emails follow `<first-name>@demo.happihub.test`; display names include accents and one
+Emails follow `<first-name>@demo.example.com` (ASCII local part); display names include accents and one
 long name (edge cases, § 5).
 
 ## 4. Dataset matrix (valid data in the database)
@@ -195,7 +198,7 @@ data, and no envelope is precomputed in git (it would bind the repository to one
 ## 8. Reset and idempotency
 
 Decision **D3**, option A: every seeded row has a **natural key** inside the reserved namespace:
-account email blind index for `@demo.happihub.test`, association name prefixed `Demo ` (slugs are
+account email blind index for each `@demo.example.com` address of the seed list, association name prefixed `Demo ` (slugs are
 derived by `slugify`, so they start with `demo-`), event
 identified by (association, title) of the seed definition. A run:
 
@@ -298,6 +301,19 @@ Sensitivity: kept 24/24. Owner chose A on 2026-10-24.
 
 Sensitivity: winner kept for every ±10 weight shift. Owner chose A on 2026-10-24.
 
+### D8 — demo email domain (added 2026-10-26, #345)
+
+| Criterion (weight) | A accept `.test` everywhere | B accept `.test` in DEV only | C spec moves to `@demo.example.com` |
+| --- | --- | --- | --- |
+| No production code change (30) | 2 | 4 | 5 |
+| No mail can leave (30) | 5 | 5 | 4 null MX, reserved name |
+| Fidelity to the validated spec (20) | 5 | 5 | 4 |
+| Simplicity (20) | 4 | 2 tier-dependent validation | 5 |
+| **Total** | 390 | 410 | **450** |
+
+Sensitivity: C stays first for every ±10 shift unless fidelity weighs 40 or more. Owner chose C
+on 2026-10-26.
+
 ### D5 — target guard
 
 | Criterion (weight) | A DEV + `_demo` name + `--confirm` | B refuse `NODE_ENV=production` only | C new DEMO tier suffix |
@@ -324,3 +340,21 @@ Sensitivity: kept 24/24.
 - AC7: `server/.demo-credentials.local.json` is added to `.gitignore`; `git status` stays clean
   after a run.
 - AC8: a `--reset` followed by a reseed stays below the `EVENT_QUOTA` limit (no 429).
+
+## 12. Implementation amendments (validated by Benoît on 2026-10-26)
+
+Gaps found while reading the services before coding:
+
+- **G1 (P7 moderator)**, option A (470/500): no service sets `platform_role`, so P7's
+  `MODERATOR` role is the second documented direct-SQL exception, beside the E19 flag (D6); both
+  are replaced by the moderation service once it exists.
+- **G2 (A3 members)**: closing an association requires its last member, and the membership stays
+  after closure. Léa (P7) creates A3 and closes it, so A3 keeps P7 as its only member.
+- **G3 (E12 transient)**: the API runs the maintenance job hourly, which archives E12 at its
+  next tick. E12 shows "started more than 24 h ago, still published" only until then.
+- **G4 (failed outbox row)**, option A (460/500): the failed and pending outbox rows are made with
+  `deliverOutbox` and a seed transport that fails for one demo recipient. The delivery pass would
+  also touch rows outside the namespace (§ 8.3), so the step is skipped with a warning when any
+  non-demo row is pending.
+- **G5 (verification)**: accounts are verified through `verifyEmail` with the token read from the
+  queued VERIFY email, as the integration harness does.

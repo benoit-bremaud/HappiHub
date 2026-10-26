@@ -12,6 +12,10 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Added
 
+- Local demo seed (#251): `npm run seed:demo -- --confirm` fills a local `_demo` database
+  through the services with personas, associations and twenty events, generates test-account
+  passwords into an ignored `0600` file, and refuses any other target. The rejection catalogue
+  R-AUTH to R-PUB runs as integration tests.
 - Event client for organizers (#252): event list per association, four-step editor (what,
   when and where, look, preview) with autosave, field-by-field conflict resolution, in-place
   sign-in, publish, cancel and delete confirmations, and the public event page. Fields and

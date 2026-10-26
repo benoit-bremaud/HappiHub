@@ -1,7 +1,7 @@
 import { withTransaction } from '../db/transaction.js';
 import { FIELD } from '../domain/fieldCipher.js';
 
-const MAX_ATTEMPTS = 5;
+export const MAX_ATTEMPTS = 5;
 // Templates limited per recipient (quota "Verification / reset emails", 10 per hour).
 const CAPPED_TEMPLATES = new Set(['VERIFY', 'RESET', 'ACCOUNT_EXISTS']);
 
