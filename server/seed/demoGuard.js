@@ -1,8 +1,10 @@
 import { isIP } from 'node:net';
 
 const isLoopback = (host) => host === 'localhost' || (isIP(host) === 4 && host.startsWith('127.')) || host === '::1';
-// A Docker Compose service name is a single label (no dot), so it cannot name a remote host.
-const isServiceName = (host) => /^[a-z0-9][a-z0-9_-]*$/i.test(host);
+// Docker Compose service names of the local stack; any other name may resolve to a remote host.
+const SERVICE_NAMES = new Set(['postgres', 'db']);
+// libpq lets these query parameters replace the URL host, so they would bypass the host check.
+const HOST_OVERRIDES = ['host', 'hostaddr'];
 
 /**
  * Target guard D5 (test-environment spec § 2): the demo seed runs only on a local `_demo`
@@ -19,7 +21,8 @@ export const demoTargetRefusals = (env, args) => {
     if (!decodeURIComponent(url.pathname.slice(1)).endsWith('_demo'))
       refusals.push('the DEV database name must end in _demo');
     const host = url.hostname.replace(/^\[(.*)\]$/, '$1');
-    if (!isLoopback(host) && !isServiceName(host)) refusals.push('the DEV database host must be local');
+    const overridden = HOST_OVERRIDES.some((name) => url.searchParams.has(name));
+    if (overridden || (!isLoopback(host) && !SERVICE_NAMES.has(host))) refusals.push('the DEV database host must be local');
   }
   if (!args.includes('--confirm')) refusals.push('--confirm is required');
   if (env.DATABASE_URL_PROD) refusals.push('DATABASE_URL_PROD must not be set');

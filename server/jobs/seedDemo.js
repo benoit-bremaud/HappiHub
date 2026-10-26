@@ -4,18 +4,19 @@ import { runMaintenance } from './maintenance.js';
 import { findAccount, resendVerification, signUp, updateAccount, verifyEmail } from '../services/accounts.js';
 import { closeAssociation, createAdditionalAssociation, findMembership } from '../services/associations.js';
 import { cancelEvent, createEvent, editEvent, publishEvent } from '../services/events.js';
-import { acceptInvitation, createInvitation } from '../services/invitations.js';
-import { deliverOutbox } from '../services/outbox.js';
+import { acceptInvitation, createInvitation, resendInvitation } from '../services/invitations.js';
+import { deliverOutbox, MAX_ATTEMPTS } from '../services/outbox.js';
 import { generatePassword, readCredentials, writeCredentials } from '../seed/credentials.js';
-import { DEMO_ACCOUNTS, DEMO_ADDRESSES, DEMO_ASSOCIATIONS, DEMO_DOMAIN, demoEvents } from '../seed/demoDataset.js';
+import { DEMO_ACCOUNTS, DEMO_ADDRESSES, DEMO_ASSOCIATIONS, demoEvents } from '../seed/demoDataset.js';
 
 // Demo seed of the test-environment spec (#251): every write goes through the services with the
 // DEV keyring (D1), keyed by natural keys in the reserved namespace (D3), one service transaction
 // at a time so a rerun completes a failed run (D7). Direct SQL only for the E19 flag (D6) and the
 // P7 role (G1). The run clock `ctx.now` is moved into the past for the states of D6.
 
-const MAX_DELIVERY_ATTEMPTS = 5;
-const FAILING_RECIPIENT = `hugo@${DEMO_DOMAIN}`;
+// The invitee of A1 whose invitation delivery fails (§ 4.3); the unverified persona keeps a pending VERIFY.
+const FAILING_RECIPIENT = DEMO_ACCOUNTS.find((a) => a.key === DEMO_ASSOCIATIONS[0].pendingInvitations[0]).email;
+const UNVERIFIED = DEMO_ACCOUNTS.find((a) => a.verified === false).email;
 
 const accountIdByEmail = async (ctx, email) =>
   (await ctx.db.query('SELECT id FROM account WHERE email_bidx = $1', [ctx.cipher.blindIndex(email)])).rows[0]?.id ?? null;
@@ -32,40 +33,73 @@ const queuedVerifyToken = async (ctx, email) => {
 const assertMigrated = async (db, migrationsDir) => {
   const expected = readdirSync(migrationsDir).filter((name) => name.endsWith('.sql')).length;
   const { rows: [{ count }] } = await db.query('SELECT count(*)::int AS count FROM pgmigrations')
-    .catch(() => ({ rows: [{ count: 0 }] }));
+    .catch((error) => {
+      if (error.code !== '42P01') throw error; // 42P01: no migration table yet
+      return { rows: [{ count: 0 }] };
+    });
   if (count < expected) throw new Error('The demo database is not migrated: run npm run migrate first');
 };
 
 /** `--reset`: delete only namespace rows; foreign keys cascade to memberships, events and activity. */
 const resetNamespace = async (ctx) => {
   const bidx = DEMO_ADDRESSES.map((email) => ctx.cipher.blindIndex(email));
-  await ctx.db.query('DELETE FROM association WHERE name = ANY($1::text[])', [DEMO_ASSOCIATIONS.map((a) => a.name)]);
+  await ctx.db.query(
+    `DELETE FROM association WHERE name = ANY($1::text[])
+       AND created_by IN (SELECT id FROM account WHERE email_bidx = ANY($2::bytea[]))`,
+    [DEMO_ASSOCIATIONS.map((a) => a.name), bidx]);
   await ctx.db.query('DELETE FROM invitation WHERE email_bidx = ANY($1::bytea[])', [bidx]);
   await ctx.db.query('DELETE FROM outbox_message WHERE recipient_bidx = ANY($1::bytea[])', [bidx]);
   await ctx.db.query('DELETE FROM account WHERE email_bidx = ANY($1::bytea[])', [bidx]);
 };
 
+/**
+ * Bring an account to its persona state from whatever a previous, interrupted run left (D7):
+ * each step runs only when its state is missing. Returns whether anything changed.
+ */
+const convergeAccount = async (ctx, persona, id) => {
+  let account = await findAccount(ctx.db, ctx.cipher, id);
+  let changed = false;
+  if (persona.verified !== false && !account.emailVerifiedAt) {
+    let token = await queuedVerifyToken(ctx, persona.email);
+    if (!token) {
+      await resendVerification(ctx, persona.email);
+      token = await queuedVerifyToken(ctx, persona.email);
+    }
+    await verifyEmail(ctx, token);
+    account = await findAccount(ctx.db, ctx.cipher, id);
+    changed = true;
+  }
+  if (account.displayName !== persona.displayName) {
+    account = await updateAccount(ctx, account, { displayName: persona.displayName });
+    changed = true;
+  }
+  if (persona.pendingEmail && account.pendingEmail !== persona.pendingEmail) {
+    account = await updateAccount(ctx, account, { email: persona.pendingEmail });
+    changed = true;
+  }
+  if (persona.platformRole && account.platformRole !== persona.platformRole) {
+    await ctx.db.query('UPDATE account SET platform_role = $2 WHERE id = $1', [id, persona.platformRole]); // G1
+    changed = true;
+  }
+  return changed;
+};
+
+/** Create or complete one persona; the password is kept unless missing or rotated (D2). */
 const seedAccount = async (ctx, persona, passwords, { rotatePasswords }, tally) => {
   let id = await accountIdByEmail(ctx, persona.email);
   const known = passwords.get(persona.email);
   const password = !known || rotatePasswords ? generatePassword() : known;
-  if (!id) {
+  const created = !id;
+  if (created) {
     await signUp(ctx, { email: persona.email, password });
     id = await accountIdByEmail(ctx, persona.email);
-    if (persona.verified !== false) await verifyEmail(ctx, await queuedVerifyToken(ctx, persona.email));
-    let account = await findAccount(ctx.db, ctx.cipher, id);
-    account = await updateAccount(ctx, account, { displayName: persona.displayName });
-    if (persona.pendingEmail) await updateAccount(ctx, account, { email: persona.pendingEmail });
-    if (persona.platformRole)
-      await ctx.db.query('UPDATE account SET platform_role = $2 WHERE id = $1', [id, persona.platformRole]); // G1
-    tally.created += 1;
   } else if (password !== known) {
     // Lost credentials file or --rotate-passwords: the service sets the new hash (and ends sessions).
     await updateAccount(ctx, await findAccount(ctx.db, ctx.cipher, id), { newPassword: password });
-    tally.updated += 1;
-  } else {
-    tally.unchanged += 1;
   }
+  const converged = await convergeAccount(ctx, persona, id);
+  if (created) tally.created += 1;
+  else tally[password !== known || converged ? 'updated' : 'unchanged'] += 1;
   passwords.set(persona.email, password);
   return id;
 };
@@ -88,7 +122,12 @@ const seedAssociation = async (ctx, definition, ids, personas, tally) => {
       'SELECT 1 FROM membership WHERE association_id = $1 AND account_id = $2', [row.id, ids[key]]);
     if (member.length) continue;
     const association = await findMembership(ctx.db, owner.id, row.slug);
-    const { link } = await createInvitation(ctx, owner, association, personas[key].email);
+    // A run interrupted between invitation and acceptance left a pending row: resend gives a new token.
+    const { rows: [open] } = await ctx.db.query(
+      "SELECT id FROM invitation WHERE association_id = $1 AND email_bidx = $2 AND status = 'PENDING' AND expires_at > $3",
+      [row.id, ctx.cipher.blindIndex(personas[key].email), new Date(ctx.now())]);
+    const { link } = open ? await resendInvitation(ctx, owner, association, open.id)
+      : await createInvitation(ctx, owner, association, personas[key].email);
     await acceptInvitation(ctx, await findAccount(ctx.db, ctx.cipher, ids[key]), { token: link.split('#')[1] });
     tally.created += 1;
   }
@@ -106,30 +145,46 @@ const seedAssociation = async (ctx, definition, ids, personas, tally) => {
   return row;
 };
 
-/** Create one event through the services, at the seed clock of its definition (D6). */
+/**
+ * Create or complete one event through the services, at the seed clock of its definition (D6).
+ * Each step runs only when the current state lacks it, so a rerun finishes a half-built event (D7).
+ * Returns 'created', 'updated' or 'unchanged'.
+ */
 const seedEvent = async (ctx, clock, definition, associations, ids) => {
   const association = associations[definition.association];
-  const { rows: existing } = await ctx.db.query(
-    'SELECT 1 FROM event WHERE association_id = $1 AND title = $2', [association.id, definition.body.title]);
-  if (existing.length) return false;
+  const { rows: [existing] } = await ctx.db.query(
+    `SELECT id, version, status, schedule_changed_at, hidden_by_moderation FROM event
+     WHERE association_id = $1 AND title = $2`, [association.id, definition.body.title]);
   const runNow = clock.now;
   clock.now = runNow - (definition.createdAgo ?? 0);
+  let outcome = existing ? 'unchanged' : 'created';
+  const step = () => { if (outcome === 'unchanged') outcome = 'updated'; };
   try {
     const member = await findMembership(ctx.db, ids[definition.by], association.slug);
-    let view = await createEvent(ctx, ids[definition.by], member, definition.body);
-    if (definition.publish) view = await publishEvent(ctx, ids[definition.by], member, view.id, view.version);
-    if (definition.cancelReason)
-      view = await cancelEvent(ctx, ids[definition.by], member, view.id, { baseVersion: view.version, reason: definition.cancelReason });
-    if (definition.edit) {
+    let view = existing ?? await createEvent(ctx, ids[definition.by], member, definition.body);
+    if (definition.publish && view.status === 'DRAFT') {
+      view = await publishEvent(ctx, ids[definition.by], member, view.id, view.version);
+      step();
+    }
+    if (definition.cancelReason && view.status === 'PUBLISHED') {
+      view = await cancelEvent(ctx, ids[definition.by], member, view.id,
+        { baseVersion: view.version, reason: definition.cancelReason });
+      step();
+    }
+    if (definition.edit && !existing?.schedule_changed_at) {
       const editor = await findMembership(ctx.db, ids[definition.edit.by], association.slug);
       view = await editEvent(ctx, ids[definition.edit.by], editor, view.id,
         { baseVersion: view.version, changes: definition.edit.changes });
+      step();
     }
-    if (definition.hide) await ctx.db.query('UPDATE event SET hidden_by_moderation = true WHERE id = $1', [view.id]); // D6
+    if (definition.hide && !existing?.hidden_by_moderation) {
+      await ctx.db.query('UPDATE event SET hidden_by_moderation = true WHERE id = $1', [view.id]); // D6
+      step();
+    }
   } finally {
     clock.now = runNow;
   }
-  return true;
+  return outcome;
 };
 
 /**
@@ -149,9 +204,9 @@ const seedOutbox = async (ctx, log) => {
   const transport = { send: async ({ recipient, template }) => {
     if (recipient === FAILING_RECIPIENT && template === 'INVITATION') throw new Error('demo delivery failure');
   } };
-  for (let pass = 0; pass < MAX_DELIVERY_ATTEMPTS; pass += 1)
+  for (let pass = 0; pass < MAX_ATTEMPTS; pass += 1)
     await deliverOutbox(ctx.db, transport, { cipher: ctx.cipher, now: ctx.now, batch: 1000 });
-  await resendVerification(ctx, DEMO_ACCOUNTS.find((a) => a.key === 'P5').email);
+  await resendVerification(ctx, UNVERIFIED);
 };
 
 /** § 7 check: one seeded account stores its email as an `hh1.` envelope, never in clear. */
@@ -172,9 +227,13 @@ export const seedDemo = async (services, { clock, credentialsFile, migrationsDir
   const passwords = readCredentials(credentialsFile);
   const personas = Object.fromEntries(DEMO_ACCOUNTS.map((persona) => [persona.key, persona]));
   const ids = {};
-  for (const persona of DEMO_ACCOUNTS)
+  // Seeding is sequential on purpose: each step reads the state the previous one wrote (D7).
+  for (const persona of DEMO_ACCOUNTS) {
     ids[persona.key] = await seedAccount(ctx, persona, passwords, { rotatePasswords }, tally);
-  writeCredentials(credentialsFile, DEMO_ACCOUNTS.map(({ key, email }) => ({ key, email, password: passwords.get(email) })));
+    // Written after each account so an interrupted run never loses a password already set.
+    writeCredentials(credentialsFile, DEMO_ACCOUNTS.filter(({ email }) => passwords.has(email))
+      .map(({ key, email }) => ({ key, email, password: passwords.get(email) })));
+  }
 
   const associations = {};
   for (const definition of DEMO_ASSOCIATIONS)
@@ -185,13 +244,13 @@ export const seedDemo = async (services, { clock, credentialsFile, migrationsDir
   const events = demoEvents(clock.now);
   let needsMaintenance = false;
   for (const definition of events.filter((event) => event.maintenance)) {
-    const created = await seedEvent(ctx, clock, definition, associations, ids);
-    tally[created ? 'created' : 'unchanged'] += 1;
-    needsMaintenance ||= created;
+    const outcome = await seedEvent(ctx, clock, definition, associations, ids);
+    tally[outcome] += 1;
+    needsMaintenance ||= outcome === 'created';
   }
   if (needsMaintenance) await runMaintenance(ctx);
   for (const definition of events.filter((event) => !event.maintenance))
-    tally[(await seedEvent(ctx, clock, definition, associations, ids)) ? 'created' : 'unchanged'] += 1;
+    tally[await seedEvent(ctx, clock, definition, associations, ids)] += 1;
   await seedOutbox(ctx, log);
   await assertEncrypted(ctx, ids.P1);
   return tally;
