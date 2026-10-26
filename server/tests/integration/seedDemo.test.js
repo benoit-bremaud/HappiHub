@@ -120,6 +120,21 @@ describe('demo seed reruns (AC2, AC8, D2)', () => {
     expect((await signIn('P2')).status).toBe(200);
   });
 
+  test('a rerun completes maintenance and outbox fixtures interrupted before their last step (D7)', async () => {
+    await seed();
+    // Interrupted before runMaintenance: E16 has no notice, E18 is not archived yet.
+    await pool.query("UPDATE event SET cleanup_notice_at = NULL WHERE title = 'Ancien brouillon oublié'");
+    await pool.query("UPDATE event SET status = 'PUBLISHED' WHERE title = 'Exposition terminée'");
+    // Interrupted after the delivery passes, before Nora's VERIFY was queued again.
+    await pool.query("DELETE FROM outbox_message WHERE template = 'VERIFY' AND recipient_bidx = $1", [bidx(email('P5'))]);
+    await seed();
+    expect((await eventByTitle('Ancien brouillon oublié')).cleanup_notice_at).not.toBeNull();
+    expect(await eventByTitle('Exposition terminée')).toMatchObject({ status: 'ARCHIVED' });
+    const outbox = (await pool.query('SELECT failed_at, recipient_bidx FROM outbox_message')).rows;
+    expect(outbox.filter((r) => r.failed_at)).toEqual([expect.objectContaining({ recipient_bidx: bidx(email('P4')) })]);
+    expect(outbox.filter((r) => !r.failed_at)).toEqual([expect.objectContaining({ recipient_bidx: bidx(email('P5')) })]);
+  });
+
   test('--rotate-passwords replaces every password', async () => {
     await seed();
     const old = passwords();

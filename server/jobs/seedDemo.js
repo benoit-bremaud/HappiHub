@@ -193,10 +193,15 @@ const seedEvent = async (ctx, clock, definition, associations, ids) => {
  */
 const seedOutbox = async (ctx, log) => {
   const demo = new Set(DEMO_ADDRESSES.map((email) => ctx.cipher.blindIndex(email).toString('hex')));
+  const pendingVerify = async () => (await ctx.db.query(
+    "SELECT 1 FROM outbox_message WHERE recipient_bidx = $1 AND template = 'VERIFY' AND failed_at IS NULL",
+    [ctx.cipher.blindIndex(UNVERIFIED)])).rows.length;
   const { rows: failed } = await ctx.db.query('SELECT 1 FROM outbox_message WHERE recipient_bidx = $1 AND failed_at IS NOT NULL',
     [ctx.cipher.blindIndex(FAILING_RECIPIENT)]);
-  if (failed.length) return;
   const { rows: pending } = await ctx.db.query('SELECT recipient_bidx FROM outbox_message WHERE failed_at IS NULL');
+  const verify = await pendingVerify();
+  // Each fixture converges on its own, so a run interrupted between them completes the other (D7).
+  if (failed.length && verify && pending.length === verify) return;
   if (pending.some((row) => !demo.has(row.recipient_bidx.toString('hex')))) {
     log('outbox fixture skipped: non-demo emails are pending');
     return;
@@ -204,9 +209,11 @@ const seedOutbox = async (ctx, log) => {
   const transport = { send: async ({ recipient, template }) => {
     if (recipient === FAILING_RECIPIENT && template === 'INVITATION') throw new Error('demo delivery failure');
   } };
-  for (let pass = 0; pass < MAX_ATTEMPTS; pass += 1)
+  // Delivers every other demo email (e.g. notices from a rerun maintenance); failures need all attempts.
+  const passes = failed.length ? 1 : MAX_ATTEMPTS;
+  for (let pass = 0; pass < passes; pass += 1)
     await deliverOutbox(ctx.db, transport, { cipher: ctx.cipher, now: ctx.now, batch: 1000 });
-  await resendVerification(ctx, UNVERIFIED);
+  if (!(await pendingVerify())) await resendVerification(ctx, UNVERIFIED);
 };
 
 /** § 7 check: one seeded account stores its email as an `hh1.` envelope, never in clear. */
@@ -242,13 +249,14 @@ export const seedDemo = async (services, { clock, credentialsFile, migrationsDir
   // E16 and E18 reach their state through the job (D6), run before the other events so it does
   // not archive E12 at once; the API's hourly tick archives E12 later (G3).
   const events = demoEvents(clock.now);
-  let needsMaintenance = false;
-  for (const definition of events.filter((event) => event.maintenance)) {
-    const outcome = await seedEvent(ctx, clock, definition, associations, ids);
-    tally[outcome] += 1;
-    needsMaintenance ||= outcome === 'created';
-  }
-  if (needsMaintenance) await runMaintenance(ctx);
+  const maintained = events.filter((event) => event.maintenance);
+  for (const definition of maintained) tally[await seedEvent(ctx, clock, definition, associations, ids)] += 1;
+  // Decided from the fixtures' state, not from this run's creations, so a run interrupted before
+  // the job still converges (D7): E16 waits for its cleanup notice, E18 for its archive.
+  const { rows: [waiting] } = await ctx.db.query(
+    `SELECT count(*)::int AS n FROM event WHERE title = ANY($1::text[])
+       AND cleanup_notice_at IS NULL AND status <> 'ARCHIVED'`, [maintained.map((event) => event.body.title)]);
+  if (waiting.n) await runMaintenance(ctx);
   for (const definition of events.filter((event) => !event.maintenance))
     tally[await seedEvent(ctx, clock, definition, associations, ids)] += 1;
   await seedOutbox(ctx, log);
