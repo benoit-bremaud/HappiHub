@@ -1,3 +1,5 @@
 .env
 .env.*
 !.env.example
+# Generated demo passwords (test-environment spec, D2)
+.demo-credentials.local.json
