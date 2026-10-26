@@ -2,7 +2,7 @@
 
 > **Source spec**: [public agenda](../../specs/public-agenda.md) § 2–4 (AC1–AC11)
 
-Status: proposed, awaiting Benoît's validation.
+Status: validated by Benoît on 2026-10-26.
 
 ```mermaid
 sequenceDiagram

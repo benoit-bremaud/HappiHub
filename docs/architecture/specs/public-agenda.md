@@ -1,6 +1,6 @@
 # Public agenda — browse upcoming events without an account (#366)
 
-Status: **proposed, awaiting Benoît's validation**. No code before validation (AGENTS.md).
+Status: **validated by Benoît on 2026-10-26** (D1–D3 option A, weights accepted).
 
 UML: [diagrams/public-agenda/](../diagrams/public-agenda/).
 Realises [UC21 — Browse upcoming events](v1-use-cases.md#uc21--browse-upcoming-events)
@@ -98,7 +98,7 @@ migration.
   type chips and a city `<select>` fed by `/api/events/cities` (fetched only when opened).
 - Loading, error (retry) and empty states. No new dependency.
 
-## 7. Decisions (MCDA, weights proposed — owner validates)
+## 7. Decisions (MCDA, validated 2026-10-26)
 
 Criteria and weights: privacy/security 30, simplicity (KISS) 25, fit to UC21/P1 25,
 UX/progressive disclosure 20. Scores 0–5, total /500.
