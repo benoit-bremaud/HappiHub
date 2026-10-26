@@ -19,3 +19,13 @@ pre-merge SonarQube scan reads both lcov reports (see `docs/SONARQUBE.md`).
 
 There is no end-to-end or performance suite yet. Never point the integration suite at a
 real or shared database.
+
+## Demo seed (#251)
+
+`npm run seed:demo -- --confirm [--reset] [--rotate-passwords]` fills a local DEV database whose
+name ends in `_demo` with the personas, associations and events of the
+[test-environment spec](../../docs/architecture/specs/test-environment.md). Passwords are generated
+into `server/.demo-credentials.local.json` (mode 0600, ignored by git; see
+`.demo-credentials.example.json` for its shape). The seed is covered by `tests/unit/demoGuard.test.js`
+and `tests/integration/seedDemo.test.js`; the rejection catalogue (§ 5) by
+`tests/integration/rejectionCatalogue.test.js`.

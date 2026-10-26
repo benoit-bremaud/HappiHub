@@ -5,6 +5,18 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-10-26
+
+- **#251 demo seed implemented** (branch `feat/demo-seed-251`). Before coding, the owner chose D8 C
+  (450/500): demo accounts move to `demo.example.com`, because the email schema refuses `.test`
+  (#345, closed by this amendment, no production change). Reading the services surfaced G1–G5
+  (spec § 12): P7's MODERATOR role is a second documented SQL exception (G1 A, 470/500), A3 keeps
+  Léa as its member after closure, E12 is archived by the next hourly tick, and the failed outbox
+  fixture is skipped when non-demo emails are pending (G4 A, 460/500). Seed via services, D5 guard,
+  generated passwords in an ignored 0600 file; 9 seed and 29 rejection-catalogue integration tests,
+  15 guard unit tests. Real run on a local `happihub_demo`: 38 created, then 0 created / 36
+  unchanged; AC5 checked in the browser ([QA](docs/architecture/qa/2026-10-26-demo-seed.md)).
+
 ## 2026-10-24
 
 - **#329 current-password attempt race — conception validated and implemented**
