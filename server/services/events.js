@@ -257,6 +257,9 @@ export const readPublicEvent = async (ctx, id) => {
 /** Agenda page size; the query reads one more row to know whether another page exists. */
 const AGENDA_PAGE_SIZE = 20;
 
+/** Last agenda page (AC4): the controller rejects beyond it, so no "more" is announced there. */
+export const AGENDA_MAX_PAGE = 50;
+
 /**
  * Agenda FROM … WHERE (public-agenda AC2): published or cancelled and not ended. Reserves
  * $1/$2 for agendaWindow(now); callers append `AND …` from $3.
@@ -287,7 +290,7 @@ export const listPublicEvents = async (ctx, { page, type, city }) => {
      ORDER BY e.starts_at, e.id LIMIT $5 OFFSET $6`,
     [...agendaWindow(ctx.now()), type, city, AGENDA_PAGE_SIZE + 1, (page - 1) * AGENDA_PAGE_SIZE]);
   return { items: rows.slice(0, AGENDA_PAGE_SIZE).map(cardView), page, pageSize: AGENDA_PAGE_SIZE,
-    hasMore: rows.length > AGENDA_PAGE_SIZE };
+    hasMore: rows.length > AGENDA_PAGE_SIZE && page < AGENDA_MAX_PAGE };
 };
 
 /** UC21a: cities that currently have at least one agenda event, sorted by name (AC7). */

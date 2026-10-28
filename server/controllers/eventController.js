@@ -2,7 +2,7 @@ import Joi from 'joi';
 import { searchCommunes } from '../domain/communes.js';
 import { cancellationReasonSchema, commune, EVENT_STATUSES, EVENT_TYPES, eventError } from '../domain/event.js';
 import {
-  cancelEvent, createEvent, deleteEvent, editEvent, listEvents, listPublicCities, listPublicEvents, publishEvent, readEvent,
+  AGENDA_MAX_PAGE, cancelEvent, createEvent, deleteEvent, editEvent, listEvents, listPublicCities, listPublicEvents, publishEvent, readEvent,
   readPublicEvent,
 } from '../services/events.js';
 import { handle } from './handle.js';
@@ -25,7 +25,7 @@ const SCHEMAS = {
   list: Joi.object({ status: Joi.string().valid(...EVENT_STATUSES) }),
   communes: Joi.object({ q: Joi.string().trim().min(2).max(60).required() }),
   // public-agenda AC4/AC5: page capped at 50 so the agenda cannot be paged without bound.
-  agenda: Joi.object({ page: Joi.number().integer().min(1).max(50).default(1),
+  agenda: Joi.object({ page: Joi.number().integer().min(1).max(AGENDA_MAX_PAGE).default(1),
     type: Joi.string().valid(...EVENT_TYPES).default(null), city: commune.default(null) }),
 };
 

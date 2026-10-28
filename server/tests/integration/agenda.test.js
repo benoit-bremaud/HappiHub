@@ -98,6 +98,15 @@ describe('UC21 public agenda', () => {
     expect((await agenda('?page=50')).body).toMatchObject({ items: [], page: 50, hasMore: false });
   });
 
+  test('the last page never announces more, even with over 1,000 events (AC4)', async () => {
+    await pool.query(`INSERT INTO event (association_id, type, title, short_description, status, starts_at, venue_label,
+        venue_normalized_city, published_at)
+      SELECT $1, 'TALK', 'Bulk ' || n, 'Short', 'PUBLISHED', $2::timestamptz + n * interval '1 minute', 'Hall', '69123', $2
+      FROM generate_series(1, 1001) AS n`, [troupe, at(DAY)]);
+    expect((await agenda('?page=49')).body).toMatchObject({ page: 49, hasMore: true });
+    expect((await agenda('?page=50')).body).toMatchObject({ page: 50, hasMore: false });
+  });
+
   test('both routes are under the publicReads limiter (AC11)', async () => {
     const client = await browser(app);
     for (const path of ['/api/events', '/api/events/cities'])
