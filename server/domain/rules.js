@@ -1,5 +1,5 @@
 // Domain guards evaluated inside the write transaction, on locked rows (spec § 4).
-export const MAX_ASSOCIATIONS_CREATED = 5;
+const MAX_ASSOCIATIONS_CREATED = 5;
 export const INVITATIONS_PER_DAY = 10;
 
 export const canCreateAssociation = (associationsCreated) => associationsCreated < MAX_ASSOCIATIONS_CREATED;

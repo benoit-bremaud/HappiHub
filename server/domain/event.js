@@ -11,9 +11,9 @@ export const DAY_MS = 24 * 3600e3;
 /** Allowed `type` values (§ 7); mirrored by the migration CHECK. */
 export const EVENT_TYPES = ['THEATRE', 'CONCERT', 'EXHIBITION', 'WORKSHOP', 'DANCE', 'CINEMA', 'TALK', 'OTHER'];
 /** Poster presets; the first one is the creation default. */
-export const POSTER_STYLES = ['classic', 'bold', 'paper', 'night', 'pastel', 'minimal'];
+const POSTER_STYLES = ['classic', 'bold', 'paper', 'night', 'pastel', 'minimal'];
 /** `priceKind` values; only AMOUNT carries `priceAmountCents`. */
-export const PRICE_KINDS = ['FREE', 'AMOUNT', 'PAY_WHAT_YOU_WANT'];
+const PRICE_KINDS = ['FREE', 'AMOUNT', 'PAY_WHAT_YOU_WANT'];
 /** Lifecycle statuses, also the member list filter values. */
 export const EVENT_STATUSES = ['DRAFT', 'PUBLISHED', 'CANCELLED', 'ARCHIVED'];
 /** Q: creations per association within a sliding 24 h window. */
@@ -24,7 +24,7 @@ export const COALESCE_MS = 15 * 60e3;
 export const DRAFT_NOTICE_GRACE_MS = 14 * DAY_MS;
 
 /** G1: fields a published event must keep (UC18, UC16 2c). */
-export const REQUIRED_FIELDS = ['title', 'type', 'shortDescription', 'startsAt', 'venueLabel', 'venueCity'];
+const REQUIRED_FIELDS = ['title', 'type', 'shortDescription', 'startsAt', 'venueLabel', 'venueCity'];
 const SCHEDULE_FIELDS = new Set(['startsAt', 'endsAt', 'venueLabel', 'venueAddress', 'venueCity']);
 const READ_ONLY = new Set(['CANCELLED', 'ARCHIVED']);
 
@@ -89,11 +89,11 @@ export const parseField = (field, value) => {
 };
 
 /** Parse every field of a partial body. @throws as parseField. */
-export const parseFields = (values) =>
+const parseFields = (values) =>
   Object.fromEntries(Object.entries(values).map(([field, value]) => [field, parseField(field, value)]));
 
 /** Cross-field rules every saved event satisfies, draft or not (mirrors the table CHECKs). */
-export const checkConsistency = (event) => {
+const checkConsistency = (event) => {
   if (event.endsAt && (!event.startsAt || event.endsAt < event.startsAt))
     throw eventError(400, 'INVALID_FIELD', 'The end must not precede the start', { field: 'endsAt' });
   if ((event.priceKind === 'AMOUNT') !== (event.priceAmountCents !== null))
@@ -113,7 +113,7 @@ export const newDraft = (body) => {
 };
 
 /** G1: required fields still null, in REQUIRED_FIELDS order. */
-export const missingFields = (event) => REQUIRED_FIELDS.filter((field) => event[field] === null);
+const missingFields = (event) => REQUIRED_FIELDS.filter((field) => event[field] === null);
 
 /** A1: effective end in ms; `starts_at` + 24 h without an end; null for a draft without start. */
 export const effectiveEnd = (event) => {

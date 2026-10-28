@@ -34,7 +34,7 @@ jobs:
           npx --no-install jest --config jest.config.cjs --runInBand --coverage
           --collectCoverageFrom='app.js'
           --collectCoverageFrom='server.js'
-          --collectCoverageFrom='{config,controllers,middleware,models,queries,routes,utils,validation}/**/*.{js,ts}'
+          --collectCoverageFrom='{config,controllers,db,domain,jobs,middleware,routes,services,utils}/**/*.js'
       - name: Client dependencies
         working-directory: client
         run: npm ci --ignore-scripts --no-audit --no-fund
