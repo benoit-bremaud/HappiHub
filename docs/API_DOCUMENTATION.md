@@ -51,6 +51,8 @@ Historical FAQ/GUIDE/tutorials do not define current behavior.
 | `POST /associations/:slug/events/:id/publish` | UC18 | 200 | `{baseVersion}`; guard failures `422 PUBLICATION_REFUSED` with `details.failures` |
 | `POST /associations/:slug/events/:id/cancel` | UC19 | 200 | `{baseVersion, confirm: true, reason?}` (≤ 500); final |
 | `POST /associations/:slug/events/:id/delete` | UC20 | 204 | `{baseVersion, confirm: true}`; drafts only |
+| `GET /events` | public | 200 | No session ([public agenda](architecture/specs/public-agenda.md)). Published or cancelled events not yet ended (ongoing included), not hidden, of an active association; soonest first (`startsAt`, then `id`). Query `page` 1–50 (default 1), `type` (event type), `city` (INSEE code); anything else is `400 INVALID_REQUEST`. Body `{items, page, pageSize: 20, hasMore}`; items are cards (`id, status, title, type, shortDescription, startsAt, endsAt, venueLabel, venueCity {code, name}, priceKind, priceAmountCents, posterStyle, association {name, slug}`), no account ids, address, version or editing metadata |
+| `GET /events/cities` | public | 200 | No session. `[{code, name}]` of cities that have at least one agenda event, sorted by name |
 | `GET /events/:id` | public | 200 | No session. Published, cancelled or archived events of an active association, not hidden by moderation; includes `association: {name, slug}`, no account ids, version or editing metadata. Anything else (draft, hidden, unknown or malformed id) is the same `404 EVENT_NOT_FOUND` |
 | `/comments` | — | 503 | Legacy routes disabled until the participation/comment brick (S3) |
 
