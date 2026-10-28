@@ -52,3 +52,15 @@
 - Tests: right pyramid; AC11 missing, AC3 oracle circular.
 - Security: SQL parameterised, no privacy leak, routes ordered, limiter present.
 - Correctness: unknown/out-of-range URL params break the page; past-end page dead end.
+
+## Final gate (after fixes)
+
+| Step | Result |
+|---|---|
+| 1 Tests | ✅ server unit 161 · ✅ server integration 176 · ✅ client 93 · ✅ build |
+| 2 Coverage | server integration 90.9 / 75.6 / 96.2 / 93.4 %; client 92.9 / 82.7 / 93.8 / 96.2 % · docs ≈100 % of the new surface |
+| 3 SonarQube | ✅ PASSED |
+| 4 Secrets | ✅ gitleaks clean (main..HEAD) · no tracked .env · diff read |
+| 5 QA pass | ✅ pass, mobile first at 375 px (one column, 44 px targets, no horizontal scroll) |
+
+- Gate: **GREEN**. Remaining follow-up: a shared `useSend` client hook (Should, deferred to its own issue). Visual design brainstorm: #367.

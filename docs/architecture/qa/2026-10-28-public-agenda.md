@@ -19,7 +19,7 @@ database `happihub_demo`), migrations, then `npm run seed:demo -- --confirm` (38
 | Unknown and out-of-range URL parameters | ✅ `/?utm_source=x&page=99` shows "No upcoming event yet. Back to first page" and never sends the tracker to the API |
 | Card opens the public page (UC22) | ✅ `/events/:id` |
 | XSS seed title `<script>alert(1)</script>` | ✅ rendered as text |
-| Mobile 375 px | ✅ no horizontal scroll; the header overlap is the known issue #285 |
+| Mobile 375 px (mobile first, owner rule 2026-10-28) | ✅ one column, 44 px touch targets, no horizontal scroll ([filters](2026-10-28-public-agenda/04-filters-mobile.jpg)); the header overlap is the known issue #285 |
 | Cookies set by the agenda | ✅ none readable (`document.cookie` empty) |
 
 Screenshots: [desktop](2026-10-28-public-agenda/01-home-agenda-desktop.jpg),

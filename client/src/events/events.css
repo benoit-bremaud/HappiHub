@@ -56,10 +56,16 @@ output { display: block; }
 }
 .hh-danger-link { color: var(--hh-danger); }
 .hh-add { align-self: flex-start; }
-/* UC21 public agenda (public-agenda AC8, AC9). */
-.hh-agenda { max-width: 64rem; margin: 0 auto; text-align: left; }
-.hh-agenda__filters fieldset { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; border: 0; padding: 0.5rem 0; }
+/* UC21 public agenda (public-agenda AC8, AC9), mobile first: one column and 44 px touch
+   targets by default, more columns only from 40rem. */
+.hh-agenda { width: 100%; max-width: 64rem; margin: 0 auto; text-align: left; }
+.hh-agenda button { min-height: 2.75rem; padding: 0 1rem; }
+.hh-agenda select { min-height: 2.75rem; max-width: 100%; }
+.hh-agenda__filters fieldset { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; border: 0; padding: 0.5rem 0; margin: 0; }
 .hh-agenda__filters [aria-pressed="true"] { font-weight: 700; text-decoration: underline; }
-.hh-agenda__list { list-style: none; padding: 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); }
+.hh-agenda__list { list-style: none; padding: 0; display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
 .hh-agenda__list a { color: inherit; text-decoration: none; display: block; }
 .hh-agenda__pages { display: flex; gap: 0.5rem; justify-content: center; }
+@media (min-width: 40rem) {
+  .hh-agenda__list { grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); }
+}
