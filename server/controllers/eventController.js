@@ -1,8 +1,9 @@
 import Joi from 'joi';
 import { searchCommunes } from '../domain/communes.js';
-import { cancellationReasonSchema, EVENT_STATUSES, eventError } from '../domain/event.js';
+import { cancellationReasonSchema, EVENT_STATUSES, EVENT_TYPES, eventError } from '../domain/event.js';
 import {
-  cancelEvent, createEvent, deleteEvent, editEvent, listEvents, publishEvent, readEvent, readPublicEvent,
+  cancelEvent, createEvent, deleteEvent, editEvent, listEvents, listPublicCities, listPublicEvents, publishEvent, readEvent,
+  readPublicEvent,
 } from '../services/events.js';
 import { handle } from './handle.js';
 
@@ -23,6 +24,9 @@ const SCHEMAS = {
   delete: Joi.object({ baseVersion, confirm }),
   list: Joi.object({ status: Joi.string().valid(...EVENT_STATUSES) }),
   communes: Joi.object({ q: Joi.string().trim().min(2).max(60).required() }),
+  // public-agenda AC4/AC5: page capped at 50 so the agenda cannot be paged without bound.
+  agenda: Joi.object({ page: Joi.number().integer().min(1).max(50).default(1),
+    type: Joi.string().valid(...EVENT_TYPES).default(null), city: Joi.string().pattern(/^[0-9][0-9AB][0-9]{3}$/).default(null) }),
 };
 
 const envelope = (schema, input) => {
@@ -82,6 +86,13 @@ export const deleteEventHandler = handle(async (req, res) => {
 
 /** Public read without a session; every hidden case is the same 404. */
 export const readPublicEventHandler = handle(async (req, res) => res.json(await readPublicEvent(ctxOf(req), eventId(req))));
+
+/** UC21 public agenda, no session (public-agenda § 4). */
+export const listPublicEventsHandler = handle(async (req, res) =>
+  res.json(await listPublicEvents(ctxOf(req), envelope(SCHEMAS.agenda, req.query))));
+
+/** UC21a: cities that have agenda events, no session. */
+export const listPublicCitiesHandler = handle(async (req, res) => res.json(await listPublicCities(ctxOf(req))));
 
 /** A-B5: city picker reference search, no session (public reference data). */
 export const searchCommunesHandler = handle(async (req, res) =>

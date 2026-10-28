@@ -38,7 +38,7 @@ Acceptance criteria (tests are written against these):
   ended, hidden, closed/suspended association.
 - **AC3** Order: `starts_at` ascending, then `id` ascending (stable across pages).
 - **AC4** Pagination: page size 20; `page` 1–50, default 1; response
-  `{ items, page, pageSize, hasMore }`. Invalid `page`/`type`/`city` → 400 `VALIDATION_ERROR`.
+  `{ items, page, pageSize, hasMore }`. Invalid `page`/`type`/`city` → 400 `INVALID_REQUEST`.
 - **AC5** Filters `type` (one of the 8 `EventType` values) and `city` (INSEE code) combine with AND.
 - **AC6** Item projection = card fields only (§ 4); no account, member, owner or participant
   identifier, no version, editing metadata, `created_at`/`updated_at`, long description.

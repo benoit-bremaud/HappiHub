@@ -17,7 +17,7 @@ sequenceDiagram
   alt limit exceeded
     R-->>C: 429
   else invalid query
-    R-->>C: 400 VALIDATION_ERROR
+    R-->>C: 400 INVALID_REQUEST
   else
     R->>S: listPublicEvents(ctx, {type, city, page})
     S->>DB: SELECT card columns WHERE public AND not ended [AND type] [AND city] ORDER BY starts_at, id LIMIT 21 OFFSET (page-1)*20

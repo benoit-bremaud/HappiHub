@@ -11,7 +11,7 @@ import {
 } from '../controllers/associationController.js';
 import {
   cancelEventHandler, createEventHandler, deleteEventHandler, editEventHandler, listEventsHandler, publishEventHandler,
-  readEventHandler, readPublicEventHandler, searchCommunesHandler,
+  listPublicCitiesHandler, listPublicEventsHandler, readEventHandler, readPublicEventHandler, searchCommunesHandler,
 } from '../controllers/eventController.js';
 
 /** Brick D and brick B endpoints (specs § 5); `limits` are the per-IP limiters created by the app. */
@@ -54,6 +54,8 @@ export const apiRoutes = (limits) => {
   router.post(`${events}/:id/publish`, limits.eventWrites, auth, member, publishEventHandler);
   router.post(`${events}/:id/cancel`, limits.eventWrites, auth, member, cancelEventHandler);
   router.post(`${events}/:id/delete`, limits.eventWrites, auth, member, deleteEventHandler);
+  router.get('/events', limits.publicReads, listPublicEventsHandler);
+  router.get('/events/cities', limits.publicReads, listPublicCitiesHandler);
   router.get('/events/:id', limits.publicReads, readPublicEventHandler);
   router.get('/communes', limits.publicReads, searchCommunesHandler);
 

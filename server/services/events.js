@@ -225,6 +225,9 @@ export const deleteEvent = (ctx, accountId, association, id, baseVersion) =>
       action: 'EVENT_DELETED', targetRef: id, detail: { title: event.title } });
   });
 
+/** Shared by every public read: not hidden, association active (AGENTS.md, public-agenda § 5). */
+const PUBLICLY_VISIBLE = `NOT e.hidden_by_moderation AND a.status = 'ACTIVE'`;
+
 /**
  * Public read (§ 5): published, cancelled or archived, not hidden, association ACTIVE; anything
  * else is the same 404 (BC12, T8). No account ids, version or cleanup fields (AGENTS.md).
@@ -233,11 +236,56 @@ export const readPublicEvent = async (ctx, id) => {
   const { rows: [row] } = await ctx.db.query(
     `SELECT ${EVENT_COLUMNS}, a.name AS association_name, a.slug AS association_slug
      FROM ${EVENT_SOURCE} JOIN association a ON a.id = e.association_id
-     WHERE e.id = $1 AND e.status IN ('PUBLISHED', 'CANCELLED', 'ARCHIVED') AND NOT e.hidden_by_moderation
-       AND a.status = 'ACTIVE'`, [id]);
+     WHERE e.id = $1 AND e.status IN ('PUBLISHED', 'CANCELLED', 'ARCHIVED') AND ${PUBLICLY_VISIBLE}`, [id]);
   if (!row) throw notFound();
   return { ...contentView(toEvent(ctx.cipher, row), ctx.now()),
     association: { name: row.association_name, slug: row.association_slug } };
+};
+
+export const AGENDA_PAGE_SIZE = 20;
+
+/**
+ * Agenda predicate (public-agenda AC2): published or cancelled, not ended (A1 effective end,
+ * same SQL as cancelUpcomingEvents). $1 = now, $2 = now − 24 h.
+ */
+const AGENDA_SOURCE = `event e JOIN association a ON a.id = e.association_id
+  WHERE e.status IN ('PUBLISHED', 'CANCELLED') AND ${PUBLICLY_VISIBLE}
+    AND (e.ends_at >= $1 OR (e.ends_at IS NULL AND e.starts_at >= $2))`;
+
+const agendaWindow = (now) => [new Date(now), new Date(now - DAY_MS)];
+
+/** Card allow-list (AC6): no account ids, version, editing metadata, address or long text. */
+const cardView = (row) => ({
+  id: row.id, status: row.status, title: row.title, type: row.type, shortDescription: row.short_description,
+  startsAt: iso(row.starts_at), endsAt: iso(row.ends_at), venueLabel: row.venue_label,
+  venueCity: { code: row.venue_normalized_city, name: findCommune(row.venue_normalized_city)?.name ?? null },
+  priceKind: row.price_kind, priceAmountCents: row.price_amount_cents, posterStyle: row.poster_style,
+  association: { name: row.association_name, slug: row.association_slug },
+});
+
+/**
+ * UC21: one page of upcoming and ongoing public events, soonest first (AC1–AC5). One extra
+ * row is read to know whether another page exists, without a COUNT.
+ */
+export const listPublicEvents = async (ctx, { page = 1, type = null, city = null } = {}) => {
+  const { rows } = await ctx.db.query(
+    `SELECT e.id, e.status, e.title, e.type, e.short_description, e.starts_at, e.ends_at, e.venue_label,
+       e.venue_normalized_city, e.price_kind, e.price_amount_cents, e.poster_style,
+       a.name AS association_name, a.slug AS association_slug
+     FROM ${AGENDA_SOURCE} AND ($3::text IS NULL OR e.type = $3) AND ($4::text IS NULL OR e.venue_normalized_city = $4)
+     ORDER BY e.starts_at, e.id LIMIT $5 OFFSET $6`,
+    [...agendaWindow(ctx.now()), type, city, AGENDA_PAGE_SIZE + 1, (page - 1) * AGENDA_PAGE_SIZE]);
+  return { items: rows.slice(0, AGENDA_PAGE_SIZE).map(cardView), page, pageSize: AGENDA_PAGE_SIZE,
+    hasMore: rows.length > AGENDA_PAGE_SIZE };
+};
+
+/** UC21a: cities that currently have at least one agenda event, sorted by name (AC7). */
+export const listPublicCities = async (ctx) => {
+  const { rows } = await ctx.db.query(
+    `SELECT DISTINCT e.venue_normalized_city AS code FROM ${AGENDA_SOURCE} AND e.venue_normalized_city IS NOT NULL`,
+    agendaWindow(ctx.now()));
+  return rows.map(({ code }) => ({ code, name: findCommune(code)?.name ?? code }))
+    .sort((left, right) => left.name.localeCompare(right.name, 'fr'));
 };
 
 /**
