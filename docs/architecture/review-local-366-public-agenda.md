@@ -14,9 +14,9 @@
 | 2 Coverage | server integration 90.9 % stmts / 75.0 % branches / 96.2 % funcs / 93.3 % lines; client 92.9 / 82.5 / 93.8 / 96.2 · docs ≈100 % of the new public surface (doc-auditor estimate) |
 | 3 SonarQube | ❌ FAILED: 3 new violations (nested template literal `Agenda.jsx:22`; `[0-9]` → `\d` twice `eventController.js:29`) |
 | 4 Secrets | ✅ gitleaks clean (main..HEAD, 4 commits) · no tracked .env · diff read: nothing sensitive |
-| 5 QA pass | pending, after the fixes |
+| 5 QA pass | ✅ pass after a home.css fix (agenda top unreachable) · report: docs/architecture/qa/2026-10-28-public-agenda.md |
 
-- Gate: **RED — SonarQube, Must Have open**
+- Gate: RED at 4100c11 (SonarQube, Must Have open); all Must and Should items except the `useSend` follow-up fixed in 89fd589 and later; see the final gate below.
 
 ## 🔴 Must Have
 

@@ -2,8 +2,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100vh; /* Full viewport height */
+    /* Top-aligned and growing: the agenda is taller than the viewport and must stay scrollable. */
+    justify-content: flex-start;
+    min-height: 100%;
+    padding: 2rem 1rem;
+    box-sizing: border-box;
     color: #ffffff;
     font-family: 'Roboto', sans-serif;
   }
