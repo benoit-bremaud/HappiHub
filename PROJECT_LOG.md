@@ -7,6 +7,18 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-28
 
+- **#295 repo audit leftovers removed** (branch `chore/295-remove-repo-audit-leftovers`). Scope
+  chosen by MCDA: #295 alone (445/500) before #307, because #307 needs a correct coverage
+  measurement first. Spec validated with R6 included (430/500 vs 380 without
+  [spec](docs/architecture/specs/repo-audit-leftovers.md)). CI server coverage now uses the
+  `jest.config.cjs` scope instead of stale command-line globs. New unit baseline: 44.8 %
+  statements and 46.8 % branches. The integration run is unchanged at
+  90.9 % statements and 75.7 % branches. The server declares `"type": "module"`, and its
+  CommonJS files are now `.cjs`. Removed: dead env keys (including two secrets that CRA would
+  bundle), `test.rest`, the sample media, 3 unused dependencies and 9 file-local exports.
+  Review-local found 0 Must and 4 Should items, all fixed: Sonar exclusion, two stale doc
+  paths, and coverage scope duplication.
+
 - **#366 public agenda (UC21) implemented** (PR #369, narrow slice of #126). The owner asked on
   2026-10-26 that public events be visible without signing in. The conception was validated the
   same day ([spec](docs/architecture/specs/public-agenda.md)). D1 A (485/500): upcoming and ongoing

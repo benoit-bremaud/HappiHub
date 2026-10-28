@@ -12,9 +12,9 @@ No UML diagram is affected: the change touches tooling, examples and dead code o
 
 | ID | Change | Verified fact (2026-10-28) |
 |---|---|---|
-| R1 | CI server coverage globs: `{config,controllers,db,domain,jobs,middleware,routes,services,utils}/**/*.js` plus `app.js`, `server.js` | `.github/workflows/quality-tests.yml` lists absent `models`, `queries`, `validation` and omits `db`, `domain`, `jobs`, `services` |
+| R1 | CI server coverage: drop the command-line globs so the `collectCoverageFrom` scope of `jest.config.cjs` applies (all server modules, operator entry points excluded; amended during review-local to keep one source of truth) | `.github/workflows/quality-tests.yml` lists absent `models`, `queries`, `validation` and omits `db`, `domain`, `jobs`, `services` |
 | R2 | `client/.env.example`: keep only `REACT_APP_API_URL` | `client/src/api.js` is the only `process.env` reader; the file advertises an OAuth client secret and API secret that CRA would bundle |
-| R3 | `server/.env.example`: document `NODE_ENV` (values `production`/`test`/other), `TEST_DATABASE_URL` and the `*_FILE` variants already read by `config/` | `appConfig.js`, `fieldKeyring.js`, integration `globalSetup.js` |
+| R3 | `server/.env.example`: document `NODE_ENV` (values `production`/`test`/other), `TEST_DATABASE_URL` and the `*_FILE` variants read at startup | `config/appConfig.js`, `config/fieldKeyring.js`, `server.js`, `jobs/migrate.js`, integration `globalSetup.cjs` |
 | R4 | Delete `client/test.rest`, `client/public/assets/images/pic.jpg`, `client/public/assets/videos/vid.mp4` | no reference outside package files and archived docs |
 | R5 | Remove unused dependencies `body-parser` (server), `@babel/preset-typescript` and its babel comment (server), `@testing-library/user-event` (client); regenerate lockfiles with `npm uninstall` | no import in source or tests |
 | R6 | `server/package.json`: add `"type": "module"`; rename the CommonJS files `babel.config.js` → `.cjs`, `tests/integration/globalSetup.js` and `globalTeardown.js` → `.cjs` and update `jest.integration.cjs` | `npm start` currently relies on Node syntax detection (ESM sources without `type`) |
