@@ -1,6 +1,6 @@
 # HappiHub handover
 
-Updated: 2026-10-24. The recovery work and V1 bricks D (accounts/associations), B (event
+Updated: 2026-10-28. The recovery work and V1 bricks D (accounts/associations), B (event
 lifecycle backend) and the event client (#252) are merged to main. No further application code is authorized without the
 owner's completed UML approval gate for that increment.
 
@@ -118,6 +118,8 @@ is in use for the pre-merge gate ([SONARQUBE](SONARQUBE.md)). Do not interpret c
 folders as an approved implementation plan.
 
 ## Next actions
+
+#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). Next: #367 visual design brainstorm with the owner (mobile first), #368 shared `useSend` hook. UI rule: always mobile first.
 
 QA backlog from the 2026-10-24 inspector pass: #319 (edge security headers) and #320 (source maps)
 are fixed and merged (PR #326, squash `9cb6a3d`, both issues closed); #321–#324 (P3) remain.
