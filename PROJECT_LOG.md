@@ -5,6 +5,20 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-10-28
+
+- **#366 public agenda (UC21) implemented** (PR #369, narrow slice of #126). The owner asked on
+  2026-10-26 that public events be visible without signing in. The conception was validated the
+  same day ([spec](docs/architecture/specs/public-agenda.md)). D1 A (485/500): upcoming and ongoing
+  events, published and cancelled, no archive. D2 A (485): page numbers with `hasMore` from an n+1
+  read. D3 A (470): type and city filters behind one "Filter" button. `GET /api/events` and
+  `/api/events/cities` share the public visibility SQL and the A1 "not ended" helper. The card
+  allow-list carries no ids or address. Review-local found 3 Must issues, all fixed: the raw URL
+  query reached the API, AC11 was untested, and the AC3 test oracle was circular. QA found that
+  the home page's fixed `100vh` centred layout made the top of the agenda unreachable; fixed.
+  New owner rule: always mobile first (one column, 44 px targets). Follow-ups: #367 (visual
+  design brainstorm, the owner finds the UI not attractive enough), #368 (shared `useSend` hook).
+
 ## 2026-10-26
 
 - **#251 demo seed implemented** (branch `feat/demo-seed-251`). Before coding, the owner chose D8 C
