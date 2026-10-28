@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { searchCommunes } from '../domain/communes.js';
-import { cancellationReasonSchema, EVENT_STATUSES, EVENT_TYPES, eventError } from '../domain/event.js';
+import { cancellationReasonSchema, commune, EVENT_STATUSES, EVENT_TYPES, eventError } from '../domain/event.js';
 import {
   cancelEvent, createEvent, deleteEvent, editEvent, listEvents, listPublicCities, listPublicEvents, publishEvent, readEvent,
   readPublicEvent,
@@ -26,7 +26,7 @@ const SCHEMAS = {
   communes: Joi.object({ q: Joi.string().trim().min(2).max(60).required() }),
   // public-agenda AC4/AC5: page capped at 50 so the agenda cannot be paged without bound.
   agenda: Joi.object({ page: Joi.number().integer().min(1).max(50).default(1),
-    type: Joi.string().valid(...EVENT_TYPES).default(null), city: Joi.string().pattern(/^[0-9][0-9AB][0-9]{3}$/).default(null) }),
+    type: Joi.string().valid(...EVENT_TYPES).default(null), city: commune.default(null) }),
 };
 
 const envelope = (schema, input) => {

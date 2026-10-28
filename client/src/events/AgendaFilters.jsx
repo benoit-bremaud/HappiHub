@@ -5,7 +5,8 @@ import { EVENT_TYPES } from './eventFields';
 
 /**
  * UC21a filters behind one "Filter" button (public-agenda AC9, progressive disclosure). The
- * city list is fetched only once the panel is opened.
+ * city list is fetched only once the panel is opened. It starts open when the URL already
+ * holds a filter, so a shared link shows its active choice.
  */
 export const AgendaFilters = ({ type, city, onChange }) => {
   const [open, setOpen] = useState(Boolean(type || city));
@@ -33,6 +34,7 @@ export const AgendaFilters = ({ type, city, onChange }) => {
             <select value={city ?? ''} onChange={(e) => onChange({ type, city: e.target.value || null })}>
               <option value="">All cities</option>
               {cities.map(({ code, name }) => <option key={code} value={code}>{name}</option>)}
+              {city && !cities.some(({ code }) => code === city) && <option value={city}>{city}</option>}
             </select>
           </label>
         </fieldset>

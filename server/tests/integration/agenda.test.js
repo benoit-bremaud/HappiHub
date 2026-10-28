@@ -71,10 +71,12 @@ describe('UC21 public agenda', () => {
     expect(first.body).toMatchObject({ page: 1, hasMore: true });
     expect(first.body.items).toHaveLength(20);
     expect(second.body).toMatchObject({ page: 2, hasMore: false });
-    const listed = [...first.body.items, ...second.body.items];
-    const expected = listed.slice().sort((a, b) => a.startsAt.localeCompare(b.startsAt) || a.id.localeCompare(b.id));
-    expect(listed.map((item) => item.id)).toEqual(expected.map((item) => item.id));
-    expect(new Set(listed.map((item) => item.id)).size).toBe(21);
+    // Expected order from the inserted fixtures: even n start an hour earlier; ties by id in
+    // byte order, which is how PostgreSQL compares uuid values.
+    const byId = (a, b) => (a < b ? -1 : 1);
+    const expected = [...ids.filter((_, n) => n % 2 === 0).sort(byId), ...ids.filter((_, n) => n % 2 === 1).sort(byId)];
+    expect(first.body.items.map((item) => item.id)).toEqual(expected.slice(0, 20));
+    expect(second.body.items.map((item) => item.id)).toEqual(expected.slice(20));
   });
 
   test('filters by type and city with AND (AC5)', async () => {
@@ -84,7 +86,26 @@ describe('UC21 public agenda', () => {
     expect((await agenda('?type=CONCERT&city=69123')).body.items.map((item) => item.id)).toEqual([lyonConcert]);
   });
 
-  test.each(['?page=0', '?page=51', '?page=x', '?type=SPORT', '?city=Lyon', '?owner=1'])(
+  test('includes the A1 boundaries: end exactly now, no end and started exactly 24 h ago (AC2)', async () => {
+    const endsNow = await insert({ starts_at: at(-HOUR), ends_at: at(0) });
+    const dayAgo = await insert({ starts_at: at(-DAY) });
+    await insert({ starts_at: at(-DAY - 1000) });
+    expect((await agenda()).body.items.map((item) => item.id).sort()).toEqual([endsNow, dayAgo].sort());
+  });
+
+  test('accepts the last page 50 with an empty result (AC4)', async () => {
+    await insert();
+    expect((await agenda('?page=50')).body).toMatchObject({ items: [], page: 50, hasMore: false });
+  });
+
+  test('both routes are under the publicReads limiter (AC11)', async () => {
+    const client = await browser(app);
+    for (const path of ['/api/events', '/api/events/cities'])
+      expect((await client.get(path)).headers['ratelimit-policy']).toMatch(/q=600; w=900/);
+  });
+
+  test.each(['?page=0', '?page=51', '?page=x', '?page=1.5', '?type=SPORT', '?type=concert', '?type=TALK&type=DANCE',
+    '?city=Lyon', '?city=99999', '?owner=1'])(
     'rejects %s with 400 INVALID_REQUEST (AC4)', async (query) => {
       const response = await agenda(query);
       expect(response.status).toBe(400);
@@ -98,6 +119,7 @@ describe('UC21 public agenda', () => {
       'posterStyle', 'shortDescription', 'startsAt', 'status', 'title', 'type', 'venueCity', 'venueLabel'].sort());
     expect(item.association).toEqual({ name: 'Troupe', slug: 'troupe' });
     expect(item.venueCity).toEqual({ code: '69123', name: 'Lyon' });
+    expect(JSON.stringify(item)).not.toMatch(/rue Secrète|claire@example\.org/);
   });
 });
 
@@ -107,8 +129,12 @@ describe('UC21a agenda cities', () => {
     await insert({ city: '69123' });
     await insert({ city: '69123' });
     await insert({ city: '13055', status: 'DRAFT' });
+    await insert({ city: '33063', hidden: true });
+    await insert({ city: '31555', starts_at: at(-3 * DAY), ends_at: at(-2 * DAY) });
+    await insert({ city: '06088', status: 'CANCELLED' });
     const response = await (await browser(app)).get('/api/events/cities');
     expect(response.status).toBe(200);
-    expect(response.body).toEqual([{ code: '69123', name: 'Lyon' }, { code: '75056', name: 'Paris' }]);
+    expect(response.body).toEqual([{ code: '69123', name: 'Lyon' }, { code: '06088', name: 'Nice' },
+      { code: '75056', name: 'Paris' }]);
   });
 });

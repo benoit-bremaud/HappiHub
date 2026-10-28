@@ -39,7 +39,7 @@ Acceptance criteria (tests are written against these):
 - **AC3** Order: `starts_at` ascending, then `id` ascending (stable across pages).
 - **AC4** Pagination: page size 20; `page` 1–50, default 1; response
   `{ items, page, pageSize, hasMore }`. Invalid `page`/`type`/`city` → 400 `INVALID_REQUEST`.
-- **AC5** Filters `type` (one of the 8 `EventType` values) and `city` (INSEE code) combine with AND.
+- **AC5** Filters `type` (one of the 8 `EventType` values) and `city` (a known INSEE commune code) combine with AND.
 - **AC6** Item projection = card fields only (§ 4); no account, member, owner or participant
   identifier, no version, editing metadata, `created_at`/`updated_at`, long description.
 - **AC7** `GET /api/events/cities` lists `{ code, name }` of cities having at least one
@@ -93,9 +93,9 @@ migration.
 
 - `components/Home/Home.jsx` keeps the welcome line and renders `<Agenda />`.
 - `events/Agenda.jsx`: reads `type`, `city`, `page` from `useSearchParams`, fetches
-  `/api/events`, renders cards (`EventPoster` reuse) and "Previous / Next" links.
+  `/api/events`, renders cards (`EventPoster` reuse) and "Previous / Next" buttons that rewrite the URL; only the parsed `type`, `city` and clamped `page` reach the API, and an empty page past the end offers "Back to first page".
 - `events/AgendaFilters.jsx`: a single "Filter" toggle (progressive disclosure); when open,
-  type chips and a city `<select>` fed by `/api/events/cities` (fetched only when opened).
+  type chips and a city `<select>` fed by `/api/events/cities` (fetched only when opened; the panel starts open when the URL already holds a filter).
 - Loading, error (retry) and empty states. No new dependency.
 
 ## 7. Decisions (MCDA, validated 2026-10-26)

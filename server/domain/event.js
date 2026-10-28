@@ -56,7 +56,8 @@ const isoDateTime = Joi.string().custom((value, helpers) => {
   return new Date(value).toISOString();
 });
 const optionalDate = isoDateTime.allow(null).empty('').default(null);
-const commune = Joi.string().custom((code, helpers) => (findCommune(code) ? code : helpers.error('any.invalid')));
+/** A known INSEE commune code (decision V); also validates the agenda city filter. */
+export const commune = Joi.string().custom((code, helpers) => (findCommune(code) ? code : helpers.error('any.invalid')));
 
 /** Editable fields: the allow-list of `changes` and creation bodies (status, version, ids excluded). */
 const FIELD_SCHEMAS = {

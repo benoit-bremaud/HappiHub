@@ -32,13 +32,25 @@ const toEvent = (cipher, row) => ({
   lastEditedByFormerMember: row.last_editor_deleted === true,
 });
 
+/** City as `{code, name}`, or null without a city (shared by every event projection). */
+const cityView = (code) => code && { code, name: findCommune(code)?.name ?? null };
+
+/**
+ * A1 "not ended" predicate, the SQL twin of hasEnded(): bind the two placeholders to
+ * agendaWindow(now). Kept in one place for the agenda and the association closure.
+ */
+const notEnded = (nowParam, dayAgoParam, alias = '') =>
+  `(${alias}ends_at >= ${nowParam} OR (${alias}ends_at IS NULL AND ${alias}starts_at >= ${dayAgoParam}))`;
+
+const agendaWindow = (now) => [new Date(now), new Date(now - DAY_MS)];
+
 /** Content shared by the member and public views; the city is shown with its name (V). */
 const contentView = (event, now) => ({
   id: event.id, status: event.status, title: event.title, type: event.type,
   shortDescription: event.shortDescription, longDescription: event.longDescription,
   startsAt: event.startsAt, endsAt: event.endsAt, ended: hasEnded(event, now),
   venueLabel: event.venueLabel, venueAddress: event.venueAddress,
-  venueCity: event.venueCity && { code: event.venueCity, name: findCommune(event.venueCity)?.name ?? null },
+  venueCity: cityView(event.venueCity),
   priceKind: event.priceKind, priceAmountCents: event.priceAmountCents, posterStyle: event.posterStyle,
   cancellationReason: event.cancellationReason, publishedAt: event.publishedAt, scheduleChangedAt: event.scheduleChangedAt,
 });
@@ -242,37 +254,36 @@ export const readPublicEvent = async (ctx, id) => {
     association: { name: row.association_name, slug: row.association_slug } };
 };
 
-export const AGENDA_PAGE_SIZE = 20;
+/** Agenda page size; the query reads one more row to know whether another page exists. */
+const AGENDA_PAGE_SIZE = 20;
 
 /**
- * Agenda predicate (public-agenda AC2): published or cancelled, not ended (A1 effective end,
- * same SQL as cancelUpcomingEvents). $1 = now, $2 = now − 24 h.
+ * Agenda FROM … WHERE (public-agenda AC2): published or cancelled and not ended. Reserves
+ * $1/$2 for agendaWindow(now); callers append `AND …` from $3.
  */
-const AGENDA_SOURCE = `event e JOIN association a ON a.id = e.association_id
-  WHERE e.status IN ('PUBLISHED', 'CANCELLED') AND ${PUBLICLY_VISIBLE}
-    AND (e.ends_at >= $1 OR (e.ends_at IS NULL AND e.starts_at >= $2))`;
-
-const agendaWindow = (now) => [new Date(now), new Date(now - DAY_MS)];
+const AGENDA_FROM_WHERE = `event e JOIN association a ON a.id = e.association_id
+  WHERE e.status IN ('PUBLISHED', 'CANCELLED') AND ${PUBLICLY_VISIBLE} AND ${notEnded('$1', '$2', 'e.')}`;
 
 /** Card allow-list (AC6): no account ids, version, editing metadata, address or long text. */
 const cardView = (row) => ({
   id: row.id, status: row.status, title: row.title, type: row.type, shortDescription: row.short_description,
   startsAt: iso(row.starts_at), endsAt: iso(row.ends_at), venueLabel: row.venue_label,
-  venueCity: { code: row.venue_normalized_city, name: findCommune(row.venue_normalized_city)?.name ?? null },
+  venueCity: cityView(row.venue_normalized_city),
   priceKind: row.price_kind, priceAmountCents: row.price_amount_cents, posterStyle: row.poster_style,
   association: { name: row.association_name, slug: row.association_slug },
 });
 
 /**
  * UC21: one page of upcoming and ongoing public events, soonest first (AC1–AC5). One extra
- * row is read to know whether another page exists, without a COUNT.
+ * row is read to know whether another page exists, without a COUNT. `page`, `type` and `city`
+ * are validated by the controller (type and city may be null).
  */
-export const listPublicEvents = async (ctx, { page = 1, type = null, city = null } = {}) => {
+export const listPublicEvents = async (ctx, { page, type, city }) => {
   const { rows } = await ctx.db.query(
     `SELECT e.id, e.status, e.title, e.type, e.short_description, e.starts_at, e.ends_at, e.venue_label,
        e.venue_normalized_city, e.price_kind, e.price_amount_cents, e.poster_style,
        a.name AS association_name, a.slug AS association_slug
-     FROM ${AGENDA_SOURCE} AND ($3::text IS NULL OR e.type = $3) AND ($4::text IS NULL OR e.venue_normalized_city = $4)
+     FROM ${AGENDA_FROM_WHERE} AND ($3::text IS NULL OR e.type = $3) AND ($4::text IS NULL OR e.venue_normalized_city = $4)
      ORDER BY e.starts_at, e.id LIMIT $5 OFFSET $6`,
     [...agendaWindow(ctx.now()), type, city, AGENDA_PAGE_SIZE + 1, (page - 1) * AGENDA_PAGE_SIZE]);
   return { items: rows.slice(0, AGENDA_PAGE_SIZE).map(cardView), page, pageSize: AGENDA_PAGE_SIZE,
@@ -282,11 +293,15 @@ export const listPublicEvents = async (ctx, { page = 1, type = null, city = null
 /** UC21a: cities that currently have at least one agenda event, sorted by name (AC7). */
 export const listPublicCities = async (ctx) => {
   const { rows } = await ctx.db.query(
-    `SELECT DISTINCT e.venue_normalized_city AS code FROM ${AGENDA_SOURCE} AND e.venue_normalized_city IS NOT NULL`,
+    `SELECT DISTINCT e.venue_normalized_city AS code FROM ${AGENDA_FROM_WHERE} AND e.venue_normalized_city IS NOT NULL`,
     agendaWindow(ctx.now()));
+  // A <select> option needs a label: an unknown code (not expected) shows as itself.
   return rows.map(({ code }) => ({ code, name: findCommune(code)?.name ?? code }))
     .sort((left, right) => left.name.localeCompare(right.name, 'fr'));
 };
+
+/** A1 "not ended" for the closure update: $2 = now, $3 = now − 24 h. */
+const CLOSURE_NOT_ENDED = notEnded('$2', '$3');
 
 /**
  * UC8 hook (C1): in the closing transaction (association row already locked), upcoming published
@@ -297,8 +312,8 @@ export const cancelUpcomingEvents = async (client, ctx, associationId, actorId) 
   const { rows } = await client.query(
     `UPDATE event SET status = 'CANCELLED', cancellation_reason = 'Association closed', version = version + 1,
        updated_at = $2 WHERE association_id = $1 AND status = 'PUBLISHED'
-       AND (ends_at >= $2 OR (ends_at IS NULL AND starts_at >= $3)) RETURNING id`,
-    [associationId, new Date(now), new Date(now - DAY_MS)]);
+       AND ${CLOSURE_NOT_ENDED} RETURNING id`,
+    [associationId, ...agendaWindow(now)]);
   await Promise.all(rows.map(({ id }) =>
     recordActivity(client, ctx, { associationId, actorId, action: 'EVENT_CANCELLED', targetRef: id })));
   return rows.length;
