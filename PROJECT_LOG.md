@@ -7,7 +7,15 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-29
 
-- **#367 agenda visual design study** (branch `docs/367-agenda-visual-design`,
+- **#382 cultural poster implementation** (branch `feat/382-cultural-poster-design`). Scope
+  amendment (study § 8) validated by Benoît: it folds #347 (contrast, C1–C2), #285 (header
+  overlap, C3), #302 (Cancelled twice, C4) and #355 (style labels, two-width preview, same-day
+  ranges, C5–C7). Decision A1: the public page keeps its banner and its poster drops the badge;
+  agenda cards keep it (475/500 vs B 375, C 335). Client: role tokens in `index.css`, Bricolage
+  Grotesque bundled from `src/fonts/` (OFL), six AA poster palettes, compact header (wordmark
+  links Home), home tagline then agenda, sticky day headers, 1/2/3 columns at 0/48/75 rem,
+  press feedback only.
+- **#367 agenda visual design study** (merged 2026-10-29, PR #381, `8d09f29`; branch `docs/367-agenda-visual-design`,
   [study](docs/architecture/specs/agenda-visual-design.md)). Research covered DICE, Resident
   Advisor, Luma, Shotgun, Dribbble and Awwwards at phone width. Pinterest needs a sign-in, which
   was not attempted. Benoît chose the top MCDA score for each of the seven decisions. D1: the

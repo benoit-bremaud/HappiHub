@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { Agenda } from './Agenda';
+import { Home } from '../components/Home/Home';
 
 // Public agenda client criteria AC8–AC10 (public-agenda spec § 2). Only fetch is faked.
 
@@ -126,4 +127,25 @@ test('a failed load can be retried', async () => {
   routes['/events'] = page([card()]);
   fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
   await link('Jazz night');
+});
+
+test('events are grouped under one heading per start day, in API order (V3)', async () => {
+  const local = (day, hour) => new Date(2026, 10, day, hour).toISOString();
+  routes['/events'] = page([card({ id: 'a', startsAt: local(14, 18) }), card({ id: 'b', title: 'Hamlet', startsAt: local(14, 21) }),
+    card({ id: 'c', title: 'Tango', startsAt: local(15, 20) })]);
+  show();
+  await link('Tango');
+  expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent))
+    .toEqual(['Saturday 14 November', 'Jazz night', 'Hamlet', 'Sunday 15 November', 'Tango']);
+  const saturday = screen.getByRole('region', { name: 'Saturday 14 November' });
+  expect(within(saturday).getAllByRole('link')).toHaveLength(2);
+});
+
+test('home shows one tagline then the agenda first, no welcome hero (D7, V1)', async () => {
+  routes['/events'] = page([card()]);
+  render(<MemoryRouter><Home /></MemoryRouter>);
+  await link('Jazz night');
+  expect(screen.getByText('Culture, sharing and community through events.')).toBeInTheDocument();
+  expect(screen.queryByText(/Welcome/)).toBeNull();
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Upcoming events');
 });

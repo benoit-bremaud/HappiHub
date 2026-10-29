@@ -1,5 +1,5 @@
 import {
-  centsToEuros, describeFailure, emptyValues, entryStep, eurosToCents, fieldProblem, fromLocalInput,
+  centsToEuros, dayHeading, describeFailure, emptyValues, formatRange, entryStep, eurosToCents, fieldProblem, fromLocalInput,
   fromServer, isPast, missingRequired, priceLabel, stepOf, toLocalInput, typeLabel,
 } from './eventFields';
 
@@ -78,5 +78,24 @@ describe('conversions', () => {
     expect(typeLabel('DANCE')).toBe('Dance');
     expect(isPast('2000-01-01T00:00:00Z')).toBe(true);
     expect(isPast('2999-01-01T00:00:00Z')).toBe(false);
+  });
+});
+
+describe('poster dates (C7, V3)', () => {
+  // Local times, so the expectations hold in any test time zone.
+  const at = (day, hour) => new Date(2026, 10, day, hour).toISOString();
+
+  test('a same-day range shows the date once, then start and end times', () => {
+    expect(formatRange(at(14, 20), at(14, 23))).toBe('Sat, 14 November 2026, 20:00 – 23:00');
+  });
+
+  test('a range over several days keeps both full dates; no end shows the start only', () => {
+    expect(formatRange(at(14, 20), at(15, 2))).toMatch(/14 November 2026.* – .*15 November 2026/);
+    expect(formatRange(at(14, 20), null)).toMatch(/14 November 2026/);
+    expect(formatRange(null, null)).toBe('');
+  });
+
+  test('day headers name the weekday, day and month', () => {
+    expect(dayHeading(at(14, 20))).toBe('Saturday 14 November');
   });
 });

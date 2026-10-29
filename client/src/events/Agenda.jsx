@@ -3,8 +3,17 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { send } from '../accounts/request';
 import { AgendaFilters } from './AgendaFilters';
 import { EventPoster } from './EventPoster';
-import { formatDate, fromServer } from './eventFields';
+import { dayHeading, formatDate, fromServer } from './eventFields';
 import './events.css';
+
+/** Groups the page's events by local start day, keeping the API's `startsAt` order (V3). */
+const byDay = (items) => items.reduce((days, event) => {
+  const key = new Date(event.startsAt).toDateString();
+  const last = days.at(-1);
+  if (last?.key === key) last.events.push(event);
+  else days.push({ key, heading: dayHeading(event.startsAt), events: [event] });
+  return days;
+}, []);
 
 /** UC21 public agenda: upcoming events as cards, filters and page held in the URL (AC8–AC10). */
 export const Agenda = () => {
@@ -47,18 +56,23 @@ export const Agenda = () => {
       )}
       {result?.items?.length > 0 && (
         <>
-          <ul className="hh-agenda__list">
-            {result.items.map((event) => (
-              <li key={event.id}>
-                {/* The poster is labelled "Poster preview"; the link names what a listener needs. */}
-                <Link to={`/events/${event.id}`} aria-label={[event.title, formatDate(event.startsAt), event.venueCity?.name,
-                  event.status === 'CANCELLED' && 'cancelled'].filter(Boolean).join(', ')}>
-                  <EventPoster values={fromServer(event)} cityName={event.venueCity?.name}
-                    cancelled={event.status === 'CANCELLED'} />
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {byDay(result.items).map(({ key, heading, events }) => (
+            <section key={key} className="hh-agenda__day" aria-label={heading}>
+              <h3 className="hh-agenda__day-title">{heading}</h3>
+              <ul className="hh-agenda__list">
+                {events.map((event) => (
+                  <li key={event.id}>
+                    {/* The poster is labelled "Poster preview"; the link names what a listener needs. */}
+                    <Link to={`/events/${event.id}`} aria-label={[event.title, formatDate(event.startsAt), event.venueCity?.name,
+                      event.status === 'CANCELLED' && 'cancelled'].filter(Boolean).join(', ')}>
+                      <EventPoster values={fromServer(event)} cityName={event.venueCity?.name}
+                        cancelled={event.status === 'CANCELLED'} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
           <nav className="hh-agenda__pages" aria-label="Agenda pages">
             {page > 1 && <button type="button" onClick={() => navigate({ page: page - 1 })}>Previous</button>}
             {result.hasMore && <button type="button" onClick={() => navigate({ page: page + 1 })}>Next</button>}

@@ -1,64 +1,55 @@
-img {
-    width: 15%;
-    border-radius: 2px;
-}
-
+/* Compact header (agenda visual design § 5.3): wraps below the wordmark on narrow phones (#285). */
 .header {
-    background: linear-gradient(to right, #1f4037, #99f2c8);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 30px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--hh-gap);
+  min-height: 3.5rem;
+  padding: 0 1rem;
+  background: var(--hh-surface);
+  border-bottom: 1px solid var(--hh-line);
 }
 
-.logo {
-    width: 30%;
-}
-
-.logo h1 {
-    color: #ffffff;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 24px;
-}
-
-.nav {
-    width: 70%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.header__brand {
+  font-family: var(--hh-font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-stretch: 85%;
+  color: var(--hh-ink);
+  text-decoration: none;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
 }
 
 .nav ul {
-    list-style: none;
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    padding: 0;
-    margin: 0;
-}
-
-.nav li {
-    padding: 0; /* Remove padding from li to let buttons handle padding */
-    margin: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0;
+  margin: 0;
 }
 
 .nav-btn {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px 20px;
-    margin: 0;
-    border: none;
-    border-radius: 8px;
-    color: #ffffff;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.3s ease;
-    text-decoration: none;
-    display: inline-block; /* Make sure buttons are inline-block */
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0 0.75rem;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--hh-accent);
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.nav-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+.nav-btn:hover { text-decoration: underline; }
+
+@media (min-width: 48rem) {
+  .header { padding: 0 2rem; }
 }

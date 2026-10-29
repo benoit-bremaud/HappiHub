@@ -1,21 +1,13 @@
-/* Functional styling for brick D screens; the visual design awaits Clément/Yazii's feedback. */
-:root {
-  --hh-surface: rgba(255, 255, 255, 0.92);
-  --hh-text: #1d1d1f;
-  --hh-muted: #5a5a60;
-  --hh-accent: #3b3b98;
-  --hh-danger: #a4161a;
-  --hh-radius: 10px;
-  --hh-gap: 0.75rem;
-}
-.hh-page { max-width: 40rem; margin: 2rem auto; padding: 1.5rem; background: var(--hh-surface);
-  color: var(--hh-text); border-radius: var(--hh-radius); text-align: left; }
+/* Account screens; colours come from the role tokens in index.css (#347). */
+.hh-page { max-width: 40rem; margin: 1rem auto; padding: 1.5rem 1rem; box-sizing: border-box; border: 1px solid var(--hh-line); background: var(--hh-surface);
+  color: var(--hh-ink); border-radius: var(--hh-radius); text-align: left; }
 .hh-page h2, .hh-page h3 { margin-top: 0; }
 .hh-form { display: flex; flex-direction: column; gap: var(--hh-gap); margin-bottom: 1.5rem; }
 .hh-form label { display: flex; flex-direction: column; gap: 0.25rem; font-weight: 600; }
-.hh-form input, .hh-form textarea { font: inherit; padding: 0.5rem; border: 1px solid var(--hh-muted); border-radius: 6px; }
-.hh-hint { color: var(--hh-muted); font-size: 0.9rem; font-weight: 400; }
-.hh-button { font: inherit; padding: 0.5rem 1rem; border: none; border-radius: 6px; background: var(--hh-accent);
+.hh-form input, .hh-form textarea { font: inherit; padding: 0.5rem; border: 1px solid var(--hh-ink-muted); border-radius: 6px;
+  background: var(--hh-surface); color: var(--hh-ink); }
+.hh-hint { color: var(--hh-ink-muted); font-size: 0.9rem; font-weight: 400; }
+.hh-button { font: inherit; font-weight: 600; min-height: 2.75rem; padding: 0.5rem 1rem; border: none; border-radius: 6px; background: var(--hh-accent);
   color: #fff; cursor: pointer; align-self: flex-start; }
 .hh-button[disabled] { opacity: 0.6; cursor: wait; }
 .hh-danger { background: var(--hh-danger); }

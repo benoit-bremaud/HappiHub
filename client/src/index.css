@@ -1,11 +1,44 @@
+/* Design tokens: the single source of colours and type (agenda visual design § 5.1–5.2, #347).
+   Role-named so a later dark theme only adds values (D6). Every text pair is WCAG AA. */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  /* Self-hosted Latin + Latin-1 subset, SIL OFL 1.1 (src/fonts/OFL.txt), bundled from the HappiHub origin, V5. */
+  src: url('./fonts/bricolage-grotesque-latin.woff2') format('woff2-variations');
+}
+
+:root {
+  --hh-ground: #f4efe6;
+  --hh-surface: #fffaf2;
+  --hh-ink: #1c1a17;
+  --hh-ink-muted: #5c564c;
+  --hh-accent: #b8371f;
+  --hh-danger: #a4161a;
+  --hh-warning: #8a5a00;
+  --hh-line: #d8cfc0;
+  --hh-radius: 10px;
+  --hh-gap: 0.75rem;
+  --hh-font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --hh-font-body: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  background: var(--hh-ground);
+  color: var(--hh-ink);
+  font-family: var(--hh-font-body);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+a { color: var(--hh-accent); }
+a:hover { color: var(--hh-accent); }
+
+:focus-visible { outline: 3px solid var(--hh-accent); outline-offset: 2px; }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',

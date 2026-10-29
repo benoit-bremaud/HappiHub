@@ -143,7 +143,7 @@ animation; disabled under `prefers-reduced-motion: reduce`.
 
 ## 8. Scope amendment for the implementation brick (#382)
 
-Status: **proposed 2026-10-29, awaiting Benoît's validation.** The implementation brick #382
+Status: **validated by Benoît on 2026-10-29** (A1 = A, 475/500). The implementation brick #382
 applies §§ 5–6 and folds in four open defects on the same files. Behaviour stays as specified
 elsewhere except where a criterion below says otherwise.
 
@@ -178,7 +178,7 @@ agenda cards keep the badge (public-agenda AC8).
   Minimal (one label map in `eventFields.js`, keys unchanged).
 - **C6** Step 4 shows the mobile (20 rem) and desktop previews side by side from 768 px and
   stacked below it, both labelled.
-- **C7** A same-day range reads "Sat 14 November 2026, 20:00 – 23:00": the end shows the time
+- **C7** A same-day range reads "Sat, 14 November 2026, 20:00 – 23:00": the end shows the time
   only when start and end fall on the same local day; other ranges stay unchanged.
 
 ### 8.2 Decision A1 — where "Cancelled" is said on the public page (#302)
@@ -198,7 +198,7 @@ Totals recomputed by script.
 ### 8.3 Unchanged
 
 No API, data or behaviour change; no new dependency (the font is a static woff2 file under
-`client/public/fonts/` with its OFL licence). Tests: unit tests for C5, C7 and the poster
+`client/src/fonts/` with its OFL licence). Tests: unit tests for C5, C7 and the poster
 `cancelled` rendering per context (C4); C1, C3 and V1–V8 are checked in the QA pass with
 screenshots at 390, 768 and 1440 px.
 

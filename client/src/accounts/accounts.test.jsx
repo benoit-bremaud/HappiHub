@@ -69,3 +69,9 @@ test('header sign-out revokes the server session', async () => {
   expect(fetch.mock.calls[0][1].method).toBe('DELETE');
   expect(fetch.mock.calls[0][0]).toMatch(/\/session$/);
 });
+
+test('signed-out header: the wordmark links Home, then Sign up and Sign in (visual design § 5.3)', () => {
+  at(<Header />);
+  expect(screen.getByRole('link', { name: 'HappiHub' })).toHaveAttribute('href', '/');
+  expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['HappiHub', 'Sign up', 'Sign in']);
+});
