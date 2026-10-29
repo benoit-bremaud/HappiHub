@@ -112,6 +112,23 @@ describe('verification racing the never-verified tasks (#328)', () => {
       expect((await verification).status).toBe(410);
     } finally { tx.release(); }
   });
+
+  test('AC341-1: a resend waiting on a purge that commits first answers the neutral 202', async () => {
+    const id = await signUp('late@example.org');
+    const before = await n("SELECT 1 FROM outbox_message WHERE template = 'VERIFY'");
+    const tx = await pool.connect();
+    try {
+      await tx.query('BEGIN');
+      await tx.query('SELECT 1 FROM auth_token WHERE account_id = $1 FOR UPDATE', [id]);
+      await tx.query('SELECT 1 FROM account WHERE id = $1 FOR UPDATE', [id]);
+      const resend = (await browser(app)).post('/api/email-verification/resend', { email: 'late@example.org' }).then((r) => r);
+      await waitForLockWait();
+      await tx.query('DELETE FROM account WHERE id = $1', [id]);
+      await tx.query('COMMIT');
+      expect((await resend).status).toBe(202);
+    } finally { tx.release(); }
+    expect(await n("SELECT 1 FROM outbox_message WHERE template = 'VERIFY'")).toBe(before);
+  });
 });
 
 describe('event tasks (brick B BC13, C1)', () => {

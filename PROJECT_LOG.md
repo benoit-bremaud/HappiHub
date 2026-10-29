@@ -7,6 +7,11 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-29
 
+- **#341 resend verification racing the unverified purge** (branch
+  `fix/341-resend-verification-purge-lock`). Spec option A approved by MCDA (480/500 vs B 365
+  account-first lock, C 335 catching the foreign-key error): `resendVerification` locks the
+  account's tokens then the account (#328 R2 order) and rechecks the match, so an account purged
+  meanwhile gets the neutral 202 instead of a 500. Tests AC341-1 (integration race) and AC341-2.
 - **#307 integration branch coverage above 80 %** (branch `test/307-integration-branch-coverage`).
   Spec option B chosen by MCDA (455/500 vs C 425 with a CI job, A 280 testing config through
   boot). New `tests/integration/requestPaths.test.js` covers request-path branches (session
