@@ -7,8 +7,19 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-10-29
 
-- **#341 resend verification racing the unverified purge** (branch
-  `fix/341-resend-verification-purge-lock`). Spec option A approved by MCDA (480/500 vs B 365
+- **#367 agenda visual design study** (branch `docs/367-agenda-visual-design`,
+  [study](docs/architecture/specs/agenda-visual-design.md)). Research covered DICE, Resident
+  Advisor, Luma, Shotgun, Dribbble and Awwwards at phone width. Pinterest needs a sign-in, which
+  was not attempted. Benoît chose the top MCDA score for each of the seven decisions. D1: the
+  cultural poster direction (450/500, fallback minimal list 385). D2: card colour from the
+  organizer's `posterStyle` (450). D3: Bricolage Grotesque, self-hosted (450). D4: full-width
+  poster cards under sticky day headers (445, close to the compact list at 410). D5: press
+  feedback only (440). D6: light paper only in V1, with tokens named by role (425; a tie with
+  auto dark mode if comfort weighs 40). D7: compact header, agenda first (450).
+  Study validated by Benoît the same day; no UI code yet.
+
+- **#341 resend verification racing the unverified purge** (merged 2026-10-29, PR #380,
+  `d317403`). Spec option A approved by MCDA (480/500 vs B 365
   account-first lock, C 335 catching the foreign-key error): `resendVerification` locks the
   account's tokens then the account (#328 R2 order) and rechecks the match, so an account purged
   meanwhile gets the neutral 202 instead of a 500. Tests AC341-1 (integration race) and AC341-2.

@@ -119,13 +119,13 @@ folders as an approved implementation plan.
 
 ## Next actions
 
-#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). Next: #367 visual design brainstorm with the owner (mobile first), #368 shared `useSend` hook. UI rule: always mobile first.
+#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). #367 visual design: the cultural poster direction was chosen on 2026-10-29 ([study](architecture/specs/agenda-visual-design.md), D1–D7); its implementation is a later brick. Next: #368 shared `useSend` hook. UI rule: always mobile first.
 
 QA backlog from the 2026-10-24 inspector pass: #319 (edge security headers) and #320 (source maps)
 are fixed and merged (PR #326, squash `9cb6a3d`, both issues closed); #321–#324 (P3) remain.
 #244 partner API conception validated and merged 2026-10-24 (PR #327, `3c56657`, [spec](architecture/specs/partner-api.md));
 its implementation is a later brick. #251 test-environment conception validated 2026-10-24, amended D8 and G1–G5 on 2026-10-26 ([spec](architecture/specs/test-environment.md)); the demo seed (`npm run seed:demo -- --confirm`) and the rejection-catalogue tests are implemented on branch `feat/demo-seed-251` (closes #251 and #345, demo domain `demo.example.com`). Global review 2026-10-24
-([report](architecture/review-global-2026-10-24.md)) added P1 bugs #328, #329 and CI gaps #295, #307. #328 is merged (PR #342, `96e5535`); its follow-up #341 (resend rechecks under lock, [spec](architecture/specs/resend-verification-purge-race.md)) is fixed in its PR; #329 current-password reservation is fixed in its PR ([spec](architecture/specs/current-password-reservation.md)).
+([report](architecture/review-global-2026-10-24.md)) added P1 bugs #328, #329 and CI gaps #295, #307. #328 is merged (PR #342, `96e5535`); its follow-up #341 (resend rechecks under lock, [spec](architecture/specs/resend-verification-purge-race.md)) is merged (PR #380, `d317403`); #329 current-password reservation is fixed in its PR ([spec](architecture/specs/current-password-reservation.md)).
 
 1. Done 2026-10-15: V1 framing, personas and journeys J1–J6 validated.
 2. Research synthesis is superseded for V1 by the validated framing.
