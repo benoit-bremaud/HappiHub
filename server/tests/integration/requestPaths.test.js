@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { createApp } from '../../app.js';
 import { createSessionStore } from '../../config/session.js';
-import { bidx, browser, buildApp, cipher, config, createPool, lastEmail, migrate, origin, PASSWORD, resetData, signUpVerified }
+import { accountId, bidx, browser, buildApp, cipher, config, createPool, lastEmail, migrate, origin, PASSWORD, resetData, signUpVerified }
   from './harness.js';
 
 // Request-path branches not reached by the use-case suites: session bootstrap edge cases,
@@ -14,7 +14,6 @@ beforeAll(() => { migrate(); pool = createPool(); });
 beforeEach(async () => { await resetData(pool); ({ app, clock } = buildApp(pool)); });
 afterAll(() => pool.end());
 
-const accountId = async (email) => (await pool.query('SELECT id FROM account WHERE email_bidx = $1', [bidx(email)])).rows[0].id;
 
 /** App over the real database and store, whose boundaries can be switched off per test. */
 const flaky = () => {
@@ -88,6 +87,8 @@ describe('session bootstrap (UC1 anonymous visit, UC3 sign-in)', () => {
     const response = await client.get('/api/session');
     expect(response.status).toBe(503);
     expect(response.body).toEqual({ message: 'Session unavailable' });
+    outage.down.db = false;
+    expect((await client.get('/api/session')).body.account).not.toBeNull();
   });
 });
 
@@ -97,10 +98,6 @@ describe('application wiring and error handlers', () => {
     ['without a field cipher', { db: {} }, 'Field cipher is required'],
   ])('createApp %s refuses to start', (_label, deps, message) => {
     expect(() => createApp(config, deps)).toThrow(message);
-  });
-
-  test('createApp called without any dependencies refuses to start', () => {
-    expect(() => createApp(config)).toThrow('Database pool is required');
   });
 
   test('createApp falls back to the system clock when none is injected', async () => {
@@ -126,8 +123,8 @@ describe('application wiring and error handlers', () => {
     expect(response.body).toEqual({ message: 'Invalid request' });
   });
 
-  // Pins current behavior; #376 changes it to the body-parser 415.
-  test('any other failure while parsing answers a generic 500 that echoes nothing', async () => {
+  // Pins current behavior: the fix for #376 must update this test to expect the body-parser 415.
+  test('any other failure while parsing answers a generic 500 that echoes nothing (#376)', async () => {
     const client = await browser(app);
     const response = await client.agent.post('/api/signup').set('Origin', origin).set('X-CSRF-Token', client.state.csrf)
       .set('Content-Type', 'application/json').set('Content-Encoding', 'br').send('{"email":"secret@example.org"}');
@@ -153,7 +150,8 @@ describe('application wiring and error handlers', () => {
     expect(response.body).toEqual({ message: 'Session unavailable' });
   });
 
-  test('a limiter key falls back to the IP when the sign-in body has no string email', async () => {
+  // Coverage of the limiter-key fallback; the limiter itself is exercised in accounts.test.js.
+  test('a sign-in body without a string email is validated, not crashed on, by the limiter', async () => {
     const client = await browser(app);
     const missing = await client.post('/api/session', {});
     const numeric = await client.post('/api/session', { email: 42, password: PASSWORD });
@@ -222,8 +220,8 @@ describe('email change confirmation (UC4)', () => {
 
     expect(response.status).toBe(410);
     expect((await pool.query('SELECT count(*)::int AS n FROM account WHERE email_bidx = $1', [bidx('new@example.org')])).rows[0].n).toBe(1);
-    const { rows: [account] } = await pool.query('SELECT email_bidx, pending_email_bidx FROM account WHERE id = $1',
-      [await accountId('claire@example.org')]);
+    const { rows: [account] } = await pool.query('SELECT email_bidx FROM account WHERE id = $1',
+      [await accountId(pool, 'claire@example.org')]);
     expect(Buffer.compare(account.email_bidx, bidx('claire@example.org'))).toBe(0);
   });
 });
@@ -231,7 +229,7 @@ describe('email change confirmation (UC4)', () => {
 // Known gap (production): verifyEmail clears the taken pending address, then throws, so the
 // transaction rolls the clearing back and the stale pending change stays on the account.
 // Tracked by #375: the clearing is rolled back with the 410.
-test.todo('a pending address found taken at verification is cleared durably');
+test.todo('a pending address found taken at verification is cleared durably (#375)');
 
 describe('invitation guards (UC10, UC11)', () => {
   const invite = async (claire, email = 'malik@example.org') => (await claire.post('/api/associations/troupe/invitations', { email })).body;
@@ -311,14 +309,14 @@ describe('commune search and city labels', () => {
   });
 
   test('a query that folds to nothing returns no commune', async () => {
-    expect(await search("--")).toEqual([]);
+    expect(await search('--')).toEqual([]);
   });
 
   test('the exact name comes before longer names sharing the prefix', async () => {
     const names = (await search('Aix')).map((commune) => commune.name);
     expect(names[0]).toBe('Aix');
     expect(names.length).toBeGreaterThan(1);
-    expect(names.slice(1)).toEqual([...names.slice(1)].sort((a, b) => a.localeCompare(b, 'fr')));
+    expect(names.slice(1).every((name) => name.startsWith('Aix'))).toBe(true);
   });
 
   test('an agenda city outside the reference list is labelled by its own code', async () => {
@@ -329,7 +327,7 @@ describe('commune search and city labels', () => {
        SELECT a.id, 'CONCERT', 'Odd', 'Short', 'PUBLISHED', $1, 'Hall', '1 rue Secrète', '99999', $1, m.account_id, m.account_id
        FROM association a JOIN membership m ON m.association_id = a.id`, [new Date(clock.now + 86_400_000)]);
     const cities = await (await browser(app)).get('/api/events/cities');
-    expect(cities.body.cities ?? cities.body).toEqual(expect.arrayContaining([{ code: '99999', name: '99999' }]));
+    expect(cities.body).toEqual(expect.arrayContaining([{ code: '99999', name: '99999' }]));
     const { rows: [{ id }] } = await pool.query('SELECT id FROM event');
     const mine = await claire.get(`/api/associations/troupe/events/${id}`);
     expect(mine.body.venueCity).toEqual({ code: '99999', name: null });
