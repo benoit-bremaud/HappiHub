@@ -195,7 +195,23 @@ simplicity 20.
 Sensitivity: simplicity 20→40 (others re-normalised): A 481, B 381, C 301; A stays first.
 Totals recomputed by script.
 
-### 8.3 Unchanged
+### 8.3 Decision A2 — wide-screen grid (found in the #382 QA pass)
+
+Most days hold one event, so per-day grids left two thirds of a 1440 px screen empty. Criteria:
+wide-screen density 35, finding the day 25, simplicity 20, fit with this study 20.
+
+| Option | Density | Day | Simple | Study | Total |
+| --- | --- | --- | --- | --- | --- |
+| **B one grid from 48 rem, day headings on phones only** | 5 | 3 | 4 | 3 | **390** |
+| A per-day grids (V7 as written) | 1 | 5 | 5 | 5 | 360 |
+| C one grid, each day heading spans a row | 2 | 5 | 4 | 4 | 355 |
+
+Sensitivity: day 25→35 and density 35→20 make A first (420, C 395, B 365). Benoît chose B on
+2026-10-29. V3 and V7 now read: below 48 rem, sticky day headings group the cards; from 48 rem,
+all cards flow in one grid of 2 (3 from 75 rem) columns in `startsAt` order, each card's date
+block naming its day, and the headings remain for assistive technologies only.
+
+### 8.4 Unchanged
 
 No API, data or behaviour change; no new dependency (the font is a static woff2 file under
 `client/src/fonts/` with its OFL licence). Tests: unit tests for C5, C7 and the poster

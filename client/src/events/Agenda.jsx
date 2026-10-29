@@ -56,6 +56,7 @@ export const Agenda = () => {
       )}
       {result?.items?.length > 0 && (
         <>
+          <div className="hh-agenda__days">
           {byDay(result.items).map(({ key, heading, events }) => (
             <section key={key} className="hh-agenda__day" aria-label={heading}>
               <h3 className="hh-agenda__day-title">{heading}</h3>
@@ -73,6 +74,7 @@ export const Agenda = () => {
               </ul>
             </section>
           ))}
+          </div>
           <nav className="hh-agenda__pages" aria-label="Agenda pages">
             {page > 1 && <button type="button" onClick={() => navigate({ page: page - 1 })}>Previous</button>}
             {result.hasMore && <button type="button" onClick={() => navigate({ page: page + 1 })}>Next</button>}

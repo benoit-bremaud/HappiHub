@@ -53,6 +53,7 @@ output { display: block; }
 .hh-poster--night { --hh-poster-bg: #13204a; --hh-poster-fg: #e6eeff; --hh-poster-accent: #8fd3ff; }
 .hh-poster--pastel { --hh-poster-bg: #f9d5e0; --hh-poster-fg: #4a1f3d; --hh-poster-accent: #8a2357; }
 .hh-poster--minimal { --hh-poster-bg: #ffffff; --hh-poster-fg: #1c1a17; --hh-poster-accent: #5c564c; border-color: var(--hh-line); }
+.hh-poster--classic { border-color: var(--hh-line); }
 .hh-danger-link { color: var(--hh-danger); }
 .hh-add { align-self: flex-start; }
 /* UC21 public agenda (public-agenda AC8, AC9; visual design § 5.3, D4), mobile first: one
@@ -73,5 +74,11 @@ output { display: block; }
 .hh-agenda__list a:active .hh-poster { transform: scale(0.98); transition: transform 120ms ease-out; }
 @media (prefers-reduced-motion: reduce) { .hh-agenda__list a:active .hh-poster { transform: none; transition: none; } }
 .hh-agenda__pages { display: flex; gap: 0.5rem; justify-content: center; }
-@media (min-width: 48rem) { .hh-agenda__list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 75rem) { .hh-agenda__list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* A2: from 48rem every card flows in one grid; each card's date block names the day, and the
+   day headings stay for assistive technologies only. */
+@media (min-width: 48rem) {
+  .hh-agenda__days { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 1rem; }
+  .hh-agenda__day, .hh-agenda__days .hh-agenda__list { display: contents; }
+  .hh-agenda__day-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@media (min-width: 75rem) { .hh-agenda__days { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
