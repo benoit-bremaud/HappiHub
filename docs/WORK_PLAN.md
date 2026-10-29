@@ -173,7 +173,7 @@ Found during the #252 tests and browser QA; none blocks the brick; each is filed
 5. Conflict panel, in-place sign-in and creation quota are covered by tests only; a
    two-account browser QA needs the pending dedicated local test accounts. (#305)
 6. Test noise: `ReactDOMTestUtils.act` deprecation and React Router v7 future-flag warnings. (#306)
-7. Branch coverage 76 % in the server integration run (statements 93 %); raise with #295. (#307)
+7. ~~Branch coverage 76 % in the server integration run~~: 82.5 % with an 80 % floor (#307). Follow-ups #372–#376.
 8. No accessibility audit (Lighthouse/axe) and no dark mode check on the new screens. (#308)
 
 ## Research references

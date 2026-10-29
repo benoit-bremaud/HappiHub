@@ -5,6 +5,19 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-10-29
+
+- **#307 integration branch coverage above 80 %** (branch `test/307-integration-branch-coverage`).
+  Spec option B chosen by MCDA (455/500 vs C 425 with a CI job, A 280 testing config through
+  boot). New `tests/integration/requestPaths.test.js` covers request-path branches (session
+  bootstrap, app wiring and error handlers, validation guards, corrupted ciphertext through real
+  requests). The integration run moved from 75.7 % to 82.5 % branches (93.1 % statements), and
+  `jest.integration.cjs` now enforces an 80 % branch floor locally (CI still does not run the
+  integration suite: #373). Review-local: 0 Must, 8 Should fixed, SonarQube passed, QA smoke
+  pass. Findings filed: #372 config D7 unit tests, #373 integration in CI, #374 flaky BC5
+  conflict test (`lastEditedBy: null` race), #375 stale pending email rolled back, #376
+  body-parser 4xx mapped to 500.
+
 ## 2026-10-28
 
 - **#295 repo audit leftovers removed** (branch `chore/295-remove-repo-audit-leftovers`). Scope
