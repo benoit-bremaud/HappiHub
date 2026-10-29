@@ -68,7 +68,7 @@ Not implemented: partner/external API authentication, booking or
 payment, logo and expanded demo dataset. Compose files on main use PostgreSQL; #292 needs re-checking (stale local containers).
 
 Latest recorded verification (#252 gate, 2026-10-23): 69 unit and 98 PostgreSQL
-integration server tests, 84 client tests, SonarQube gate passed, gitleaks clean, browser QA. Since #295 the CI server coverage uses the `jest.config.cjs` scope (all server modules); branch coverage is raised by #307.
+integration server tests, 84 client tests, SonarQube gate passed, gitleaks clean, browser QA. Since #295 the CI server coverage uses the `jest.config.cjs` scope (all server modules); #307 raised the integration run to 82.5 % branches with an 80 % floor in `jest.integration.cjs`; the integration suite is not yet in CI (#373).
 
 Last recorded dependency audit: runtime server zero findings, full server tree 33 affected
 entries, client 104. Counts are dated and include dependency chains. CRA/Jest migration,

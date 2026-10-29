@@ -1,4 +1,4 @@
-import { bidx, browser, buildApp, createPool, lastEmail, migrate, resetData, signUpVerified } from './harness.js';
+import { accountId, bidx, browser, buildApp, createPool, lastEmail, migrate, resetData, signUpVerified } from './harness.js';
 
 // Brick B acceptance criteria BC1–BC12, BC14–BC16, BC18, BC19 (spec § 8) against the Express
 // app and a disposable PostgreSQL. BC13 is in maintenance.test.js, BC17 in migrations.test.js.
@@ -15,7 +15,6 @@ const future = () => new Date(clock.now + 7 * DAY).toISOString();
 const complete = () => ({ title: 'Concert', type: 'CONCERT', shortDescription: 'Live music', startsAt: future(),
   venueLabel: 'Salle des fêtes', venueCity: '69123' });
 const row = async (id) => (await pool.query('SELECT * FROM event WHERE id = $1', [id])).rows[0];
-const accountId = async (email) => (await pool.query('SELECT id FROM account WHERE email_bidx = $1', [bidx(email)])).rows[0].id;
 const activity = async (action) =>
   (await pool.query('SELECT * FROM activity_entry WHERE action = $1 ORDER BY occurred_at', [action])).rows;
 
@@ -57,7 +56,7 @@ describe('UC15 create (BC1, BC2)', () => {
     expect(created.status).toBe(201);
     expect(created.body).toMatchObject({ title: 'Atelier', type: 'WORKSHOP', status: 'DRAFT', version: 1,
       priceKind: 'FREE', posterStyle: 'classic', lastEditedBy: 'Claire', venueCity: null });
-    expect(await row(created.body.id)).toMatchObject({ created_by: await accountId('claire@example.org') });
+    expect(await row(created.body.id)).toMatchObject({ created_by: await accountId(pool, 'claire@example.org') });
     const outsider = await signUpVerified(app, pool, 'x@example.org', 'Other');
     expect((await outsider.post(EVENTS, { title: 'Intrus', type: 'OTHER' })).status).toBe(404);
     expect((await outsider.get(`${EVENTS}/${created.body.id}`)).status).toBe(404);
@@ -92,7 +91,7 @@ describe('UC16/UC17 edit (BC3–BC7)', () => {
     const saved = await claire.patch(`${EVENTS}/${event.id}`, { baseVersion: 1, changes: { title: 'Grand concert' } });
     expect(saved.status).toBe(200);
     expect(saved.body).toMatchObject({ title: 'Grand concert', version: 2, lastEditedBy: 'Claire' });
-    expect(await row(event.id)).toMatchObject({ version: 2, last_edited_by: await accountId('claire@example.org') });
+    expect(await row(event.id)).toMatchObject({ version: 2, last_edited_by: await accountId(pool, 'claire@example.org') });
   });
 
   test('concurrent saves of different fields both succeed (BC4)', async () => {
@@ -181,7 +180,7 @@ describe('UC18 publish (BC8, BC9)', () => {
       venueCity: { code: '69123', name: 'Lyon' }, association: { name: 'Troupe', slug: 'troupe' } });
     for (const hidden of ['version', 'lastEditedBy', 'lastEditedByFormerMember', 'createdBy', 'createdAt', 'updatedAt', 'cleanupNoticeAt'])
       expect(response.body).not.toHaveProperty(hidden);
-    const claireId = await accountId('claire@example.org');
+    const claireId = await accountId(pool, 'claire@example.org');
     const { rows: [{ association_id: associationId }] } = await pool.query('SELECT association_id FROM event');
     expect(JSON.stringify(response.body)).not.toMatch(new RegExp(`${claireId}|${associationId}|Claire"`));
   });
@@ -301,7 +300,7 @@ describe('cross-brick effects (BC14, BC15)', () => {
       expect.objectContaining({ association: 'troupe', id: mine.id, title: 'Mine', createdByYou: true, lastEditedByYou: true }),
       expect.objectContaining({ id: edited.id, title: 'Edited by Claire', createdByYou: false, lastEditedByYou: true }),
     ]));
-    expect(JSON.stringify(exported.events)).not.toContain(await accountId('malik@example.org'));
+    expect(JSON.stringify(exported.events)).not.toContain(await accountId(pool, 'malik@example.org'));
     expect((await claire.del('/api/account', { confirm: true, password: 'a quiet walk by the river' })).status).toBe(204);
     expect(await row(mine.id)).toMatchObject({ created_by: null, last_edited_by: null, title: 'Mine' });
     expect((await row(edited.id)).last_edited_by).toBeNull();

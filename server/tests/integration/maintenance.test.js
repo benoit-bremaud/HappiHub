@@ -1,5 +1,6 @@
 import { runMaintenance } from '../../jobs/maintenance.js';
-import { createLogTransport, deliverOutbox } from '../../services/outbox.js';
+import { withTransaction } from '../../db/transaction.js';
+import { createLogTransport, deliverOutbox, queueEmail } from '../../services/outbox.js';
 import { bidx, browser, buildApp, cipher, createPool, lastEmail, migrate, PASSWORD, resetData, signUpVerified } from './harness.js';
 
 const DAY = 24 * 3600e3;
@@ -183,6 +184,16 @@ describe('outbox delivery (DF1)', () => {
     expect(row).toMatchObject({ attempts: 5, payload_enc: null });
     expect(row.failed_at).not.toBeNull();
     expect(await deliverOutbox(pool, failing, { cipher })).toBe(0);
+  });
+
+  test('a message queued without payload is delivered with a null payload', async () => {
+    await withTransaction(pool, (client) => queueEmail(client, app.locals.ctx,
+      { recipient: 'n@example.org', template: 'INVITATION' }));
+    expect((await pool.query('SELECT payload_enc FROM outbox_message')).rows[0].payload_enc).toBeNull();
+    const sent = [];
+    expect(await deliverOutbox(pool, { send: async (message) => { sent.push(message); } }, { cipher })).toBe(1);
+    expect(sent).toEqual([expect.objectContaining({ template: 'INVITATION', recipient: 'n@example.org', payload: null })]);
+    expect(await n('SELECT 1 FROM outbox_message')).toBe(0);
   });
 
   test('the log transport is refused in production', () => {

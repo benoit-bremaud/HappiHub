@@ -8,6 +8,8 @@ import { testCipher } from '../testCipher.js';
 export const cipher = testCipher;
 /** Blind index of an address, for raw lookups in assertions. */
 export const bidx = (email) => cipher.blindIndex(email);
+export const accountId = async (pool, email) =>
+  (await pool.query('SELECT id FROM account WHERE email_bidx = $1', [bidx(email)])).rows[0].id;
 
 export const origin = 'http://localhost:3000';
 export const config = Object.freeze({ sessionSecret: 'synthetic-test-session-secret-32bytes', production: false,
