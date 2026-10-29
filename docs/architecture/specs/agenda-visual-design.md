@@ -8,7 +8,10 @@ Realises the presentation of [UC21](v1-use-cases.md#uc21--browse-upcoming-events
 
 Scope: the public agenda (home page, [public-agenda spec](public-agenda.md)) and the event
 card/poster it shows, mobile first. The tokens defined here become the shared base that later
-screens (event page, organizer editor) extend; those screens are not redesigned here.
+screens (event page, organizer editor) extend; their layouts are not redesigned here.
+The poster itself is shared: `EventPoster` and the `.hh-poster--*` palettes also render on the
+public event page and in the editor preview, so the new palettes and type apply there too, on
+purpose (the organizer previews exactly what visitors see; acceptance criterion V8).
 Related: #285 (header overlap on mobile), #304 (date locale), logo pending, Clément/Yazii
 feedback still to be requested (needs the owner's authorization).
 
@@ -68,7 +71,7 @@ other weights so they still sum to 100. The runner-up is the recorded design fal
 | `--hh-ground` | page background, warm paper | `#f4efe6` |
 | `--hh-ink` | main text | `#1c1a17` |
 | `--hh-ink-muted` | secondary text | `#5c564c` |
-| `--hh-accent` | links, focus, active filter | `#d2452b` (vermilion) |
+| `--hh-accent` | links, focus, active filter | `#b8371f` (vermilion; 5.09:1 on ground, 5.61:1 on surface) |
 | `--hh-surface` | sheets, filter panel | `#fffaf2` |
 | `--hh-danger` | "Cancelled" badge | existing |
 
@@ -89,7 +92,7 @@ clamp 1.75–2.5 rem), `date-numeral` (day number, 800), `label` (type, uppercas
 
 ```text
 ┌────────────────────────────┐
-│ HappiHub            ☰      │  compact header, 56 px, no overlap (#285)
+│ HappiHub   Sign up Sign in │  compact header, 56 px, no overlap (#285)
 │ Culture & community events │  one-line tagline, muted
 ├────────────────────────────┤
 │ This week      [Filter ▾]  │  filter: one button (public-agenda AC9)
@@ -108,6 +111,8 @@ clamp 1.75–2.5 rem), `date-numeral` (day number, 800), `label` (type, uppercas
 ```
 
 - ≥ 768 px: two cards per row under each day header; ≥ 1200 px: three, max width 1200 px.
+- Header keeps today's navigation, no menu drawer: the wordmark links Home; signed out it shows
+  "Sign up" and "Sign in", signed in "My account" and "Sign out", as plain ≥ 44 px links.
 - Whole card is one link (≥ 44 px target); focus ring in `--hh-accent`.
 - "Cancelled" stays a badge on the poster (public-agenda AC8).
 - Previous/Next pagination unchanged (D2 of the agenda spec).
@@ -126,6 +131,8 @@ animation; disabled under `prefers-reduced-motion: reduce`.
 - **V5** Fonts are served from the HappiHub origin; no request to a third-party font host.
 - **V6** No motion other than press feedback; none with reduced motion.
 - **V7** Layout: 1 column < 768 px, 2 columns ≥ 768 px, 3 columns ≥ 1200 px.
+- **V8** The public event page and the editor preview render the same redesigned poster without
+  layout regression (screenshots at 390 px); the header keeps its current links (§ 5.3).
 
 ## 7. Open points
 
