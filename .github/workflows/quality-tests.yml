@@ -30,11 +30,8 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Server tests and complete coverage
         working-directory: server
-        run: >-
-          npx --no-install jest --config jest.config.cjs --runInBand --coverage
-          --collectCoverageFrom='app.js'
-          --collectCoverageFrom='server.js'
-          --collectCoverageFrom='{config,controllers,middleware,models,queries,routes,utils,validation}/**/*.{js,ts}'
+        # Coverage scope lives in jest.config.cjs (single source of truth).
+        run: npx --no-install jest --config jest.config.cjs --runInBand --coverage
       - name: Client dependencies
         working-directory: client
         run: npm ci --ignore-scripts --no-audit --no-fund

@@ -15,7 +15,7 @@ const DUMMY_HASH = bcrypt.hashSync('dummy password for constant-time paths', BCR
 
 const ACCOUNT_COLUMNS = 'id, email_enc, email_verified_at, pending_email_enc, display_name_enc, platform_role, auth_version';
 /** Account row to the domain shape, decrypting its personal columns at the SQL boundary (§ 8). */
-export const toAccount = (cipher, row) => ({ id: row.id, email: cipher.decrypt(FIELD.accountEmail, row.email_enc),
+const toAccount = (cipher, row) => ({ id: row.id, email: cipher.decrypt(FIELD.accountEmail, row.email_enc),
   emailVerifiedAt: row.email_verified_at, pendingEmail: cipher.decrypt(FIELD.accountPendingEmail, row.pending_email_enc),
   displayName: cipher.decrypt(FIELD.accountDisplayName, row.display_name_enc), platformRole: row.platform_role,
   authVersion: row.auth_version });

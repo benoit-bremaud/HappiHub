@@ -36,7 +36,7 @@ The server already resolves a tier suffix from `NODE_ENV` (`config/appConfig.js`
 
 | Tier | Database | Data | Who writes it |
 | --- | --- | --- | --- |
-| TEST | disposable container from `tests/integration/globalSetup.js` | per-test fixtures, truncated by `resetData` | integration tests only |
+| TEST | disposable container from `tests/integration/globalSetup.cjs` | per-test fixtures, truncated by `resetData` | integration tests only |
 | DEV (demo) | local PostgreSQL database whose name ends in `_demo` | demo seed (§ 4) plus whatever the developer adds | `npm run seed:demo` (proposed) |
 | PROD | real hosting (not yet deployed) | real users | never seeded |
 
