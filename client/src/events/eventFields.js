@@ -5,7 +5,9 @@ export const EVENT_TYPES = [
   ['THEATRE', 'Theatre'], ['CONCERT', 'Concert'], ['EXHIBITION', 'Exhibition'], ['WORKSHOP', 'Workshop'],
   ['DANCE', 'Dance'], ['CINEMA', 'Cinema'], ['TALK', 'Talk'], ['OTHER', 'Other'],
 ];
-export const POSTER_STYLES = ['classic', 'bold', 'paper', 'night', 'pastel', 'minimal'];
+/** Poster style keys (stored values) with their human labels (agenda visual design C5). */
+export const POSTER_STYLES = [['classic', 'Classic'], ['bold', 'Bold'], ['paper', 'Paper'], ['night', 'Night'],
+  ['pastel', 'Pastel'], ['minimal', 'Minimal']];
 export const PRICE_KINDS = [['FREE', 'Free'], ['AMOUNT', 'Fixed price'], ['PAY_WHAT_YOU_WANT', 'Pay what you want']];
 export const STATUS_LABELS = { DRAFT: 'Draft', PUBLISHED: 'Published', CANCELLED: 'Cancelled', ARCHIVED: 'Archived' };
 
@@ -30,7 +32,7 @@ export const stepOf = (field) => STEPS.find((step) => step.fields.includes(field
 
 /** Form values in the API representation; the city is its INSEE code. */
 export const emptyValues = () => ({
-  ...Object.fromEntries(EDITABLE_FIELDS.map((field) => [field, null])), priceKind: 'FREE', posterStyle: POSTER_STYLES[0],
+  ...Object.fromEntries(EDITABLE_FIELDS.map((field) => [field, null])), priceKind: 'FREE', posterStyle: POSTER_STYLES[0][0],
 });
 
 /** Editable values of a member or public event view (`venueCity` comes back as `{code, name}`). */
@@ -95,9 +97,32 @@ export const eurosToCents = (text) => {
 };
 
 /** Display date in the fixed en-GB format of the current English UI; empty input gives ''. */
-export const formatDate = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', {
+/** Display locale of every event date (#304 will revisit it). */
+const LOCALE = 'en-GB';
+
+export const formatDate = (iso) => (iso ? new Date(iso).toLocaleString(LOCALE, {
   weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
 }) : '');
+
+const dayPart = (date) => date.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+const timePart = (date) => date.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
+
+/** Poster date line; a same-day range shows the date once: "Sat, 14 November 2026, 20:00 – 23:00" (C7). */
+export const formatRange = (startsAt, endsAt) => {
+  if (!startsAt) return '';
+  if (!endsAt) return formatDate(startsAt);
+  const start = new Date(startsAt);
+  const end = new Date(endsAt);
+  return start.toDateString() === end.toDateString()
+    ? `${dayPart(start)}, ${timePart(start)} – ${timePart(end)}`
+    : `${formatDate(startsAt)} – ${formatDate(endsAt)}`;
+};
+
+/** Agenda day heading in local time: "Saturday 31 October" (V3). */
+export const dayHeading = (iso) => new Date(iso).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
+
+/** Short month of the poster date block: "Nov". */
+export const monthShort = (iso) => new Date(iso).toLocaleDateString(LOCALE, { month: 'short' });
 
 /** Poster price line; a fixed price without a positive amount reads "Price to be set". */
 export const priceLabel = ({ priceKind, priceAmountCents }) => {

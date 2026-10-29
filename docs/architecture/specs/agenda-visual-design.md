@@ -141,6 +141,83 @@ animation; disabled under `prefers-reduced-motion: reduce`.
 - Date locale (#304) to align with the day headers.
 - Dark theme: later study (D6).
 
+## 8. Scope amendment for the implementation brick (#382)
+
+Status: **validated by Benoît on 2026-10-29** (A1 = A, 475/500). The implementation brick #382
+applies §§ 5–6 and folds in four open defects on the same files. Behaviour stays as specified
+elsewhere except where a criterion below says otherwise.
+
+### 8.1 Folded issues and acceptance criteria
+
+**#347 — text contrast (P1, WCAG 1.4.3).** The tokens of § 5.1 move to `client/src/index.css`
+as the single source; `accounts.css` and `events.css` stop defining colours of their own and
+use the role tokens (the old `--hh-text`, `--hh-muted`, `--hh-surface` names become aliases or
+are replaced). The mint header gradient, the grey home banner and `#007bff` links disappear.
+
+- **C1** Every text/background pair on the header, home, sign-in, account, association and
+  event screens reaches 4.5:1 (3:1 for text ≥ 24 px or ≥ 18.66 px bold), checked by axe with
+  zero `color-contrast` violations at 390 and 1440 px.
+- **C2** Links use `--hh-accent` (#b8371f) on `--hh-ground` or `--hh-surface`; no hard-coded
+  colour remains in the touched CSS outside `index.css` and the poster palettes.
+
+**#285 — header overlap on mobile.** Covered by § 5.3 and V4.
+
+- **C3** At 320, 375 and 390 px the wordmark and the navigation links never overlap and no
+  link wraps inside itself; each link is ≥ 44 × 44 px; the page has no horizontal scroll.
+
+**#302 — "Cancelled" twice on the public page.** Decision A1 below: the public page keeps its
+banner (it carries the cancellation reason) and the poster there renders without its badge;
+agenda cards keep the badge (public-agenda AC8).
+
+- **C4** A cancelled event's public page shows "cancelled" exactly once (the banner, with the
+  reason when present); its agenda card still shows the "Cancelled" badge.
+
+**#355 — editor poster polish.**
+
+- **C5** Step 3 "Poster style" chips show human labels: Classic, Bold, Paper, Night, Pastel,
+  Minimal (one label map in `eventFields.js`, keys unchanged).
+- **C6** Step 4 shows the mobile (20 rem) and desktop previews side by side from 768 px and
+  stacked below it, both labelled.
+- **C7** A same-day range reads "Sat, 14 November 2026, 20:00 – 23:00": the end shows the time
+  only when start and end fall on the same local day; other ranges stay unchanged.
+
+### 8.2 Decision A1 — where "Cancelled" is said on the public page (#302)
+
+Criteria: one clear message 30, the reason stays readable 25, agenda AC8 unchanged 25,
+simplicity 20.
+
+| Option | Message | Reason | AC8 | Simple | Total |
+| --- | --- | --- | --- | --- | --- |
+| **A banner on the page, badge on cards only** | 5 (one place) | 5 (banner holds it) | 4 (prop per context) | 5 (one prop) | **475** |
+| B badge only, reason in a line under the poster | 4 | 3 (reason detached) | 4 | 4 | 375 |
+| C banner moved inside the poster | 4 | 4 | 3 (agenda cards grow) | 2 (poster gets page logic) | 335 |
+
+Sensitivity: simplicity 20→40 (others re-normalised): A 481, B 381, C 301; A stays first.
+Totals recomputed by script.
+
+### 8.3 Decision A2 — wide-screen grid (found in the #382 QA pass)
+
+Most days hold one event, so per-day grids left two thirds of a 1440 px screen empty. Criteria:
+wide-screen density 35, finding the day 25, simplicity 20, fit with this study 20.
+
+| Option | Density | Day | Simple | Study | Total |
+| --- | --- | --- | --- | --- | --- |
+| **B one grid from 48 rem, day headings on phones only** | 5 | 3 | 4 | 3 | **390** |
+| A per-day grids (V7 as written) | 1 | 5 | 5 | 5 | 360 |
+| C one grid, each day heading spans a row | 2 | 5 | 4 | 4 | 355 |
+
+Sensitivity: day 25→35 and density 35→20 make A first (420, C 395, B 365). Benoît chose B on
+2026-10-29. V3 and V7 now read: below 48 rem, sticky day headings group the cards; from 48 rem,
+all cards flow in one grid of 2 (3 from 75 rem) columns in `startsAt` order, each card's date
+block naming its day, and the headings remain for assistive technologies only.
+
+### 8.4 Unchanged
+
+No API, data or behaviour change; no new dependency (the font is a static woff2 file under
+`client/src/fonts/` with its OFL licence). Tests: unit tests for C5, C7 and the poster
+`cancelled` rendering per context (C4); C1, C3 and V1–V8 are checked in the QA pass with
+screenshots at 390, 768 and 1440 px.
+
 ## Appendix — MCDA matrices (scores 0–5; total = Σ score × weight)
 
 **D1 Visual direction** — identity 25, works without photos 20, mobile legibility 20,

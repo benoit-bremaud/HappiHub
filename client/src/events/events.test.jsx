@@ -296,10 +296,11 @@ describe('steps (UC15 5–9)', () => {
     await waitFor(() => expect(bodies(`PATCH ${EVENTS}/${ID}`).at(-1).changes).toEqual({ priceKind: 'FREE', priceAmountCents: null }));
   });
 
-  test('step 3 picks a poster style; Next moves to the following step', async () => {
+  test('step 3 picks a poster style by its human label (C5); Next moves to the following step', async () => {
     routes[`PATCH ${EVENTS}/${ID}`] = [200, event({ version: 2, posterStyle: 'night' })];
     await openEditor(3);
-    fireEvent.click(screen.getByLabelText('night'));
+    expect(screen.queryByLabelText('night')).toBeNull();
+    fireEvent.click(screen.getByLabelText('Night'));
     await waitFor(() => expect(bodies(`PATCH ${EVENTS}/${ID}`)[0].changes).toEqual({ posterStyle: 'night' }));
     expect(screen.getByLabelText('Poster preview')).toHaveClass('hh-poster--night');
     fireEvent.click(screen.getByRole('button', { name: 'Next: Preview' }));
@@ -448,6 +449,8 @@ describe('list and public page', () => {
       longDescription: 'Line 1\nLine 2', title: '<script>x</script>' }), lastEditedBy: undefined, association: { name: 'Troupe', slug: 'troupe' } }];
     renderAt(`/events/${ID}`);
     expect(await screen.findByText('This event is cancelled. Storm')).toBeInTheDocument();
+    // C4 (#302): the banner says it once; the poster on this page carries no badge.
+    expect(screen.queryAllByText(/cancelled/i)).toHaveLength(1);
     expect(screen.getByText(/By Troupe · Updated on .*May 2030/)).toBeInTheDocument();
     expect(screen.getByText('<script>x</script>')).toBeInTheDocument();
     expect(screen.queryByText(/Claire/)).toBeNull();

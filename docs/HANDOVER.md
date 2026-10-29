@@ -119,7 +119,7 @@ folders as an approved implementation plan.
 
 ## Next actions
 
-#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). #367 visual design: the cultural poster direction was chosen on 2026-10-29 ([study](architecture/specs/agenda-visual-design.md), D1–D7); its implementation is a later brick. Next: #368 shared `useSend` hook. UI rule: always mobile first.
+#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). #367 visual design: the cultural poster direction was chosen on 2026-10-29 ([study](architecture/specs/agenda-visual-design.md), D1–D7; PR #381, `8d09f29`). #382 implements it and folds #347, #285, #302 and #355 (study § 8). Next: #368 shared `useSend` hook. UI rule: always mobile first.
 
 QA backlog from the 2026-10-24 inspector pass: #319 (edge security headers) and #320 (source maps)
 are fixed and merged (PR #326, squash `9cb6a3d`, both issues closed); #321–#324 (P3) remain.

@@ -106,7 +106,7 @@ StepWhere.propTypes = { editor: editorShape.isRequired, cityName: PropTypes.stri
 
 export const StepLook = ({ editor }) => (
   <>
-    <Chips editor={editor} field="posterStyle" legend="Poster style" options={POSTER_STYLES.map((style) => [style, style])} />
+    <Chips editor={editor} field="posterStyle" legend="Poster style" options={POSTER_STYLES} />
     <Optional shown={editor.values.longDescription} label="Add a longer description">
       <Field editor={editor} field="longDescription" label="Long description" as="textarea" rows={8} />
     </Optional>

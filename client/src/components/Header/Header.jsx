@@ -3,7 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSession } from "../../session";
 import { send } from "../../accounts/request";
 
-/** Navigation; sign-out revokes the server session (DELETE /session). */
+/**
+ * Compact header (agenda visual design § 5.3, D7): the wordmark links Home and the current
+ * links follow; it wraps instead of overlapping on phones (#285). Sign-out revokes the
+ * server session (DELETE /session).
+ */
 export const Header = () => {
   const { status, refresh } = useSession();
   const navigate = useNavigate();
@@ -14,14 +18,13 @@ export const Header = () => {
   };
   return (
     <header className="header">
-      <div className="logo"><h1>HappiHub</h1></div>
-      <nav className="nav">
+      <h1 className="header__brand"><Link to="/">HappiHub</Link></h1>
+      <nav className="nav" aria-label="Main">
         <ul>
-          <li><Link className="nav-btn" to="/">Home</Link></li>
           {status === "authenticated" ? (
             <>
               <li><Link className="nav-btn" to="/account">My account</Link></li>
-              <li><button className="nav-btn" onClick={signOut}>Sign out</button></li>
+              <li><button type="button" className="nav-btn" onClick={signOut}>Sign out</button></li>
             </>
           ) : (
             <>

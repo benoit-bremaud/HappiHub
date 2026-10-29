@@ -27,7 +27,8 @@ export const PublicEventPage = () => {
     <section className="hh-page">
       {cancelled && <output className="hh-banner">This event is cancelled.{event.cancellationReason && ` ${event.cancellationReason}`}</output>}
       {event.ended && !cancelled && <output className="hh-banner">This event has ended.</output>}
-      <EventPoster values={fromServer(event)} cityName={event.venueCity?.name} cancelled={cancelled} />
+      {/* The banner above already says it (A1, #302), so the poster shows no badge here. */}
+      <EventPoster values={fromServer(event)} cityName={event.venueCity?.name} />
       {event.venueAddress && <p>{event.venueAddress}</p>}
       {event.longDescription && <p className="hh-long">{event.longDescription}</p>}
       <p className="hh-hint">By {event.association.name}

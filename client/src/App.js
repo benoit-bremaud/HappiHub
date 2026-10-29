@@ -12,16 +12,16 @@ import { EventListPage } from './events/EventListPage';
 import { PublicEventPage } from './events/PublicEventPage';
 
 function AppContent() {
-  const { account, status, refresh } = useSession();
+  const { status, refresh } = useSession();
   return (
     <div className="App">
       <Router>
         <Header />
         {status === 'loading' && <p role="status">Checking your session…</p>}
         {status === 'unavailable' && <div role="alert">Authentication unavailable. <button onClick={refresh}>Retry connection</button></div>}
-        <main className="content">
+        <main>
           <Routes>
-            <Route path="/" element={<Home account={account} />} />
+            <Route path="/" element={<Home />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

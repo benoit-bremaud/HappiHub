@@ -12,6 +12,9 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Added
 
+- Cultural poster design for the agenda (#382, study #367): warm paper tokens, self-hosted
+  Bricolage Grotesque, six AA poster palettes chosen by organizers, a compact header, the agenda
+  first on the home page, sticky day headings on phones and a 2/3-column grid on wider screens.
 - Local demo seed (#251): `npm run seed:demo -- --confirm` fills a local `_demo` database
   through the services with personas, associations and twenty events, generates test-account
   passwords into an ignored `0600` file, and refuses any other target. The rejection catalogue
@@ -53,6 +56,9 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Fixed
 
+- Text contrast below 4.5:1 on links, home banner and header (#347); header overlap on phones
+  (#285); "Cancelled" shown twice on the public event page (#302); raw poster style keys,
+  one-width preview and repeated same-day dates in the editor (#355).
 - Maintenance no longer deletes, or sends a day-23 reminder to, an account verified while the
   job runs: each candidate is rechecked under lock, and counts report real effects (#328).
 - Parallel requests can no longer exceed the 5 current-password attempts per 15 minutes on
