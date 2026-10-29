@@ -11,10 +11,10 @@
 |---|---|
 | 1 Tests | ✅ server unit 161 · ✅ server integration 9 suites · ✅ client 93 · ✅ client build |
 | 2 Coverage | server unit 44.8 % stmts / 46.8 % branches; integration 90.9 % stmts / 75.7 % branches (floor 80: below, tracked by #307, no regression from this diff) · docs: no new code to document |
-| 3 SonarQube | ⚠️ pending: the local collector analyzes the CI artifact after push |
+| 3 SonarQube | ✅ PASSED (local scan of the branch head with the three lcov reports, 2026-10-29) · client 92.9 % stmts / 82.7 % branches |
 | 4 Secrets | ✅ gitleaks clean (origin/main..HEAD) · no tracked .env · diff read: nothing sensitive |
-| 5 QA pass | pending before merge: smoke (tooling-only diff, no product behavior change) |
-- Gate: **push authorised; merge waits for steps 3 and 5**
+| 5 QA pass | ✅ smoke · findings → #371 (new), #285 (existing) · report: docs/architecture/qa/2026-10-29-295-qa-smoke.md |
+- Gate: **GREEN — merge authorised by the gate, owner approval pending**
 
 ## 🔴 Must Have
 _None._
