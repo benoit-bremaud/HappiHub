@@ -86,7 +86,8 @@ export const EventEditorPage = () => {
         : <p role="alert">{editor.message}</p>)}
       {status === 'conflict' && <ConflictPanel conflict={editor.conflict} onResolve={editor.resolve} />}
       <div className="hh-editor__body">
-        <div className="hh-form">
+        {/* Step 4 spans both columns so its two-width preview has room (C6). */}
+        <div className={step === 4 ? 'hh-form hh-form--wide' : 'hh-form'}>
           {step === 1 && <StepWhat editor={editor} />}
           {step === 2 && <StepWhere editor={editor} cityName={shownCity} setCityName={setCityName} />}
           {step === 3 && <StepLook editor={editor} />}

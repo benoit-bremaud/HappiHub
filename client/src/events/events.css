@@ -1,8 +1,9 @@
 /* Event screens (client spec § 1) and the shared poster (agenda visual design § 5). Colours come
    from index.css; each poster style only sets its own print palette, all WCAG AA (V2). */
-.hh-editor { max-width: 64rem; }
+.hh-page.hh-editor { max-width: 64rem; }
 .hh-editor__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
 @media (min-width: 52rem) { .hh-editor__body { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
+.hh-form--wide { grid-column: 1 / -1; }
 .hh-steps { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
 .hh-step { font: inherit; padding: 0.4rem 0.8rem; border: 1px solid var(--hh-line); border-radius: 999px; background: none; cursor: pointer; }
 .hh-step--current { border-color: var(--hh-accent); color: var(--hh-accent); font-weight: 700; }

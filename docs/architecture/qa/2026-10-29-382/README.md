@@ -13,6 +13,6 @@ Local stack on 2026-10-29: client on port 3010, API on 5010, disposable PostgreS
 - C4: the cancelled event page says "cancelled" once.
 - V5: fonts come from localhost:3010 only. The pre-existing Bootstrap CSS CDN link in `public/index.html` is a stylesheet, not a font host.
 - Fixed during the pass: the classic poster now has a hairline edge on the paper ground. Decision A2 (one grid from 48 rem) was validated by Benoit.
-- Not covered by this pass: the editor preview (V8, C6) needs a signed-in session and is left to the owner QA.
+- C6 and V8, editor step 4 signed in as a demo organizer: at 390 px the previews stack (320 / 341 px); side by side at 832 px (320 / 462 px) and 1440 px (320 / 654 px), after the PR #385 review fix (step 4 spans both editor columns, editor page 64 rem wide). Screenshots `editor-preview-*.png`.
 
 Screenshots: `home-*.png`, `home-*-scrolled.png`, `event-*.png`, `signin-390.png`.
