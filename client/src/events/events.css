@@ -1,6 +1,5 @@
 /* Event screens (client spec § 1) and the shared poster (agenda visual design § 5). Colours come
    from index.css; each poster style only sets its own print palette, all WCAG AA (V2). */
-.hh-poster { --hh-poster-bg: #f6efe0; --hh-poster-fg: #1c1a17; --hh-poster-accent: #b8371f; }
 .hh-editor { max-width: 64rem; }
 .hh-editor__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
 @media (min-width: 52rem) { .hh-editor__body { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
@@ -12,7 +11,7 @@
 .hh-chips legend { font-weight: 600; margin-bottom: 0.25rem; }
 .hh-chips label { flex-direction: row; font-weight: 400; align-items: center; }
 .hh-chip { font: inherit; padding: 0.3rem 0.8rem; border: 1px solid var(--hh-line); border-radius: 999px; background: none; cursor: pointer; }
-.hh-chip--on { background: var(--hh-accent); border-color: var(--hh-accent); color: #fff; }
+.hh-chip--on { background: var(--hh-accent); border-color: var(--hh-accent); color: var(--hh-on-accent); }
 .hh-badge { display: inline-block; margin-left: 0.5rem; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.8rem;
   border: 1px solid var(--hh-line); color: var(--hh-ink-muted); vertical-align: middle; }
 .hh-warning { color: var(--hh-warning); }
@@ -24,7 +23,7 @@
 .hh-dialog { border-color: var(--hh-accent); position: static; width: auto; margin: 0 0 1rem; color: inherit; background: inherit; }
 output { display: block; }
 .hh-dialog textarea { width: 100%; font: inherit; }
-.hh-banner { padding: 0.75rem; border-radius: var(--hh-radius); background: var(--hh-danger); color: #fff; }
+.hh-banner { padding: 0.75rem; border-radius: var(--hh-radius); background: var(--hh-danger); color: var(--hh-on-accent); }
 .hh-long { white-space: pre-line; }
 .hh-checklist { padding-left: 1.2rem; }
 .hh-events li a { font-weight: 600; }
@@ -34,20 +33,20 @@ output { display: block; }
 @media (min-width: 48rem) { .hh-previews { flex-direction: row; align-items: flex-start; } }
 .hh-preview--mobile { width: 20rem; max-width: 100%; flex: none; }
 .hh-preview--desktop { flex: 1 1 24rem; min-width: 0; }
-.hh-poster { padding: 1.25rem; border-radius: var(--hh-radius); background: var(--hh-poster-bg); color: var(--hh-poster-fg);
+.hh-poster { --hh-poster-bg: #f6efe0; --hh-poster-fg: #1c1a17; --hh-poster-accent: #b8371f;
+  padding: 1.25rem; border-radius: var(--hh-radius); background: var(--hh-poster-bg); color: var(--hh-poster-fg);
   border: 1px solid transparent; overflow-wrap: anywhere; }
 .hh-poster p { margin: 0.25rem 0; }
 .hh-poster__head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.25rem 0.75rem; }
 .hh-poster__date { display: flex; flex-direction: column; align-items: center; margin: 0; line-height: 1; color: var(--hh-poster-accent);
   font-family: var(--hh-font-display); text-transform: uppercase; }
-.hh-poster p.hh-poster__date { margin: 0; }
 .hh-poster__day { font-size: 2.25rem; font-weight: 800; }
 .hh-poster__month { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; }
 .hh-poster__type { flex: 1; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; font-weight: 700; color: var(--hh-poster-accent); }
 .hh-poster__title { font-family: var(--hh-font-display); font-stretch: 85%; font-weight: 800; line-height: 1.1;
   font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem); margin: 0.5rem 0; }
 .hh-poster__summary { margin-top: 0.75rem; }
-.hh-poster__banner { background: var(--hh-danger); color: #fff; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 700; }
+.hh-poster__banner { background: var(--hh-danger); color: var(--hh-on-accent); padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 700; }
 .hh-poster--bold { --hh-poster-bg: #1c1a17; --hh-poster-fg: #ffffff; --hh-poster-accent: #ffd23f; }
 .hh-poster--paper { --hh-poster-bg: #d9c3a0; --hh-poster-fg: #3b2a17; --hh-poster-accent: #7a3410; }
 .hh-poster--night { --hh-poster-bg: #13204a; --hh-poster-fg: #e6eeff; --hh-poster-accent: #8fd3ff; }
@@ -64,7 +63,7 @@ output { display: block; }
   background: var(--hh-surface); border: 1px solid var(--hh-line); border-radius: 999px; cursor: pointer; }
 .hh-agenda select { font: inherit; min-height: 2.75rem; max-width: 100%; }
 .hh-agenda__filters fieldset { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; border: 0; padding: 0.5rem 0; margin: 0; }
-.hh-agenda__filters [aria-pressed="true"] { background: var(--hh-accent); border-color: var(--hh-accent); color: #fff; }
+.hh-agenda__filters [aria-pressed="true"] { background: var(--hh-accent); border-color: var(--hh-accent); color: var(--hh-on-accent); }
 .hh-agenda__day-title { position: sticky; top: 0; z-index: 1; margin: 0; padding: 0.75rem 0 0.5rem; background: var(--hh-ground);
   text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85rem; font-weight: 800; }
 .hh-agenda__list { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }

@@ -97,12 +97,15 @@ export const eurosToCents = (text) => {
 };
 
 /** Display date in the fixed en-GB format of the current English UI; empty input gives ''. */
-export const formatDate = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', {
+/** Display locale of every event date (#304 will revisit it). */
+const LOCALE = 'en-GB';
+
+export const formatDate = (iso) => (iso ? new Date(iso).toLocaleString(LOCALE, {
   weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
 }) : '');
 
-const dayPart = (date) => date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
-const timePart = (date) => date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+const dayPart = (date) => date.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+const timePart = (date) => date.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
 
 /** Poster date line; a same-day range shows the date once: "Sat, 14 November 2026, 20:00 – 23:00" (C7). */
 export const formatRange = (startsAt, endsAt) => {
@@ -115,8 +118,11 @@ export const formatRange = (startsAt, endsAt) => {
     : `${formatDate(startsAt)} – ${formatDate(endsAt)}`;
 };
 
-/** Sticky agenda day header in local time: "Saturday 31 October" (V3). */
-export const dayHeading = (iso) => new Date(iso).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+/** Agenda day heading in local time: "Saturday 31 October" (V3). */
+export const dayHeading = (iso) => new Date(iso).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
+
+/** Short month of the poster date block: "Nov". */
+export const monthShort = (iso) => new Date(iso).toLocaleDateString(LOCALE, { month: 'short' });
 
 /** Poster price line; a fixed price without a positive amount reads "Price to be set". */
 export const priceLabel = ({ priceKind, priceAmountCents }) => {

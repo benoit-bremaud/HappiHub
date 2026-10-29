@@ -18,7 +18,7 @@ export const Header = () => {
   };
   return (
     <header className="header">
-      <Link className="header__brand" to="/">HappiHub</Link>
+      <h1 className="header__brand"><Link to="/">HappiHub</Link></h1>
       <nav className="nav" aria-label="Main">
         <ul>
           {status === "authenticated" ? (

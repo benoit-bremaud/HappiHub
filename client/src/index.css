@@ -17,6 +17,7 @@
   --hh-ink-muted: #5c564c;
   --hh-accent: #b8371f;
   --hh-danger: #a4161a;
+  --hh-on-accent: #ffffff; /* text on --hh-accent and --hh-danger fills */
   --hh-warning: #8a5a00;
   --hh-line: #d8cfc0;
   --hh-radius: 10px;

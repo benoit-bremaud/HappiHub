@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link, useSearchParams } from 'react-router-dom';
 import { send } from '../accounts/request';
 import { AgendaFilters } from './AgendaFilters';
@@ -14,6 +15,19 @@ const byDay = (items) => items.reduce((days, event) => {
   else days.push({ key, heading: dayHeading(event.startsAt), events: [event] });
   return days;
 }, []);
+
+/** One agenda card: the whole poster is the link, named for listeners (AC8). */
+const AgendaCard = ({ event }) => {
+  const cancelled = event.status === 'CANCELLED';
+  const label = [event.title, formatDate(event.startsAt), event.venueCity?.name, cancelled && 'cancelled'].filter(Boolean).join(', ');
+  return (
+    <Link to={`/events/${event.id}`} aria-label={label}>
+      <EventPoster values={fromServer(event)} cityName={event.venueCity?.name} cancelled={cancelled} />
+    </Link>
+  );
+};
+AgendaCard.propTypes = { event: PropTypes.shape({ id: PropTypes.string.isRequired, status: PropTypes.string.isRequired,
+  title: PropTypes.string, startsAt: PropTypes.string, venueCity: PropTypes.shape({ name: PropTypes.string }) }).isRequired };
 
 /** UC21 public agenda: upcoming events as cards, filters and page held in the URL (AC8–AC10). */
 export const Agenda = () => {
@@ -57,19 +71,12 @@ export const Agenda = () => {
       {result?.items?.length > 0 && (
         <>
           <div className="hh-agenda__days">
-          {byDay(result.items).map(({ key, heading, events }) => (
-            <section key={key} className="hh-agenda__day" aria-label={heading}>
+            {byDay(result.items).map(({ heading, events }) => (
+            <section key={events[0].id} className="hh-agenda__day" aria-label={heading}>
               <h3 className="hh-agenda__day-title">{heading}</h3>
               <ul className="hh-agenda__list">
                 {events.map((event) => (
-                  <li key={event.id}>
-                    {/* The poster is labelled "Poster preview"; the link names what a listener needs. */}
-                    <Link to={`/events/${event.id}`} aria-label={[event.title, formatDate(event.startsAt), event.venueCity?.name,
-                      event.status === 'CANCELLED' && 'cancelled'].filter(Boolean).join(', ')}>
-                      <EventPoster values={fromServer(event)} cityName={event.venueCity?.name}
-                        cancelled={event.status === 'CANCELLED'} />
-                    </Link>
-                  </li>
+                  <li key={event.id}><AgendaCard event={event} /></li>
                 ))}
               </ul>
             </section>

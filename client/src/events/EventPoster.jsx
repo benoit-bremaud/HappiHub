@@ -1,17 +1,14 @@
 import PropTypes from 'prop-types';
 import { valuesShape } from './propShapes';
-import { formatRange, priceLabel, typeLabel } from './eventFields';
+import { formatRange, monthShort, priceLabel, typeLabel } from './eventFields';
 
 /** Day numeral and short month of the poster's date block; the full date is in the text below. */
-const DateBlock = ({ startsAt }) => {
-  const date = new Date(startsAt);
-  return (
-    <p className="hh-poster__date" aria-hidden="true">
-      <span className="hh-poster__day">{date.getDate()}</span>
-      <span className="hh-poster__month">{date.toLocaleDateString('en-GB', { month: 'short' })}</span>
-    </p>
-  );
-};
+const DateBlock = ({ startsAt }) => (
+  <div className="hh-poster__date" aria-hidden="true">
+    <span className="hh-poster__day">{new Date(startsAt).getDate()}</span>
+    <span className="hh-poster__month">{monthShort(startsAt)}</span>
+  </div>
+);
 DateBlock.propTypes = { startsAt: PropTypes.string.isRequired };
 
 /**

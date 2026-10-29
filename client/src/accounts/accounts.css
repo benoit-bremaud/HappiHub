@@ -8,7 +8,7 @@
   background: var(--hh-surface); color: var(--hh-ink); }
 .hh-hint { color: var(--hh-ink-muted); font-size: 0.9rem; font-weight: 400; }
 .hh-button { font: inherit; font-weight: 600; min-height: 2.75rem; padding: 0.5rem 1rem; border: none; border-radius: 6px; background: var(--hh-accent);
-  color: #fff; cursor: pointer; align-self: flex-start; }
+  color: var(--hh-on-accent); cursor: pointer; align-self: flex-start; }
 .hh-button[disabled] { opacity: 0.6; cursor: wait; }
 .hh-danger { background: var(--hh-danger); }
 .hh-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }

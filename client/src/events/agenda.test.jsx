@@ -149,3 +149,13 @@ test('home shows one tagline then the agenda first, no welcome hero (D7, V1)', a
   expect(screen.queryByText(/Welcome/)).toBeNull();
   expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Upcoming events');
 });
+
+test('a day that comes back later in API order gets its own heading again; cards show the same-day range (V3, C7)', async () => {
+  const local = (day, hour) => new Date(2026, 10, day, hour).toISOString();
+  routes['/events'] = page([card({ id: 'a', startsAt: local(14, 20), endsAt: local(14, 23) }),
+    card({ id: 'b', title: 'Tango', startsAt: local(15, 20) }), card({ id: 'c', title: 'Hamlet', startsAt: local(14, 21) })]);
+  show();
+  expect(await link('Jazz night')).toHaveTextContent('Sat, 14 November 2026, 20:00 – 23:00');
+  expect(screen.getAllByRole('region').slice(1).map((region) => region.getAttribute('aria-label')))
+    .toEqual(['Saturday 14 November', 'Sunday 15 November', 'Saturday 14 November']);
+});
