@@ -109,7 +109,8 @@ export const verifyEmail = (ctx, token) => withTransaction(ctx.db, async (client
 /**
  * UC2 1a/2a: neutral resend for an unverified account email or a pending new email. The match
  * is rechecked under lock, tokens first then account (#341 R1, the #328 R2 order), so an account
- * purged meanwhile gets the neutral answer instead of a foreign-key failure.
+ * purged meanwhile gets the neutral answer instead of a foreign-key failure. With no token
+ * rows, the account lock alone serializes with the purge.
  */
 export const resendVerification = (ctx, email) => withTransaction(ctx.db, async (client) => {
   const emailBidx = ctx.cipher.blindIndex(email);

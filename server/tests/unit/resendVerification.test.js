@@ -15,7 +15,8 @@ const fakeDb = ({ lookup, recheck }) => {
   };
   return { sql, db: { connect: async () => client } };
 };
-const ctx = (db) => ({ db, cipher: testCipher, now: () => 0, links: { verify: (token) => `/verify-email#${token}` } });
+const ctx = (db) => ({ db, cipher: testCipher, now: () => 0, links: { verify: (token) => `/verify-email#${token}` },
+  limits: { recipient: { take: () => true } } });
 const writes = (sql) => sql.filter((text) => /^(INSERT|DELETE)/.test(text));
 
 describe('resendVerification recheck under lock (#341)', () => {
@@ -24,6 +25,12 @@ describe('resendVerification recheck under lock (#341)', () => {
     await resendVerification(ctx(db), 'gone@example.org');
     expect(sql).toContain('SELECT 1 FROM auth_token WHERE account_id = $1 FOR UPDATE');
     expect(writes(sql)).toEqual([]);
+  });
+
+  test('an account still matching at the recheck gets a new token and an email', async () => {
+    const { sql, db } = fakeDb({ lookup: [{ id: 7 }], recheck: [{ id: 7 }] });
+    await resendVerification(ctx(db), 'late@example.org');
+    expect(writes(sql)).toHaveLength(3); // token DELETE + INSERT, outbox INSERT
   });
 
   test('locks the tokens before the account (#328 R2 order)', async () => {
