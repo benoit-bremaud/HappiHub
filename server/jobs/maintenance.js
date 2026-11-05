@@ -1,6 +1,6 @@
 import { withTransaction } from '../db/transaction.js';
 import { newToken, TOKEN_TTL_MS } from '../domain/tokens.js';
-import { deleteAccountRow } from '../services/accounts.js';
+import { deleteAccountRow, lockAccountTokens } from '../services/accounts.js';
 import { runEventMaintenance } from '../services/events.js';
 import { queueEmail } from '../services/outbox.js';
 import { FIELD } from '../domain/fieldCipher.js';
@@ -8,13 +8,13 @@ import { FIELD } from '../domain/fieldCipher.js';
 const DAY_MS = 24 * 3600e3;
 
 /**
- * Re-checks a scanned candidate under lock (#328 R1, R2): the account's tokens first, then the
+ * Re-checks a scanned candidate under lock (#328 R1, R2; #378 R2): the account's tokens first, then the
  * account, the order `verifyEmail` uses, so a concurrent verification serializes with the job
  * instead of deadlocking. Returns the account only if it still exists unverified; `created_at`
  * never changes, so the scan's age window still holds.
  */
 const lockUnverified = async (client, accountId) => {
-  await client.query('SELECT 1 FROM auth_token WHERE account_id = $1 FOR UPDATE', [accountId]);
+  await lockAccountTokens(client, accountId);
   const { rows: [account] } = await client.query(
     'SELECT email_enc, verification_reminder_at FROM account WHERE id = $1 AND email_verified_at IS NULL FOR UPDATE',
     [accountId]);
@@ -33,7 +33,10 @@ export const runMaintenance = async (ctx) => {
   const at = (offsetMs) => new Date(now - offsetMs);
   const counts = {};
   counts.invitationsExpired = (await ctx.db.query('DELETE FROM invitation WHERE expires_at <= $1', [at(0)])).rowCount;
-  counts.tokensPurged = (await ctx.db.query('DELETE FROM auth_token WHERE expires_at <= $1', [at(0)])).rowCount;
+  // #378 R6: never wait on a token a request holds; a skipped row goes at the next run.
+  counts.tokensPurged = (await ctx.db.query(
+    'DELETE FROM auth_token WHERE id IN (SELECT id FROM auth_token WHERE expires_at <= $1 FOR UPDATE SKIP LOCKED)',
+    [at(0)])).rowCount;
 
   const { rows: toRemind } = await ctx.db.query(
     `SELECT id FROM account WHERE email_verified_at IS NULL AND verification_reminder_at IS NULL

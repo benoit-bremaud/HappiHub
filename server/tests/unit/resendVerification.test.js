@@ -23,7 +23,7 @@ describe('resendVerification recheck under lock (#341)', () => {
   test('AC341-2: an account gone at the locked recheck gets no token and no email', async () => {
     const { sql, db } = fakeDb({ lookup: [{ id: 7 }], recheck: [] });
     await resendVerification(ctx(db), 'gone@example.org');
-    expect(sql).toContain('SELECT 1 FROM auth_token WHERE account_id = $1 FOR UPDATE');
+    expect(sql).toContain('SELECT 1 FROM auth_token WHERE account_id = $1 ORDER BY id FOR UPDATE');
     expect(writes(sql)).toEqual([]);
   });
 
@@ -36,7 +36,7 @@ describe('resendVerification recheck under lock (#341)', () => {
   test('locks the tokens before the account (#328 R2 order)', async () => {
     const { sql, db } = fakeDb({ lookup: [{ id: 7 }], recheck: [] });
     await resendVerification(ctx(db), 'gone@example.org');
-    const tokens = sql.indexOf('SELECT 1 FROM auth_token WHERE account_id = $1 FOR UPDATE');
+    const tokens = sql.indexOf('SELECT 1 FROM auth_token WHERE account_id = $1 ORDER BY id FOR UPDATE');
     const account = sql.findIndex((text) => text.startsWith('SELECT id FROM account WHERE id'));
     expect(tokens).toBeGreaterThan(-1);
     expect(account).toBeGreaterThan(tokens);

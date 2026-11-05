@@ -7,6 +7,21 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-11-05
 
+- **#378 account and token lock order** (branch `fix/378-align-account-token-lock-order`).
+  Conception [account-token-lock-order](docs/architecture/specs/account-token-lock-order.md)
+  approved by the owner: option A tokens → account everywhere (480/500; B account → tokens 335,
+  C retry on 40P01 310). Inventory: L1–L5 already tokens first, `updateAccount` and
+  `deleteAccount` were account first. New `lockAccountTokens` (`ORDER BY id FOR UPDATE`) runs
+  before the account lock in `updateAccount`, inside `deleteAccountRow`, before `issueToken` in
+  `requestPasswordReset`, and replaces the inline lock of `resendVerification` and `lockUnverified`.
+  Pre-push review round 1 (adversarial, Opus): 1 Must, reproduced in raw SQL: random-UUID id order
+  differs from the physical order of the bulk expired-token purge and of `requestPasswordReset`,
+  so two tokens of one account could deadlock without any account lock. Conception revalidated
+  by the owner: D1 A (420/500) purge `FOR UPDATE SKIP LOCKED`, reset locks first, R7 residual
+  window (a token committed between the two locks) documented; D2 A (470/500) the tokens lock
+  moves inside `deleteAccountRow`. Also fixed: AC378-1 now holds a VERIFY token (the RESET row
+  did not reproduce the cycle). The four integration tests (AC378-1, -2, -5 x2) fail with
+  `deadlock detected` on origin/main and pass with the fix.
 - **#368 shared useSend hook** (branch `refactor/368-shared-usesend-hook`). Conception
   [shared-usesend-hook](docs/architecture/specs/shared-usesend-hook.md) validated by the owner:
   D1 first validated as A (reset to null, 450/500), then revalidated as C after the pre-push

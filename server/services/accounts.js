@@ -25,6 +25,14 @@ export const findAccount = async (db, cipher, id) => {
   return row ? toAccount(cipher, row) : null;
 };
 
+/**
+ * Locks every token row of the account, in id order. Transactions touching both an account and its
+ * tokens take this lock before the account row (#378 R1), so they serialize instead of deadlocking
+ * (residual window: spec R7).
+ */
+export const lockAccountTokens = (client, accountId) =>
+  client.query('SELECT 1 FROM auth_token WHERE account_id = $1 ORDER BY id FOR UPDATE', [accountId]);
+
 const issueToken = async (client, ctx, accountId, purpose) => {
   const { token, hash } = newToken();
   await client.query('DELETE FROM auth_token WHERE account_id = $1 AND purpose = $2', [accountId, purpose]);
@@ -118,7 +126,7 @@ export const resendVerification = (ctx, email) => withTransaction(ctx.db, async 
     'SELECT id FROM account WHERE (email_bidx = $1 AND email_verified_at IS NULL) OR pending_email_bidx = $1 LIMIT 1',
     [emailBidx]);
   if (!row) return;
-  await client.query('SELECT 1 FROM auth_token WHERE account_id = $1 FOR UPDATE', [row.id]);
+  await lockAccountTokens(client, row.id);
   const { rows: [locked] } = await client.query(
     `SELECT id FROM account WHERE id = $1 AND ((email_bidx = $2 AND email_verified_at IS NULL) OR pending_email_bidx = $2)
      FOR UPDATE`, [row.id, emailBidx]);
@@ -131,6 +139,7 @@ export const resendVerification = (ctx, email) => withTransaction(ctx.db, async 
 export const requestPasswordReset = (ctx, email) => withTransaction(ctx.db, async (client) => {
   const { rows: [row] } = await client.query('SELECT id FROM account WHERE email_bidx = $1', [ctx.cipher.blindIndex(email)]);
   if (!row) return;
+  await lockAccountTokens(client, row.id); // #378 R2: id order, like every other multi-row token lock
   const token = await issueToken(client, ctx, row.id, 'RESET');
   await queueEmail(client, ctx, { recipient: email, template: 'RESET', payload: { link: ctx.links.reset(token) } });
 });
@@ -166,6 +175,7 @@ export const checkPassword = async (db, accountId, password) => {
 export const updateAccount = async (ctx, account, { displayName, email, newPassword }) => {
   const passwordHash = newPassword ? await bcrypt.hash(newPassword, BCRYPT_COST) : null;
   return withTransaction(ctx.db, async (client) => {
+    await lockAccountTokens(client, account.id); // #378 R3: tokens before the account
     await client.query('SELECT id FROM account WHERE id = $1 FOR UPDATE', [account.id]);
     if (displayName !== undefined)
       await client.query('UPDATE account SET display_name_enc = $2 WHERE id = $1',
@@ -228,9 +238,11 @@ export const exportAccount = async (ctx, accountId) => {
 /**
  * Account deletion effects (F26), shared by UC6 and the day-30 expiry (DF2): close associations
  * where it is the last member, delete invitations and unsent emails to its address, then the
- * account (memberships and tokens cascade; activity keeps actor_id NULL).
+ * account (memberships and tokens cascade; activity keeps actor_id NULL). The tokens are locked
+ * before the account (#378 R4), so the cascade never inverts the lock order.
  */
 export const deleteAccountRow = async (client, ctx, accountId) => {
+  await lockAccountTokens(client, accountId);
   const { rows: [row] } = await client.query(
     'SELECT id, email_bidx, pending_email_bidx, platform_role FROM account WHERE id = $1 FOR UPDATE', [accountId]);
   if (!row) return false;
