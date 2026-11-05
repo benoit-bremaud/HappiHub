@@ -1,7 +1,7 @@
 # HappiHub handover
 
 Updated: 2026-11-05 (#387 status refresh after the #346 merge). The recovery work and V1 bricks D (accounts/associations), B (event
-lifecycle backend) the event client (#252), the demo seed (#251), the public agenda (#366), the cultural poster (#382) and modal dialogs (#346) are merged to main. No further application code is authorized without the
+lifecycle backend), the event client (#252), encryption at rest (#310), the demo seed (#251), the public agenda (#366), the cultural poster (#382) and modal dialogs (#346) are merged to main. No further application code is authorized without the
 owner's completed UML approval gate for that increment.
 
 ## Read in order
@@ -148,7 +148,7 @@ its implementation is a later brick. #251 test-environment conception validated 
    #310 encryption at rest: conception validated 2026-10-23
    ([spec](architecture/specs/db-encryption-at-rest.md), ADR-0004 accepted). Implementation on
    `feat/310-db-encryption`, merged (PR #312, `b1445c5`); one design gap (Compose production
-   transport, socket volume option A 425/500) validated 2026-10-23 and recorded in spec § 7. Then #244 partner API and #251 persona scenarios (P1), each after conception approval.
+   transport, socket volume option A 425/500) validated 2026-10-23 and recorded in spec § 7. #244 partner API conception approved (PR #327, implementation later); #251 demo seed merged (PR #365).
    T11a blocks deployment. Open: email provider, hosting/backups (must provide EU PostgreSQL) and Géoplateforme quota (T11). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.
 
@@ -168,8 +168,8 @@ In development, emails (verification, invitations) are printed in the server log
 
 Follow [configuration](CONFIGURATION.md) and [Docker workflows](DOCKER.md) for reproducible
 startup on another machine. Supply a new private session key and a designated local database.
-Existing preview credentials are synthetic temporary fixtures documented in the session
-report; the requested durable dedicated demo accounts are not yet implemented.
+Local test accounts come from the #251 demo seed (`npm run seed:demo -- --confirm`, passwords
+in an ignored `0600` file); see the [test-environment spec](architecture/specs/test-environment.md).
 
 The disposable production validation stack/proxy were stopped and synthetic volumes retained.
 No production release was performed. Never terminate unrelated port occupants, connect tests

@@ -7,7 +7,7 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 ## [Unreleased]
 
 The following changes are merged to main (recovery PR #257, bricks D #276 and B #282, fixes #283
-(PR #299), #328, #329, #341 and #346, event client #252, encryption #310, demo seed #251, public
+(PR #299), #319, #320, #328, #329, #341, #345 and #346, event client #252, encryption #310, demo seed #251, public
 agenda #366 and cultural poster #382 with #285, #302, #347 and #355) and have not been released
 or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
 history and [handover](../HANDOVER.md) for the current state.
@@ -19,7 +19,8 @@ history and [handover](../HANDOVER.md) for the current state.
   first on the home page, sticky day headings on phones and a 2/3-column grid on wider screens.
 - Public agenda for visitors (#366, UC21): the home page lists upcoming and ongoing published
   or cancelled events without an account, with pages, type and city filters, through
-  `GET /api/events` and `GET /api/events/cities`; public cards carry no ids or address.
+  `GET /api/events` and `GET /api/events/cities`; public cards carry no account or member
+  identifier and no address.
 - Local demo seed (#251): `npm run seed:demo -- --confirm` fills a local `_demo` database
   through the services with personas, associations and twenty events, generates test-account
   passwords into an ignored `0600` file, and refuses any other target. The rejection catalogue
@@ -74,7 +75,9 @@ history and [handover](../HANDOVER.md) for the current state.
   account update or deletion: each attempt is reserved before the comparison (#329).
 - Resending a verification email for an account purged meanwhile answers the neutral 202
   instead of a 500: the resend rechecks under lock in the #328 order (#341).
-
+- Email validation accepts the reserved `.test` addresses used by the test environment (#345).
+- The production client image serves edge security headers (strict CSP, frame, nosniff,
+  referrer, permissions, HSTS) and ships no source maps (#319, #320).
 - Bodiless writes sent with `Content-Length: 0` (leave an association, resend an invitation)
   no longer fail with 415; only a non-empty body must be JSON (#283).
 - Password-verification bypass, public administrator signup, caller-controlled authorship,

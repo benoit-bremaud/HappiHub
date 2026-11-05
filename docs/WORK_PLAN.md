@@ -19,7 +19,8 @@ HappiHub's website and external integrations must share authoritative event rule
 | Combine useful competitor ideas into one coherent product | Confirmed ambition; feature priorities and behavior unresolved |
 | Complete and approve UML conception before any code implementation | Mandatory owner instruction |
 | Revisit visual design and obtain Clément's feedback | Requested; review not held |
-| Original logo, about ten demo events, dedicated local test credentials | Requested; implementation plan not approved |
+| Original logo and event cover illustrations | Requested; implementation plan not approved |
+| Demo dataset and dedicated local test accounts | Merged (#251, PR #365: `npm run seed:demo -- --confirm`) |
 | Target audience and first-release scope | Validated 2026-10-15 (V1 product framing) |
 | Database | PostgreSQL (ADR-0003, 2026-10-16) |
 | Business model and hosting | Unresolved |
@@ -105,7 +106,7 @@ verified duplication/coupling/configuration findings and the planned design gate
 
 A local SonarQube server runs the pre-merge quality gate ([SONARQUBE](SONARQUBE.md)).
 Architecture review remains semantic as well as automated. File moves, pipeline changes
-and refactoring still need their own approved conception (see #295).
+and refactoring still need their own approved conception.
 
 ## Feature selection method
 
@@ -154,8 +155,8 @@ on PostgreSQL.
   and 222 PostgreSQL integration tests, SonarQube gate passed, gitleaks clean
   ([review-local](architecture/review-local.md)).
 - Not implemented: partner/external API authentication, booking or payment, and the logo.
-  Open at 2026-11-05: QA bugs #284, #286–#292, #303–#306, #308 and #321–#324; audit follow-up
-  #296 (#294 and #295 are closed; #283 fixed by PR #299).
+  Open at 2026-11-05 among others (see Project #6): QA issues #284, #286–#292, #303–#306, #308,
+  #321–#324, #372–#376, #383, #384, #390; audit follow-up #296 (#294 and #295 are closed; #283 fixed by PR #299).
 - PR creation, merge and CI/CD changes require explicit approval.
 - Prepare deployment topology, image/security checks, private configuration, backup/restore
   and recovery before real external use. No production rollout is authorized by this plan.
@@ -176,7 +177,7 @@ Found during the #252 tests and browser QA; none blocks the brick; each is filed
 4. `datetime-local` shows the browser locale (US `mm/dd/yyyy` here) while the UI formats
    dates en-GB; decide one locale with the visual design. (#304)
 5. Conflict panel, in-place sign-in and creation quota are covered by tests only; a
-   two-account browser QA needs the pending dedicated local test accounts. (#305)
+   two-account browser QA can now use the #251 seed accounts. (#305)
 6. Test noise: `ReactDOMTestUtils.act` deprecation and React Router v7 future-flag warnings. (#306)
 7. ~~Branch coverage 76 % in the server integration run~~: closed, 82.5 % with an 80 % floor (#307). Follow-ups #372–#376.
 8. No accessibility audit (Lighthouse/axe) and no dark mode check on the new screens. (#308)
