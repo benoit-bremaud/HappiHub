@@ -1,6 +1,6 @@
 # HappiHub handover
 
-Updated: 2026-11-05. The recovery work and V1 bricks D (accounts/associations), B (event
+Updated: 2026-10-28; #382 merge recorded 2026-11-05 (verification counts, issue totals and older status lines not refreshed). The recovery work and V1 bricks D (accounts/associations), B (event
 lifecycle backend) and the event client (#252) are merged to main. No further application code is authorized without the
 owner's completed UML approval gate for that increment.
 

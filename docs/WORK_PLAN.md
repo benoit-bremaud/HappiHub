@@ -150,7 +150,7 @@ backend UC15–UC20 (PR #282) and the event client #252 (PR #309, 8ff8177), on P
 - Latest recorded verification (2026-10-23, #252): 69 unit and 98 PostgreSQL integration server
   tests, 84 client tests, SonarQube gate passed, gitleaks clean, browser QA.
 - Not implemented: partner/external API authentication, booking
-  or payment, logo and demo dataset. QA bugs #284–#292 and audit follow-ups #294–#296 are open (#283 fixed by PR #299).
+  or payment, logo and demo dataset. QA bugs #284, #286–#292 and audit follow-ups #294–#296 are open (#283 fixed by PR #299).
 - PR creation, merge and CI/CD changes require explicit approval.
 - Prepare deployment topology, image/security checks, private configuration, backup/restore
   and recovery before real external use. No production rollout is authorized by this plan.
@@ -164,8 +164,8 @@ Evidence: [session migration](architecture/session-migration-2026-10-12.md),
 
 Found during the #252 tests and browser QA; none blocks the brick; each is filed as an issue:
 
-1. Mobile header (375 px): the "HappiHub" title overlaps the "Home" button (existing layout). (#301, closed as duplicate of #285)
-2. Public page of a cancelled event says "Cancelled" twice (banner and poster badge). (#302)
+1. Mobile header (375 px): the "HappiHub" title overlaps the "Home" button (existing layout). ~~Open~~: fixed by #382 (PR #385). (#301 duplicate, #285)
+2. Public page of a cancelled event says "Cancelled" twice (banner and poster badge). ~~Open~~: fixed by #382 (PR #385). (#302)
 3. Clearing a required field of a published event sends a PATCH the server refuses (422,
    logged in the console); the client could apply the published-required rule locally. (#303)
 4. `datetime-local` shows the browser locale (US `mm/dd/yyyy` here) while the UI formats
