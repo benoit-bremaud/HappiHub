@@ -1,6 +1,6 @@
 # Shared useSend hook — refactoring conception
 
-Status: validated by the owner on 2026-11-05 (D1 = A), revalidated the same day as D1 = C after
+Status: validated by the owner on 2026-11-05 (D1 = A), revalidated the same day as D1 = C (425, then the 400 tie broken for C by the owner) after
 the pre-push review corrected the parity facts; implemented. Date: 2026-11-05. Work item: issue #368.
 This note specifies one client hook that replaces five copies of the same fetch-with-cancel
 effect without changing the API contract. Visible changes are limited to two, both accepted:
