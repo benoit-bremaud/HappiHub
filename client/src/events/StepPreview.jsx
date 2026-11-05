@@ -1,7 +1,7 @@
 /* global globalThis -- ES2020 global, unknown to the CRA ESLint environment. */
 import PropTypes from 'prop-types';
 import { editorShape } from './propShapes';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../session';
 import { send } from '../accounts/request';
@@ -18,6 +18,10 @@ export const StepPreview = ({ editor, cityName, slug, goTo }) => {
   const [busy, setBusy] = useState(false);
   const [failures, setFailures] = useState([]);
   const [notice, setNotice] = useState(null);
+  const reasonRef = useRef(null);
+  const reasonOpen = reason !== null;
+  // Focus the reason field once when revealed: the button that revealed it unmounts (#393).
+  useEffect(() => { if (reasonOpen) reasonRef.current?.focus(); }, [reasonOpen]);
   const { event, values } = editor;
   const missing = missingRequired(values);
   const run = async (action, payload) => {
@@ -84,7 +88,7 @@ export const StepPreview = ({ editor, cityName, slug, goTo }) => {
           <p>Cancellation is final. The public page stays online with a “Cancelled” banner.</p>
           {reason === null
             ? <button type="button" className="hh-link hh-add" onClick={() => setReason('')}>+ Add a reason for the public</button>
-            : <label>Reason<textarea value={reason} maxLength={REASON_MAX} onChange={(e) => setReason(e.target.value)} rows={3} autoFocus />
+            : <label>Reason<textarea value={reason} maxLength={REASON_MAX} onChange={(e) => setReason(e.target.value)} rows={3} ref={reasonRef} />
               {reason.length > REASON_MAX * 0.8 && <span className="hh-hint">{reason.length} / {REASON_MAX}</span>}</label>}
         </ConfirmDialog>
       )}

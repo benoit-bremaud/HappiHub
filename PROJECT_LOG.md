@@ -7,7 +7,13 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-11-05
 
-- **#378 account and token lock order** (branch `fix/378-align-account-token-lock-order`).
+- **#393 StepPreview cancel-reason focus** (branch `fix/393-drop-steppreview-autofocus`).
+  Conception [steppreview-reason-focus](docs/architecture/specs/steppreview-reason-focus.md)
+  validated by the owner: D1 A ref + effect on reveal (480/500; B callback ref 405, C no focus
+  move 300). The textarea drops `autoFocus` (Sonar `javascript:S9379`, introduced by #346) and is
+  focused once when "+ Add a reason for the public" reveals it. Also records #378 merged below.
+- **#378 account and token lock order** (merged 2026-11-05, PR #394, `b22390c`, with
+  `MERGE_GATE_WAIVER`: Sonar new_violations = 1 was the pre-existing #393 issue).
   Conception [account-token-lock-order](docs/architecture/specs/account-token-lock-order.md)
   approved by the owner: option A tokens → account everywhere (480/500; B account → tokens 335,
   C retry on 40P01 310). Inventory: L1–L5 already tokens first, `updateAccount` and

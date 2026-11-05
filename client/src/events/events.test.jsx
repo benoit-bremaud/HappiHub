@@ -391,6 +391,7 @@ describe('lifecycle (UC18–UC20)', () => {
     fireEvent.click(screen.getByRole('button', { name: '+ Add a reason for the public' }));
     expect(screen.getByLabelText(/Reason/)).toHaveFocus();
     fireEvent.change(screen.getByLabelText(/Reason/), { target: { value: ' Storm ' } });
+    expect(screen.getByLabelText(/Reason/)).toHaveFocus();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel the event' }));
     expect(await screen.findByText(/This event is cancelled and can no longer be edited. Reason: Storm/)).toBeInTheDocument();
     expect(screen.getByText('Event cancelled.')).toBeInTheDocument();
