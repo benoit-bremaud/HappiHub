@@ -14,7 +14,7 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   222, SonarQube passed). Next candidates: #368, #378, #390. Owner chose option A (445/500; 375
   for intro only plus a new issue, 290 for ignore): the changelog also gains the missing #366
   public agenda and #341 resend-race entries. Pre-push review round 1 (2 Must, 3 Should) also
-  added #345 and #319/#320 changelog entries and corrected stale #251 test-account statements
+  added the #319/#320 changelog entry (#345 has none: it moved the demo domain, no validation change) and corrected stale #251 test-account statements
   (WORK_PLAN, HANDOVER, AGENTS.md).
 - **#346 modal confirmation dialogs** (merged 2026-11-05, PR #389, squash `72e563f`; branch `fix/346-modal-confirmation-dialogs`,
   [spec](docs/architecture/specs/modal-confirmation-dialog.md)). Benoît approved the conception:

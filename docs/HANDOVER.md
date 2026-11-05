@@ -44,7 +44,7 @@ feature code. Raw earlier audit exports remain untracked and must not be bulk-st
 - Support external website servers consuming the event backend API.
 - Study a coherent combined feature set inspired by relevant competitors and actual needs.
 - Complete detailed UML conception and receive explicit owner validation before code.
-- Revisit visual identity with Clément; logo and expanded local demo remain pending.
+- Revisit visual identity with Clément; logo and cover illustrations remain pending.
 
 These are direction decisions. Since 2026-10-15 the V1 audience (cultural associations),
 first-release scope, organization model, publication destinations and partner API
@@ -65,7 +65,7 @@ Event client (#252): merged 2026-10-23 (PR #309, 8ff8177; gate: server unit 69 +
 98, client 84, SonarQube passed, gitleaks clean, browser QA). QA leftovers: work plan "QA backlog".
 
 Not implemented: partner/external API authentication, booking or
-payment, logo and expanded demo dataset. Compose files on main use PostgreSQL; #292 needs re-checking (stale local containers).
+payment, logo and cover illustrations. Compose files on main use PostgreSQL; #292 needs re-checking (stale local containers).
 
 Latest recorded verification (#346 pre-merge run, 2026-11-05): 113 client, 164 server unit
 and 222 PostgreSQL integration tests, SonarQube gate passed, gitleaks clean

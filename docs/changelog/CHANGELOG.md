@@ -6,10 +6,10 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ## [Unreleased]
 
-The following changes are merged to main (recovery PR #257, bricks D #276 and B #282, fixes #283
-(PR #299), #319, #320, #328, #329, #341, #345 and #346, event client #252, encryption #310, demo seed #251, public
-agenda #366 and cultural poster #382 with #285, #302, #347 and #355) and have not been released
-or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
+The following changes are merged to main (recovery PR #257, bricks D #276 and B #282, fixes
+#283 (PR #299), #319, #320, #328, #329, #341 and #346, event client #252, encryption #310, demo
+seed #251, public agenda #366 and cultural poster #382 with #285, #302, #347 and #355) and have
+not been released or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
 history and [handover](../HANDOVER.md) for the current state.
 
 ### Added
@@ -75,7 +75,6 @@ history and [handover](../HANDOVER.md) for the current state.
   account update or deletion: each attempt is reserved before the comparison (#329).
 - Resending a verification email for an account purged meanwhile answers the neutral 202
   instead of a 500: the resend rechecks under lock in the #328 order (#341).
-- Email validation accepts the reserved `.test` addresses used by the test environment (#345).
 - The production client image serves edge security headers (strict CSP, frame, nosniff,
   referrer, permissions, HSTS) and ships no source maps (#319, #320).
 - Bodiless writes sent with `Content-Length: 0` (leave an association, resend an invitation)

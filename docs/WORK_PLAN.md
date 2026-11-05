@@ -154,9 +154,11 @@ on PostgreSQL.
 - Latest recorded verification (2026-11-05, #346 pre-merge run): 113 client, 164 server unit
   and 222 PostgreSQL integration tests, SonarQube gate passed, gitleaks clean
   ([review-local](architecture/review-local.md)).
-- Not implemented: partner/external API authentication, booking or payment, and the logo.
+- Not implemented: partner/external API authentication, booking or payment, the logo and cover
+  illustrations.
   Open at 2026-11-05 among others (see Project #6): QA issues #284, #286–#292, #303–#306, #308,
-  #321–#324, #372–#376, #383, #384, #390; audit follow-up #296 (#294 and #295 are closed; #283 fixed by PR #299).
+  #321–#324, #372–#376, #383, #384, #390; audit follow-up #296 (#294 and #295 are closed;
+  #283 fixed by PR #299).
 - PR creation, merge and CI/CD changes require explicit approval.
 - Prepare deployment topology, image/security checks, private configuration, backup/restore
   and recovery before real external use. No production rollout is authorized by this plan.
