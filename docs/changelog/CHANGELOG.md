@@ -56,6 +56,10 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Fixed
 
+- Confirmation dialogs are modal (#346): publish, delete and cancel of an event, and member
+  removal, leaving and closing an association, share one `ConfirmDialog` built on the native
+  `<dialog>` (`showModal()`); focus moves inside, Esc closes, focus returns to the trigger, and
+  `window.confirm()` is no longer used.
 - Text contrast below 4.5:1 on links, home banner and header (#347); header overlap on phones
   (#285); "Cancelled" shown twice on the public event page (#302); raw poster style keys,
   one-width preview and repeated same-day dates in the editor (#355).

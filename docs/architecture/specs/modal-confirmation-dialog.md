@@ -1,6 +1,6 @@
 # Modal confirmation dialog (#346)
 
-Status: draft, awaiting owner approval (no code before approval).
+Status: approved by the owner on 2026-11-05 (D1 A 460/500, D2 A 470/500, D3).
 Source: issue #346, full local QA pass of 2026-10-26 (checklist A11Y-01, WCAG 2.1.2, 2.4.3, 4.1.2).
 Amends: [client event workflow](v1-brick-b-client-event-workflow.md) (UC18–UC20 confirmations) and
 [brick D](v1-brick-d-accounts-associations.md) (member removal, leave, close).
@@ -41,13 +41,14 @@ Sensitivity: with testability weighted 30 (simplicity 10), A still leads (A 445,
 
 Sensitivity: even with change size at 35 (acceptance 15), A leads (A 430, B 335). **A recommended.**
 The component moves from `client/src/events/` to `client/src/ui/ConfirmDialog.jsx` because it is
-no longer event-specific (named export kept; imports updated).
+no longer event-specific (named export kept; imports updated). Implementation follows the existing
+folder convention: `client/src/components/ConfirmDialog/ConfirmDialog.jsx` with `confirm-dialog.css`.
 
 ### D3. Neutral close label
 
 The `closeLabel` default `'Keep the event'` is event-specific. The neutral default becomes
 `'Go back'` (not "Cancel", which collides with "Cancel the event"); event callers pass
-`'Keep the event'` explicitly. One obvious option, no matrix.
+`'Keep the event'` (cancel) and `'Keep the draft'` (delete) explicitly. One obvious option, no matrix.
 
 ## Rules
 
