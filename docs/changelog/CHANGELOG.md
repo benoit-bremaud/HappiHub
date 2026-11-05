@@ -66,9 +66,10 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Fixed
 
-- Account and token locks follow one order (#378): an email change or an account deletion
-  racing a verification, a password reset or the maintenance purge on the same account no
-  longer fails with a PostgreSQL deadlock (HTTP 500).
+- Account and token locks follow one order (#378): an email change racing a verification or a
+  verification resend, an account deletion racing a verification, a resend or a password reset,
+  and the hourly expired-token purge racing these requests no longer fail with a PostgreSQL
+  deadlock (HTTP 500 or an aborted maintenance run).
 - Confirmation dialogs are modal (#346): publish, delete and cancel of an event, and member
   removal, leaving and closing an association, share one `ConfirmDialog` built on the native
   `<dialog>` (`showModal()`); focus moves inside, Esc closes, focus returns to the trigger, and
