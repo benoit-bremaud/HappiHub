@@ -252,7 +252,6 @@ describe('AssociationPage (UC7, UC8, UC10, UC12)', () => {
   beforeEach(() => {
     routes['GET /associations/troupe'] = [200, association];
     routes['GET /associations/troupe/invitations'] = [200, { invitations: [{ id: 'i1', email: 'p@example.test' }] }];
-    jest.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   test('a member is removed after confirmation; the current account has no remove button', async () => {
@@ -261,29 +260,44 @@ describe('AssociationPage (UC7, UC8, UC10, UC12)', () => {
     const buttons = await screen.findAllByRole('button', { name: 'Remove' });
     expect(buttons).toHaveLength(1);
     fireEvent.click(buttons[0]);
+    const dialog = screen.getByRole('dialog', { name: 'Remove o@example.test?' });
+    expect(calls()).not.toContain('DELETE /associations/troupe/members/other');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove' }));
     await waitFor(() => expect(calls()).toContain('DELETE /associations/troupe/members/other'));
-    expect(window.confirm).toHaveBeenCalledWith('Remove o@example.test?');
   });
 
   test('a refused action shows the server message', async () => {
     routes['POST /associations/troupe/close'] = [409, { message: 'Other members remain.' }];
     open();
     fireEvent.click(await screen.findByRole('button', { name: 'Close the association' }));
+    const dialog = screen.getByRole('dialog', { name: 'Close the association?' });
+    expect(dialog).toHaveAccessibleDescription(/Upcoming events are cancelled/);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close the association' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Other members remain.');
     expect(bodyOf('POST /associations/troupe/close')).toEqual({ confirm: true });
   });
 
   test('cancelling the confirmation sends nothing', async () => {
-    window.confirm.mockReturnValue(false);
     open();
     fireEvent.click(await screen.findByRole('button', { name: 'Leave the association' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Leave this association?' })).getByRole('button', { name: 'Go back' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(calls()).not.toContain('POST /associations/troupe/leave');
+  });
+
+  test('Esc closes the confirmation and sends nothing', async () => {
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Close the association' }));
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(calls()).not.toContain('POST /associations/troupe/close');
   });
 
   test('leaving returns to the account page', async () => {
     routes['POST /associations/troupe/leave'] = [204, {}];
     open();
     fireEvent.click(await screen.findByRole('button', { name: 'Leave the association' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Leave' }));
     expect(await screen.findByText('Account page')).toBeInTheDocument();
   });
 

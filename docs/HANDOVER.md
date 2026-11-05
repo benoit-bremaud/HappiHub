@@ -119,7 +119,7 @@ folders as an approved implementation plan.
 
 ## Next actions
 
-#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). #367 visual design: the cultural poster direction was chosen on 2026-10-29 ([study](architecture/specs/agenda-visual-design.md), D1–D7; PR #381, `8d09f29`). #382 implemented it and folded #347, #285, #302 and #355 (merged 2026-10-29, PR #385, `0179df5`). Follow-ups: #383 (year in day headings), #384 (Bootstrap CDN), #386 (staging environment, none exists yet). Next: #368 shared `useSend` hook, or #378 (lock-order deadlock). UI rule: always mobile first.
+#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). #367 visual design: the cultural poster direction was chosen on 2026-10-29 ([study](architecture/specs/agenda-visual-design.md), D1–D7; PR #381, `8d09f29`). #382 implemented it and folded #347, #285, #302 and #355 (merged 2026-10-29, PR #385, `0179df5`). Follow-ups: #383 (year in day headings), #384 (Bootstrap CDN), #386 (staging environment, none exists yet). #346 (2026-11-05): event and association confirmations use one modal `ConfirmDialog` ([spec](architecture/specs/modal-confirmation-dialog.md)). Next: #387 docs refresh, #368 shared `useSend` hook, or #378 (lock-order deadlock). UI rule: always mobile first.
 
 QA backlog from the 2026-10-24 inspector pass: #319 (edge security headers) and #320 (source maps)
 are fixed and merged (PR #326, squash `9cb6a3d`, both issues closed); #321–#324 (P3) remain.

@@ -5,6 +5,21 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-11-05
+
+- **#346 modal confirmation dialogs** (branch `fix/346-modal-confirmation-dialogs`,
+  [spec](docs/architecture/specs/modal-confirmation-dialog.md)). Benoît approved the conception:
+  D1 native `<dialog>` with `showModal()` (460/500 vs library 365, custom focus trap 320), D2 one
+  shared `ConfirmDialog` replacing `window.confirm()` on the association page (470 vs 315, 230),
+  D3 neutral "Go back" close label. Focus goes to the safe button on destructive dialogs, Esc maps
+  to close (ignored while busy), focus returns to the trigger. jsdom 16 lacks `showModal`, so
+  `setupTests.js` stubs it. Pre-push review round 1 (3 doc Musts, busy/close Shoulds): owner chose
+  option A (445/500 vs Must-only 390, code-only 270) and revalidated the amendment (folder
+  `components/ConfirmDialog/`, "Keep the draft", buttons disabled while busy, native `close` resync,
+  AC346-4 limited to keyboard activation, 44 px links in dialogs).
+- **PR #388 docs** (merged 2026-11-05, squash `fbd6b26`): recorded the #382 merge and refreshed
+  the handover.
+
 ## 2026-10-29
 
 - **#382 cultural poster implementation** (merged 2026-10-29, PR #385, squash `0179df5`; closes #382, #347, #285, #302 and #355;

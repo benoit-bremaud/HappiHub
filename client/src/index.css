@@ -20,6 +20,7 @@
   --hh-on-accent: #ffffff; /* text on --hh-accent and --hh-danger fills */
   --hh-warning: #8a5a00;
   --hh-line: #d8cfc0;
+  --hh-backdrop: rgb(28 26 23 / 0.55); /* behind modal dialogs */
   --hh-radius: 10px;
   --hh-gap: 0.75rem;
   --hh-font-display: 'Bricolage Grotesque', system-ui, sans-serif;

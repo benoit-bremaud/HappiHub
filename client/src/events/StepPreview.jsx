@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../session';
 import { send } from '../accounts/request';
-import { ConfirmDialog } from './ConfirmDialog';
+import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
 import { EventPoster } from './EventPoster';
 import { missingRequired, REASON_MAX } from './eventFields';
 
@@ -54,16 +54,16 @@ export const StepPreview = ({ editor, cityName, slug, goTo }) => {
           </ul>}
           {editor.pending && <p className="hh-hint">Saving the last changes…</p>}
           {editor.problem && <p className="hh-error">Fix the field in step to continue: {editor.problem.text}</p>}
-          {!dialog && <div className="hh-actions">
+          <div className="hh-actions">
             {ready && <button type="button" className="hh-button" disabled={busy} onClick={() => setDialog('publish')}>Publish</button>}
             {!editor.pending && <button type="button" className="hh-link hh-danger-link" disabled={busy} onClick={() => setDialog('delete')}>Delete this draft</button>}
-          </div>}
+          </div>
         </section>
       )}
       {event.status === 'PUBLISHED' && (
         <section aria-label="Published event">
           <p>Public page: <Link to={`/events/${event.id}`}>{globalThis.location.origin}/events/{event.id}</Link></p>
-          {!event.ended && !dialog && !editor.pending && <button type="button" className="hh-link hh-danger-link" onClick={() => setDialog('cancel')}>Cancel this event</button>}
+          {!event.ended && !editor.pending && <button type="button" className="hh-link hh-danger-link" onClick={() => setDialog('cancel')}>Cancel this event</button>}
         </section>
       )}
       {dialog === 'publish' && (
@@ -74,17 +74,17 @@ export const StepPreview = ({ editor, cityName, slug, goTo }) => {
       )}
       {dialog === 'delete' && (
         <ConfirmDialog title="Delete this draft?" confirmLabel="Delete the draft" busy={busy}
-          onConfirm={() => run('delete', { confirm: true })} onClose={() => setDialog(null)}>
+          onConfirm={() => run('delete', { confirm: true })} onClose={() => setDialog(null)} closeLabel="Keep the draft">
           <p>The draft is removed permanently.</p>
         </ConfirmDialog>
       )}
       {dialog === 'cancel' && (
         <ConfirmDialog title="Cancel this event?" confirmLabel="Cancel the event" busy={busy}
-          onConfirm={() => run('cancel', { confirm: true, ...(reason?.trim() && { reason: reason.trim() }) })} onClose={() => setDialog(null)}>
+          onConfirm={() => run('cancel', { confirm: true, ...(reason?.trim() && { reason: reason.trim() }) })} onClose={() => setDialog(null)} closeLabel="Keep the event">
           <p>Cancellation is final. The public page stays online with a “Cancelled” banner.</p>
           {reason === null
             ? <button type="button" className="hh-link hh-add" onClick={() => setReason('')}>+ Add a reason for the public</button>
-            : <label>Reason<textarea value={reason} maxLength={REASON_MAX} onChange={(e) => setReason(e.target.value)} rows={3} />
+            : <label>Reason<textarea value={reason} maxLength={REASON_MAX} onChange={(e) => setReason(e.target.value)} rows={3} autoFocus />
               {reason.length > REASON_MAX * 0.8 && <span className="hh-hint">{reason.length} / {REASON_MAX}</span>}</label>}
         </ConfirmDialog>
       )}

@@ -1,0 +1,13 @@
+/* Modal confirmation (spec modal-confirmation-dialog R6): mobile first, 44 px targets. */
+.hh-dialog { width: min(32rem, calc(100vw - 2rem)); box-sizing: border-box; padding: 1rem; border: 1px solid var(--hh-accent);
+  border-radius: var(--hh-radius); color: var(--hh-ink); background: var(--hh-surface); }
+.hh-dialog::backdrop { background: var(--hh-backdrop); }
+.hh-dialog h3 { margin-top: 0; }
+.hh-dialog textarea { width: 100%; box-sizing: border-box; font: inherit; }
+.hh-dialog .hh-link { min-height: 2.75rem; }
+.hh-dialog-actions { display: flex; flex-direction: column; gap: var(--hh-gap); }
+.hh-dialog-actions .hh-button { min-height: 2.75rem; width: 100%; }
+@media (min-width: 48rem) {
+  .hh-dialog-actions { flex-direction: row; }
+  .hh-dialog-actions .hh-button { width: auto; }
+}

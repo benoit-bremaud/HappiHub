@@ -16,14 +16,11 @@
 .hh-badge { display: inline-block; margin-left: 0.5rem; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.8rem;
   border: 1px solid var(--hh-line); color: var(--hh-ink-muted); vertical-align: middle; }
 .hh-warning { color: var(--hh-warning); }
-.hh-secondary { background: none; color: var(--hh-accent); border: 1px solid var(--hh-accent); }
 .hh-link { font: inherit; background: none; border: none; padding: 0; color: var(--hh-accent); text-decoration: underline; cursor: pointer; }
 .hh-actions { display: flex; flex-wrap: wrap; gap: var(--hh-gap); }
-.hh-notice, .hh-conflict, .hh-dialog { border: 1px solid var(--hh-line); border-radius: var(--hh-radius); padding: 1rem; margin-bottom: 1rem; }
+.hh-notice, .hh-conflict { border: 1px solid var(--hh-line); border-radius: var(--hh-radius); padding: 1rem; margin-bottom: 1rem; }
 .hh-conflict fieldset { border: none; padding: 0; margin: 0 0 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
-.hh-dialog { border-color: var(--hh-accent); position: static; width: auto; margin: 0 0 1rem; color: inherit; background: inherit; }
 output { display: block; }
-.hh-dialog textarea { width: 100%; font: inherit; }
 .hh-banner { padding: 0.75rem; border-radius: var(--hh-radius); background: var(--hh-danger); color: var(--hh-on-accent); }
 .hh-long { white-space: pre-line; }
 .hh-checklist { padding-left: 1.2rem; }

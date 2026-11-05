@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useSession } from '../session';
 import { send } from './request';
 import { Message, useSubmit } from './AuthPages';
+import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
 import './accounts.css';
 
 const PROFILE_FIELDS = [
@@ -89,6 +90,8 @@ export const AssociationPage = () => {
   const navigate = useNavigate();
   const [association, setAssociation] = useState(null);
   const [message, setMessage] = useState(null);
+  const [pending, setPending] = useState(null);
+  const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     const { ok, data } = await send(`/associations/${slug}`);
     setAssociation(ok ? data : { failed: data.message ?? 'Unable to load the association.' });
@@ -98,11 +101,14 @@ export const AssociationPage = () => {
   if (!association) return <section className="hh-page"><p role="status">Loading…</p></section>;
   if (association.failed) return <section className="hh-page"><p role="alert">{association.failed}</p></section>;
 
-  const confirmThen = async (question, path, { method = 'POST', payload } = {}, after) => {
-    if (!window.confirm(question)) return;
-    const { ok, data } = await send(path, method, payload);
+  /** R8: one confirmation pattern; the request runs only after the member confirms in the modal. */
+  const askConfirmation = (dialog, path, { method = 'POST', payload } = {}, after) => setPending({ ...dialog, path, method, payload, after });
+  const confirmPending = async () => {
+    setBusy(true);
+    const { ok, data } = await send(pending.path, pending.method, pending.payload);
+    setBusy(false); setPending(null);
     if (!ok) { setMessage({ error: true, text: data.message ?? 'Action failed.' }); return; }
-    after();
+    pending.after();
   };
   const closed = association.status === 'CLOSED';
   return (
@@ -117,7 +123,7 @@ export const AssociationPage = () => {
           <li key={member.accountId}>
             <span>{member.displayName || member.email}</span>
             {member.accountId !== account?.id && !closed && (
-              <button className="hh-button hh-danger" onClick={() => confirmThen(`Remove ${member.displayName || member.email}?`,
+              <button className="hh-button hh-danger" onClick={() => askConfirmation({ title: `Remove ${member.displayName || member.email}?`, confirmLabel: 'Remove' },
                 `/associations/${slug}/members/${member.accountId}`, { method: 'DELETE' }, load)}>Remove</button>)}
           </li>
         ))}
@@ -125,13 +131,19 @@ export const AssociationPage = () => {
       {!closed && <Invitations slug={slug} />}
       {!closed && (<>
         <h3>Leave or close</h3>
-        <button className="hh-button" onClick={() => confirmThen('Leave this association?', `/associations/${slug}/leave`, {},
+        <button className="hh-button" onClick={() => askConfirmation({ title: 'Leave this association?', confirmLabel: 'Leave', danger: false }, `/associations/${slug}/leave`, {},
           () => navigate('/account'))}>Leave the association</button>{' '}
-        <button className="hh-button hh-danger" onClick={() => confirmThen(
-          'Close the association? Upcoming events are cancelled and the page shows “Association closed” for 30 days, then everything is deleted.',
+        <button className="hh-button hh-danger" onClick={() => askConfirmation({ title: 'Close the association?', confirmLabel: 'Close the association',
+          body: 'Upcoming events are cancelled and the page shows “Association closed” for 30 days, then everything is deleted.' },
           `/associations/${slug}/close`, { payload: { confirm: true } }, load)}>Close the association</button>
       </>)}
       <p><Link to="/account">Back to my account</Link></p>
+      {pending && (
+        <ConfirmDialog title={pending.title} confirmLabel={pending.confirmLabel} danger={pending.danger} busy={busy}
+          onConfirm={confirmPending} onClose={() => setPending(null)}>
+          {pending.body && <p>{pending.body}</p>}
+        </ConfirmDialog>
+      )}
     </section>
   );
 };

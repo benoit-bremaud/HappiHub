@@ -2,16 +2,19 @@
 
 > **Source spec**: [client event workflow](../../specs/v1-brick-b-client-event-workflow.md) § 5
 
-Status: validated by Benoît on 2026-10-22; progressive-disclosure split (EventSteps, StepPreview, InPlaceSignIn) amended the same day, to revalidate.
+Status: validated by Benoît on 2026-10-22; progressive-disclosure split (EventSteps, StepPreview, InPlaceSignIn) amended the same day, to revalidate. `ConfirmDialog` moved to `client/src/components/` (#346, 2026-11-05).
 
 ```mermaid
 flowchart LR
+  subgraph client/src/components
+    D[ConfirmDialog]
+  end
   subgraph client/src/events
     L[EventListPage] --> S
     Ed[EventEditorPage] --> U[useEventEditor]
     Ed --> P[EventPoster]
     Ed --> C[ConflictPanel]
-    Ed --> D[ConfirmDialog]
+    Ed --> D
     Ed --> St[EventSteps]
     Ed --> SP[StepPreview]
     Ed --> IS[InPlaceSignIn]
