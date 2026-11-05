@@ -4,6 +4,7 @@
 .hh-dialog::backdrop { background: var(--hh-backdrop); }
 .hh-dialog h3 { margin-top: 0; }
 .hh-dialog textarea { width: 100%; box-sizing: border-box; font: inherit; }
+.hh-dialog .hh-link { min-height: 2.75rem; }
 .hh-dialog-actions { display: flex; flex-direction: column; gap: var(--hh-gap); }
 .hh-dialog-actions .hh-button { min-height: 2.75rem; width: 100%; }
 @media (min-width: 48rem) {

@@ -10,7 +10,9 @@ stateDiagram-v2
   Open --> Closed: close button / onClose()
   Open --> Busy: confirm button / onConfirm()
   Open --> Open: backdrop click / ignored (R7)
-  Busy --> Busy: Esc / ignored (R3)
+  Busy --> Busy: Esc or close button / ignored, buttons disabled (R3)
+  Busy --> Busy: native close / showModal() again (R3)
+  Open --> Closed: native close / onClose() (R3)
   Busy --> Closed: request done / unmount, restore focus
   Closed --> [*]
 ```

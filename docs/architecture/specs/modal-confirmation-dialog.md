@@ -1,6 +1,7 @@
 # Modal confirmation dialog (#346)
 
-Status: approved by the owner on 2026-11-05 (D1 A 460/500, D2 A 470/500, D3).
+Status: approved by the owner on 2026-11-05 (D1 A 460/500, D2 A 470/500, D3); amendment from
+the pre-push review (folder, "Keep the draft", R2, R3, R6, R8, AC346-4) revalidated the same day (option A 445/500).
 Source: issue #346, full local QA pass of 2026-10-26 (checklist A11Y-01, WCAG 2.1.2, 2.4.3, 4.1.2).
 Amends: [client event workflow](v1-brick-b-client-event-workflow.md) (UC18–UC20 confirmations) and
 [brick D](v1-brick-d-accounts-associations.md) (member removal, leave, close).
@@ -40,9 +41,9 @@ Sensitivity: with testability weighted 30 (simplicity 10), A still leads (A 445,
 | **Total /500** | **470** | 230 | 315 |
 
 Sensitivity: even with change size at 35 (acceptance 15), A leads (A 430, B 335). **A recommended.**
-The component moves from `client/src/events/` to `client/src/ui/ConfirmDialog.jsx` because it is
-no longer event-specific (named export kept; imports updated). Implementation follows the existing
-folder convention: `client/src/components/ConfirmDialog/ConfirmDialog.jsx` with `confirm-dialog.css`.
+The component moves from `client/src/events/` to `client/src/components/ConfirmDialog/ConfirmDialog.jsx`
+(existing folder convention, with `confirm-dialog.css`) because it is no longer event-specific
+(named export kept; imports updated).
 
 ### D3. Neutral close label
 
@@ -54,9 +55,12 @@ The `closeLabel` default `'Keep the event'` is event-specific. The neutral defau
 
 - R1. On mount the dialog calls `showModal()`; it is unmounted (and closed) when the caller removes it.
 - R2. Initial focus goes to the **safe action** (close button) for destructive dialogs (`danger`),
-  to the confirm button otherwise (publish). `autoFocus` on that button.
+  to the confirm button otherwise (publish, leave). The component focuses it through a ref right after
+  `showModal()` (React `autoFocus` would run before the dialog is open).
 - R3. Esc fires the native `cancel` event; the component calls `preventDefault()` and `onClose()`
-  so React state stays the single source of truth. Esc is ignored while `busy`.
+  so React state stays the single source of truth. While `busy`, Esc is ignored and both buttons are
+  disabled. If the browser closes the dialog anyway (repeated Esc), the `close` event reopens it
+  while `busy`, else calls `onClose()`.
 - R4. Before `showModal()` the component records `document.activeElement`; on unmount it
   focuses that element again if it is still in the document. To keep the trigger mounted,
   StepPreview stops hiding its action buttons while a dialog is open (`!dialog &&` guards
@@ -64,11 +68,12 @@ The `closeLabel` default `'Keep the event'` is event-specific. The neutral defau
 - R5. `aria-labelledby` = title; `aria-describedby` = body wrapper. `role` stays the native
   `dialog` (`alertdialog` not used: a confirmation the user started is not an unsolicited alert).
 - R6. Mobile first: actions stacked full-width under 48rem, side by side above; every button
-  ≥ 44 × 44 px; dialog width `min(32rem, 100vw - 2rem)`; `::backdrop` uses a token color.
+  ≥ 44 × 44 px, links inside the dialog included (the cancel reason field gets focus when revealed); dialog width `min(32rem, 100vw - 2rem)`; `::backdrop` uses a token color.
 - R7. Click on the backdrop does nothing (avoids accidental dismissal of a destructive choice).
 - R8. AssociationPage: `window.confirm()` is replaced by a `pending` state
-  `{ title, body, confirmLabel, run }` rendered through `ConfirmDialog`; server error keeps the
-  dialog closed and shows the existing message.
+  `{ title, body?, confirmLabel, danger?, path, method, payload, after }` rendered through
+  `ConfirmDialog`. Removal and close are destructive; leave is not (confirm focused). A server
+  error closes the dialog and shows the existing message.
 
 No API, server or schema change.
 
@@ -77,8 +82,10 @@ No API, server or schema change.
 - AC346-1. Opening any confirmation calls `showModal()` and focus is inside the dialog (R2).
 - AC346-2. Esc closes the dialog without running the action; `onConfirm` not called (R3).
 - AC346-3. Esc while `busy` does not close the dialog (edge).
-- AC346-4. After close (button or Esc), focus is on the trigger that opened it (R4).
-- AC346-5. Dialog has accessible name = title and description = body (R5).
+- AC346-4. After close (button or Esc), focus is on the element that was focused when the dialog
+  opened, i.e. the trigger on keyboard activation (R4). Safari and macOS Firefox do not focus a
+  clicked button, so mouse users there are not covered.
+- AC346-5. Dialog has accessible name = title and description = body, none without a body (R5).
 - AC346-6. Member removal, leave and close use `ConfirmDialog`; `window.confirm` no longer
   appears in `client/src` (grep check) (R8).
 - AC346-7. Confirming in AssociationPage sends the same request as before; refusing sends none (sad path).

@@ -102,7 +102,7 @@ export const AssociationPage = () => {
   if (association.failed) return <section className="hh-page"><p role="alert">{association.failed}</p></section>;
 
   /** R8: one confirmation pattern; the request runs only after the member confirms in the modal. */
-  const confirmThen = (dialog, path, { method = 'POST', payload } = {}, after) => setPending({ ...dialog, path, method, payload, after });
+  const askConfirmation = (dialog, path, { method = 'POST', payload } = {}, after) => setPending({ ...dialog, path, method, payload, after });
   const confirmPending = async () => {
     setBusy(true);
     const { ok, data } = await send(pending.path, pending.method, pending.payload);
@@ -123,7 +123,7 @@ export const AssociationPage = () => {
           <li key={member.accountId}>
             <span>{member.displayName || member.email}</span>
             {member.accountId !== account?.id && !closed && (
-              <button className="hh-button hh-danger" onClick={() => confirmThen({ title: `Remove ${member.displayName || member.email}?`, confirmLabel: 'Remove' },
+              <button className="hh-button hh-danger" onClick={() => askConfirmation({ title: `Remove ${member.displayName || member.email}?`, confirmLabel: 'Remove' },
                 `/associations/${slug}/members/${member.accountId}`, { method: 'DELETE' }, load)}>Remove</button>)}
           </li>
         ))}
@@ -131,15 +131,15 @@ export const AssociationPage = () => {
       {!closed && <Invitations slug={slug} />}
       {!closed && (<>
         <h3>Leave or close</h3>
-        <button className="hh-button" onClick={() => confirmThen({ title: 'Leave this association?', confirmLabel: 'Leave', danger: false }, `/associations/${slug}/leave`, {},
+        <button className="hh-button" onClick={() => askConfirmation({ title: 'Leave this association?', confirmLabel: 'Leave', danger: false }, `/associations/${slug}/leave`, {},
           () => navigate('/account'))}>Leave the association</button>{' '}
-        <button className="hh-button hh-danger" onClick={() => confirmThen({ title: 'Close the association?', confirmLabel: 'Close the association',
+        <button className="hh-button hh-danger" onClick={() => askConfirmation({ title: 'Close the association?', confirmLabel: 'Close the association',
           body: 'Upcoming events are cancelled and the page shows “Association closed” for 30 days, then everything is deleted.' },
           `/associations/${slug}/close`, { payload: { confirm: true } }, load)}>Close the association</button>
       </>)}
       <p><Link to="/account">Back to my account</Link></p>
       {pending && (
-        <ConfirmDialog title={pending.title} confirmLabel={pending.confirmLabel} danger={pending.danger ?? true} busy={busy}
+        <ConfirmDialog title={pending.title} confirmLabel={pending.confirmLabel} danger={pending.danger} busy={busy}
           onConfirm={confirmPending} onClose={() => setPending(null)}>
           {pending.body && <p>{pending.body}</p>}
         </ConfirmDialog>

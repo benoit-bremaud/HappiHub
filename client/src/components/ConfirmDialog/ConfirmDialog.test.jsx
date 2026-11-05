@@ -89,9 +89,46 @@ describe('ConfirmDialog (#346)', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
-  test('unmounting after the trigger disappeared does not throw', () => {
-    const { rerender, unmount } = render(<ConfirmDialog title="T" confirmLabel="OK" onConfirm={() => {}} onClose={() => {}} />);
+  test('the close button is disabled while the action is running', () => {
+    render(<Harness busy />);
+    openFromTrigger();
+    expect(screen.getByRole('button', { name: 'Go back' })).toBeDisabled();
+  });
+
+  test('a native close while running reopens the dialog', () => {
+    render(<Harness busy />);
+    openFromTrigger();
+    const dialog = screen.getByRole('dialog');
+    const showModal = jest.spyOn(dialog, 'showModal');
+    dialog.removeAttribute('open');
+    fireEvent(dialog, new Event('close'));
+    expect(showModal).toHaveBeenCalledTimes(1);
+    expect(dialog).toHaveAttribute('open');
+  });
+
+  test('a native close when idle closes through onClose', () => {
+    render(<Harness />);
+    const trigger = openFromTrigger();
+    const dialog = screen.getByRole('dialog');
+    dialog.removeAttribute('open');
+    fireEvent(dialog, new Event('close'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  test('without a body there is no empty description', () => {
+    render(<ConfirmDialog title="Leave?" confirmLabel="Leave" onConfirm={() => {}} onClose={() => {}} />);
+    expect(screen.getByRole('dialog', { name: 'Leave?' })).not.toHaveAttribute('aria-describedby');
+  });
+
+  test('closing after the trigger was removed leaves focus off the detached trigger', () => {
+    const { rerender } = render(<><button type="button">Open</button></>);
+    const trigger = screen.getByRole('button', { name: 'Open' });
+    trigger.focus();
     rerender(<ConfirmDialog title="T" confirmLabel="OK" onConfirm={() => {}} onClose={() => {}} />);
-    expect(() => unmount()).not.toThrow();
+    expect(trigger.isConnected).toBe(false);
+    rerender(<></>);
+    expect(document.activeElement).not.toBe(trigger);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

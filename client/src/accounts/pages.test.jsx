@@ -285,6 +285,14 @@ describe('AssociationPage (UC7, UC8, UC10, UC12)', () => {
     expect(calls()).not.toContain('POST /associations/troupe/leave');
   });
 
+  test('Esc closes the confirmation and sends nothing', async () => {
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Close the association' }));
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(calls()).not.toContain('POST /associations/troupe/close');
+  });
+
   test('leaving returns to the account page', async () => {
     routes['POST /associations/troupe/leave'] = [204, {}];
     open();

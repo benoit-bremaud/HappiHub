@@ -102,8 +102,9 @@ Mapping (sequence [02-sequence-editor-save](../diagrams/v1-event-client/02-seque
 | network (status 0) | "Not saved — Retry", input kept |
 
 Cancel: dialog explaining finality and public visibility, optional reason (≤ 500, counter),
-`confirm: true`. Delete: dialog then `POST …/delete` and back to the list. Dialogs are in-page
-(`<dialog>`), not `window.confirm`, so the reason field fits and tests are deterministic.
+`confirm: true`. Delete: dialog then `POST …/delete` and back to the list. Dialogs are modal
+(`<dialog>` with `showModal()`, amended by [modal-confirmation-dialog](modal-confirmation-dialog.md), #346), not
+`window.confirm`, so the reason field fits and tests are deterministic.
 
 ## 5. Components (diagram [03-component](../diagrams/v1-event-client/03-component.md))
 
@@ -115,7 +116,7 @@ New folder `client/src/events/`, flat, named exports:
 | `useEventEditor.js` | hook: load, draft/base/version, autosave queue, response mapping of section 4 |
 | `EventListPage.jsx`, `EventEditorPage.jsx`, `PublicEventPage.jsx` | screens |
 | `EventPoster.jsx` | preview shared by steps 1–4 and the public page |
-| `ConflictPanel.jsx`, `ConfirmDialog.jsx`, `CityPicker.jsx` | sub-components |
+| `ConflictPanel.jsx`, `CityPicker.jsx` | sub-components (`ConfirmDialog` moved to `client/src/components/ConfirmDialog/` by #346) |
 | `events.css` | neutral layout + six placeholder poster themes, design tokens as CSS variables |
 
 Also `EventSteps.jsx` (steps 1–3), `StepPreview.jsx`, `InPlaceSignIn.jsx`, `FieldError.jsx`.
