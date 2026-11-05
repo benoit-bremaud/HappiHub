@@ -42,18 +42,19 @@ Each screen keeps its own mapping from `response` to what it renders (404 messag
 
 ## Decision D1 — what a screen sees while a new path loads
 
-Round 1 scored A first (450) on incomplete facts. The pre-push review showed three screens keep
+Round 1 scored A first (450) on incomplete facts. The pre-push review showed four screens keep
 the previous data today (table above), so A would change them visibly. Revalidated scores:
 
 | Criterion (weight) | A: always reset, accept the changes | A′: reset, hold in each screen | C: option `keepPrevious` |
 |---|---|---|---|
 | Correctness, never shows another key's data (35) | 5 | 5 | 4 — previous data shown knowingly while loading |
-| Behaviour parity of the 5 screens (25) | 1 — CityPicker list flickers per keystroke, two loading flashes | 5 | 5 |
+| Behaviour parity of the 5 screens (25) | 1 — CityPicker list flickers per keystroke, two loading flashes | 5 | 4 — PublicEventPage resets on purpose, AgendaFilters reloads on reopen |
 | Simplicity, KISS/YAGNI (25) | 5 | 2 — the same hold copied in two screens | 4 — one option, three callers |
 | Testability (15) | 5 | 3 | 4 |
-| **Total /500** | 400 | 395 | **425** |
+| **Total /500** | 400 | 395 | **400** |
 
-Sensitivity: A passes C only if parity weighs under about 15. Decision: C. CityPicker,
+Round 2 (corrected parity, idle forgets in both modes): A and C tie at 400; C leads as soon as
+parity weighs over 25 and is kept, since only C preserves CityPicker. Decision: C. CityPicker,
 EventListPage and AgendaFilters pass `keepPrevious`; Agenda and PublicEventPage reset.
 
 ## Out of scope
@@ -70,7 +71,8 @@ Mutations (POST/PATCH), caching, a data-fetching library, server changes.
 - AC6 the five screens use the hook; `grep "let current = true" client/src` finds only
   `accounts/request.js`.
 - AC7 existing client tests stay green unchanged; `npm run build` passes.
-- AC8 with `keepPrevious` the last loaded response stays until the new path's reply lands.
+- AC8 with `keepPrevious` the last loaded response stays until the new path's reply lands; an
+  idle (`null`) path forgets it in both modes.
 
 No UML diagram: the change has no new actor, component boundary or state worth modelling;
 the table above is the contract.

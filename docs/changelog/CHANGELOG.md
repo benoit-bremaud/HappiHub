@@ -54,8 +54,8 @@ history and [handover](../HANDOVER.md) for the current state.
 
 - Client screens share one `useSend` hook for cancellable API reads (#368): the agenda,
   its filters, the public event page, the member event list and the city search no longer
-  repeat the same effect; visible behaviour is unchanged (lists stay on screen while a new
-  filter or search loads).
+  repeat the same effect; lists stay on screen while a new filter or search loads;
+  the public event page shows loading when its event changes.
 - Current account/role authority, event visibility and ownership boundaries are enforced
   server-side. Public responses exclude relationship identifiers.
 - Client event/comment/profile flows follow the actual API contracts.

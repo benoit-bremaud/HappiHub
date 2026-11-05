@@ -15,9 +15,10 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   per-screen holds 395. `useSend(path, { delay, keepPrevious })` in
   `client/src/accounts/request.js` returns `{ response, retry }`; `path === null` is idle; a
   reset-mode run forgets its reply so revisiting a path reloads it. CityPicker, EventListPage and
-  AgendaFilters keep the previous reply; Agenda and PublicEventPage reset. Client 121 tests
-  (8 new, AC1–AC5, AC8), build clean. Review round 1: 2 Must (parity facts, stale
-  HANDOVER/WORK_PLAN), 5 Should, all addressed.
+  AgendaFilters keep the previous reply; Agenda and PublicEventPage reset. Client 122 tests
+  (9 new incl. 2 screen-parity checks), build clean. Review round 1: 2 Must (parity facts, stale
+  HANDOVER/WORK_PLAN), 5 Should. Round 2: 1 Must (keepPrevious replayed an older search after a
+  pick), fixed by forgetting the reply on idle; C re-scored 400, tied with A, kept for CityPicker.
 - **#387 plan, handover and changelog status refresh** (branch
   `docs/387-refresh-plan-handover-changelog`, documentation only). Every claim checked live
   (`gh`, `git log`): 94 open issues on Project #6; #251, #294, #295, #307, #329 closed; #296
