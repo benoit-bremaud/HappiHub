@@ -49,13 +49,13 @@ the previous data today (table above), so A would change them visibly. Revalidat
 |---|---|---|---|
 | Correctness, never shows another key's data (35) | 5 | 5 | 4 — previous data shown knowingly while loading |
 | Behaviour parity of the 5 screens (25) | 1 — CityPicker list flickers per keystroke, two loading flashes | 5 | 4 — PublicEventPage resets on purpose, AgendaFilters reloads on reopen |
-| Simplicity, KISS/YAGNI (25) | 5 | 2 — the same hold copied in two screens | 4 — one option, three callers |
+| Simplicity, KISS/YAGNI (25) | 5 | 2 — the same hold copied in two screens | 4 — one option, two callers |
 | Testability (15) | 5 | 3 | 4 |
 | **Total /500** | 400 | 395 | **400** |
 
 Round 2 (corrected parity, idle forgets in both modes): A and C tie at 400; C leads as soon as
-parity weighs over 25 and is kept, since only C preserves CityPicker. Decision: C. CityPicker,
-EventListPage and AgendaFilters pass `keepPrevious`; Agenda and PublicEventPage reset.
+parity weighs over 25 and is kept, since only C, of the two tied options, preserves CityPicker. Decision: C. CityPicker and
+EventListPage pass `keepPrevious`; Agenda, AgendaFilters and PublicEventPage reset.
 
 ## Out of scope
 

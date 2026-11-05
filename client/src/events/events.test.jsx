@@ -450,9 +450,8 @@ describe('list and public page', () => {
     expect(screen.getByText('Updated by a member')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '<b>Talk</b>' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Draft' }));
-    // #368 keepPrevious: the previous list and chips stay while the new filter loads.
+    // #368 keepPrevious: the previous list stays while the new filter loads.
     expect(screen.getByRole('link', { name: 'Concert' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Filter by status' })).toBeInTheDocument();
     expect(await screen.findByText('No events yet.')).toBeInTheDocument();
   });
 
