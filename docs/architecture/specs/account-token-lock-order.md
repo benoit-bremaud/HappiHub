@@ -102,3 +102,5 @@ R7 window documented (420/500); B drop `ORDER BY id` and rely on physical order 
 per-account advisory lock in every transaction (335). D2, where the deletion takes the tokens lock:
 A inside `deleteAccountRow` (470/500); B in each caller, contract in a comment (350). The owner chose
 A for both. Sensitivity: A first in every ±10 variant of both matrices.
+R7 re-confirmed by the owner on 2026-11-05 after round 2 corrected its trigger (two
+unauthenticated reset or resend requests, no link click): A accept 385/500, C advisory lock 335.

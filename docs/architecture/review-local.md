@@ -1,62 +1,47 @@
-# Local review — HappiHub (branch diff main...HEAD, #346)
+# Local review — HappiHub (branch diff main...HEAD, #378)
 
 - Date: 2026-11-05
-- Commit: 1af8692
-- Scope: branch diff `main...HEAD` (`--push`)
-- Checks run: adversarial (Opus, round 1) · design · docs · tests · security · correctness
-- Verdict: ship (Must fixed in c451f64) · Must 3 (fixed) · Should 7 (fixed) · Nice 5 (3 fixed, 2 accepted)
+- Commit: 90540d2
+- Scope: branch diff `origin/main...HEAD` (`--push`)
+- Checks run: adversarial (Opus, 2 rounds) · design + docs (architecture-guardian) · tests (test-auditor) · security and correctness (diff read, adversarial)
+- Verdict: ship · Must 3 (fixed) · Should 7 (fixed) · Nice 7 (fixed)
 
 ## Adversarial review (#236)
-- Round 1 on `1af8692`: Must 3 · Should 6 · Nice 4 · unverified 2 · Push gate: closed
-- Owner decision: option A (fix all, amend and revalidate the spec), 445/500
-- Round 2 on `c451f64`: 11 fixed · 1 not fixed (S4 test title, renamed in the follow-up commit) · 0 regressed · new Must 0 · **Push gate: open**
-- Hosted reviewers (pre-merge run on `7f1ec8a`): Copilot not enabled on the repo (no review possible) · Codex posted on `7f1ec8a`, no findings (ignored by owner rule)
+- Round 1 on `a2cc573`: Must 1 · Should 3 · Nice 2 · unverified 1 · Push gate: closed
+- Round 2 on `80903b1`: 6 fixed · 0 not fixed · 0 regressed · new Must 0 · **Push gate: open** (its 2 Should and 2 Nice fixed in `90540d2`)
+- Hosted reviewers: Copilot not enabled; Codex reviews ignored (owner rule).
 
-## Pre-merge gate (head SHA 1af8692)
+## Pre-merge gate (head SHA 90540d2)
 | Step | Result |
 |---|---|
-| 0 CI mirror | `quality-tests.yml`: collector unittest ✅ · server jest ✅ · client jest + coverage ✅ · client build ✅ (Node 22.21.1 locally vs 22.23.3 in CI) |
-| 1 Tests | ✅ client 108 · ✅ server unit 164 · integration deferred to the pre-merge run |
-| 2 Coverage | client 93.62 % stmts / 83.77 % branches / 94.48 % funcs / 96.8 % lines · docs ⏸ deferred |
+| 0 CI mirror | server unit + integration run locally as in CI |
+| 1 Tests | ✅ server unit 168 · ✅ server integration 226 (+1 todo) · client untouched |
+| 2 Coverage | ⏸ deferred to the pre-merge run (`--push`) |
 | 3 SonarQube | ⏸ deferred to the pre-merge run (`--push`) |
-| 4 Secrets | ✅ gitleaks clean (main..HEAD) · no tracked .env · diff read: nothing sensitive |
+| 4 Secrets | ✅ gitleaks clean (`origin/main..HEAD`) · no tracked .env · diff read: nothing sensitive |
 | 5 E2E/smoke | ⏸ deferred to the pre-merge run (`--push`) |
-- Gate: `--push`: **pre-push green** — 113 client + 164 server unit tests, build, gitleaks; integration, SonarQube, E2E and doc coverage deferred to the pre-merge run
-
-## Pre-merge run (head SHA 7f1ec8a)
-| Step | Result |
-|---|---|
-| 1 Tests | ✅ client 113 · ✅ server unit 164 · ✅ server integration 222 (1 todo) |
-| 2 Coverage | client 93.54 % stmts / 83.89 % branches / 94.5 % funcs / 96.8 % lines · server integration 93.15 / 82.57 / 96.54 / 94.36 · docs ⚠️ no doc-coverage counter in the repo |
-| 3 SonarQube | ✅ QUALITY GATE STATUS: PASSED (local Community Build, main analysis of the branch tree) |
-| 4 Secrets | ✅ gitleaks clean (main..HEAD) · no tracked .env · diff read: nothing sensitive |
-| 5 E2E/smoke | ⚠️ the repo has no E2E or smoke suite; client production build compiles · QA pass: on staging after merge (no staging exists, #386) |
-- Gate: **not GREEN** — steps 2 (doc coverage) and 5 (E2E) cannot run, Copilot review unavailable: merge needs the owner's waiver. Report-only commit after `7f1ec8a`.
+- Gate: **pre-push green**; coverage, SonarQube and E2E deferred (not GREEN).
 
 ## 🔴 Must Have
-- `docs/architecture/specs/modal-confirmation-dialog.md:43-51` `[adversarial]` · Spec amended after approval (folder `components/`, label "Keep the draft") without recorded revalidation; stale `ui/` sentence · remove the `ui/` sentence, get and record owner revalidation.
-- `docs/architecture/specs/modal-confirmation-dialog.md` R2, R8 `[adversarial|docs]` · R2 says `autoFocus`, R8 gives a pending shape that differs from the code · align both rules with the code.
-- `docs/architecture/specs/v1-brick-b-client-event-workflow.md:104-118`, `docs/architecture/diagrams/v1-event-client/03-component.md:12-16` `[adversarial]` · stale copies place `ConfirmDialog` in `client/src/events/` and call dialogs in-page · update both.
+- `server/services/accounts.js` `ORDER BY id` vs `server/jobs/maintenance.js` purge and `requestPasswordReset` `[adversarial|design]` · token-against-token deadlock (random UUID order vs physical order) · fixed in `80903b1`: purge `SKIP LOCKED`, reset locks first (conception revalidated, D1 A).
+- `docs/architecture/specs/account-token-lock-order.md` R6 `[design]` · false "cannot form a cycle" claim · fixed in `80903b1` (R6, R7).
+- `server/tests/integration/lockOrder.test.js` AC378-1 + `PROJECT_LOG.md` `[design|tests|adversarial]` · RESET token did not reproduce the L6 cycle; log over-claimed · fixed in `80903b1` (VERIFY token, red verified on origin/main).
 
 ## 🟡 Should Have
-- `ConfirmDialog.jsx:41` `[adversarial|correctness]` · close button active while busy; the request still runs after the dialog closes · `disabled={busy}`, test.
-- `ConfirmDialog.jsx:19-24` `[adversarial|correctness]` · a second Esc can close the native dialog while React still renders it · handle the native `close` event (re-open while busy, else `onClose`).
-- `ConfirmDialog.jsx:11-24` `[adversarial|design]` · React 18 supports `onCancel`/`onClose` on `<dialog>`; removes refs written during render and manual listeners.
-- `ConfirmDialog.test.jsx:92-96` `[adversarial|tests]` · trigger-removal test is vacuous · remove a real trigger before unmount.
-- `ConfirmDialog.jsx:22` `[adversarial|correctness]` · Safari/macOS Firefox do not focus a clicked button, so focus return fails for mouse users there · narrow AC346-4 to keyboard activation (focus return applies to the focused element).
-- `StepPreview.jsx:87` `[adversarial]` · "+ Add a reason" link below 44 px inside the dialog; focus lost when it is replaced · 44 px min-height in dialogs, focus the textarea.
-- `pages.test.jsx` `[tests]` · no Esc / busy test on the association page · add one.
+- `server/services/accounts.js` `deleteAccountRow` `[design]` · lock contract only in a comment · fixed (lock moved inside, D2 A).
+- `docs/changelog/CHANGELOG.md` `[design]` · over-broad race list · fixed.
+- `lockOrder.test.js` `[tests|adversarial]` · connection left in an open transaction on failure · fixed (`holding()` rollback).
+- AC378-3 L4 `ORDER BY id` not asserted `[tests]` · fixed (`lockAccountTokens` SQL unit test, all sites use it).
+- Spec R7 trigger `[adversarial r2]` · wrong trigger · fixed in `90540d2`, owner re-confirmed acceptance.
+- Spec AC378-3 SKIP LOCKED unit claim `[adversarial r2]` · fixed (covered by AC378-5).
+- `deleteAccount` doc `[adversarial]` · no longer applies after D2 A.
 
 ## 🔵 Nice to Have
-- `ConfirmDialog.jsx:36` `[adversarial]` · `aria-describedby` points to an empty body when there are no children · set it only with children.
-- `ConfirmDialog.jsx:40-41` `[design]` · two `data-initial-focus` attributes · two refs.
-- `AssociationPage.jsx:104` `[design]` · `confirmThen` now only queues · rename `askConfirmation`, drop `danger ?? true`.
-- `accounts.css` `[design|adversarial]` · shared dialog relies on button classes from accounts.css · acceptable while every page imports it; follow-up if lazy routes appear.
-- `PROJECT_LOG.md:17-18` `[adversarial]` · #388 entry outside #346 · requested by the brief, kept.
+- Unit `.catch(() => {})`, `test.each`, code comments for R3/R2, HANDOVER #368 link, deterministic second waiter, exact `tokensPurged` · all fixed. `.then((r) => r)` kept: it sends the supertest request immediately.
 
 ## ⚪ Disagree / Intentional
-- `StepPreview.jsx:57-66` `[adversarial]` · triggers stay mounted behind the modal · R4, background is inert.
-- `setupTests.js` `[adversarial]` · `showModal` stub · D1, jsdom 16.7 lacks it.
+- `deleteAccountRow` double lock inside the purge · no-op in the same transaction (R4, D2 A).
+- CHANGELOG lists #378 under merged before merge · precedent `d16b283`.
 
 ## Per-dimension summary
-- Adversarial: 3 doc Musts (revalidation, stale rules), busy/close sync Shoulds · Design: onCancel simpler, refs over data attributes · Docs: spec drift R2/R8 · Tests: vacuous unmount test, association Esc/busy missing · Security: no finding · Correctness: close while busy, double Esc.
+- Adversarial: one real regression found and reproduced, fixed and verified · Design: helper proportionate, no over-engineering · Docs: claims now match code · Tests: deterministic red/green races · Security: parameterized SQL, nothing sensitive · Correctness: unit 168, integration 226.
