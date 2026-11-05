@@ -4,12 +4,12 @@
 - Commit: 1af8692
 - Scope: branch diff `main...HEAD` (`--push`)
 - Checks run: adversarial (Opus, round 1) · design · docs · tests · security · correctness
-- Verdict: fix Must Have first · Must 3 · Should 7 · Nice 5
+- Verdict: ship (Must fixed in c451f64) · Must 3 (fixed) · Should 7 (fixed) · Nice 5 (3 fixed, 2 accepted)
 
 ## Adversarial review (#236)
 - Round 1 on `1af8692`: Must 3 · Should 6 · Nice 4 · unverified 2 · Push gate: closed
 - Owner decision: option A (fix all, amend and revalidate the spec), 445/500
-- Round 2: see the fix commit
+- Round 2 on `c451f64`: 11 fixed · 1 not fixed (S4 test title, renamed in the follow-up commit) · 0 regressed · new Must 0 · **Push gate: open**
 - Hosted reviewers (filled at the pre-merge run): Copilot not enabled on the repo · Codex ignored by owner rule
 
 ## Pre-merge gate (head SHA 1af8692)
@@ -21,7 +21,7 @@
 | 3 SonarQube | ⏸ deferred to the pre-merge run (`--push`) |
 | 4 Secrets | ✅ gitleaks clean (main..HEAD) · no tracked .env · diff read: nothing sensitive |
 | 5 E2E/smoke | ⏸ deferred to the pre-merge run (`--push`) |
-- Gate: `--push`: tests green, push blocked by the adversarial gate (closed)
+- Gate: `--push`: **pre-push green** — 113 client + 164 server unit tests, build, gitleaks; integration, SonarQube, E2E and doc coverage deferred to the pre-merge run
 
 ## 🔴 Must Have
 - `docs/architecture/specs/modal-confirmation-dialog.md:43-51` `[adversarial]` · Spec amended after approval (folder `components/`, label "Keep the draft") without recorded revalidation; stale `ui/` sentence · remove the `ui/` sentence, get and record owner revalidation.

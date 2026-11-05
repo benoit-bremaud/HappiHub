@@ -65,7 +65,7 @@ The `closeLabel` default `'Keep the event'` is event-specific. The neutral defau
   focuses that element again if it is still in the document. To keep the trigger mounted,
   StepPreview stops hiding its action buttons while a dialog is open (`!dialog &&` guards
   removed): the modal already makes the background inert.
-- R5. `aria-labelledby` = title; `aria-describedby` = body wrapper. `role` stays the native
+- R5. `aria-labelledby` = title; `aria-describedby` = body wrapper, when a body is given. `role` stays the native
   `dialog` (`alertdialog` not used: a confirmation the user started is not an unsolicited alert).
 - R6. Mobile first: actions stacked full-width under 48rem, side by side above; every button
   ≥ 44 × 44 px, links inside the dialog included (the cancel reason field gets focus when revealed); dialog width `min(32rem, 100vw - 2rem)`; `::backdrop` uses a token color.

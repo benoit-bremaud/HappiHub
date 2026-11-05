@@ -121,7 +121,7 @@ describe('ConfirmDialog (#346)', () => {
     expect(screen.getByRole('dialog', { name: 'Leave?' })).not.toHaveAttribute('aria-describedby');
   });
 
-  test('closing after the trigger was removed leaves focus off the detached trigger', () => {
+  test('unmounting when the trigger was removed does not throw and leaves no dialog', () => {
     const { rerender } = render(<><button type="button">Open</button></>);
     const trigger = screen.getByRole('button', { name: 'Open' });
     trigger.focus();
