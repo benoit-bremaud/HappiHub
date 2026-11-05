@@ -1,6 +1,6 @@
 import { withTransaction } from '../db/transaction.js';
 import { newToken, TOKEN_TTL_MS } from '../domain/tokens.js';
-import { deleteAccountRow } from '../services/accounts.js';
+import { deleteAccountRow, lockAccountTokens } from '../services/accounts.js';
 import { runEventMaintenance } from '../services/events.js';
 import { queueEmail } from '../services/outbox.js';
 import { FIELD } from '../domain/fieldCipher.js';
@@ -14,7 +14,7 @@ const DAY_MS = 24 * 3600e3;
  * never changes, so the scan's age window still holds.
  */
 const lockUnverified = async (client, accountId) => {
-  await client.query('SELECT 1 FROM auth_token WHERE account_id = $1 FOR UPDATE', [accountId]);
+  await lockAccountTokens(client, accountId);
   const { rows: [account] } = await client.query(
     'SELECT email_enc, verification_reminder_at FROM account WHERE id = $1 AND email_verified_at IS NULL FOR UPDATE',
     [accountId]);

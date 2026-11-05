@@ -25,6 +25,13 @@ export const findAccount = async (db, cipher, id) => {
   return row ? toAccount(cipher, row) : null;
 };
 
+/**
+ * Locks every token row of the account, in id order. Transactions touching both an account and its
+ * tokens take this lock before the account row (#378 R1), so they serialize and never deadlock.
+ */
+export const lockAccountTokens = (client, accountId) =>
+  client.query('SELECT 1 FROM auth_token WHERE account_id = $1 ORDER BY id FOR UPDATE', [accountId]);
+
 const issueToken = async (client, ctx, accountId, purpose) => {
   const { token, hash } = newToken();
   await client.query('DELETE FROM auth_token WHERE account_id = $1 AND purpose = $2', [accountId, purpose]);
@@ -118,7 +125,7 @@ export const resendVerification = (ctx, email) => withTransaction(ctx.db, async 
     'SELECT id FROM account WHERE (email_bidx = $1 AND email_verified_at IS NULL) OR pending_email_bidx = $1 LIMIT 1',
     [emailBidx]);
   if (!row) return;
-  await client.query('SELECT 1 FROM auth_token WHERE account_id = $1 FOR UPDATE', [row.id]);
+  await lockAccountTokens(client, row.id);
   const { rows: [locked] } = await client.query(
     `SELECT id FROM account WHERE id = $1 AND ((email_bidx = $2 AND email_verified_at IS NULL) OR pending_email_bidx = $2)
      FOR UPDATE`, [row.id, emailBidx]);
@@ -166,6 +173,7 @@ export const checkPassword = async (db, accountId, password) => {
 export const updateAccount = async (ctx, account, { displayName, email, newPassword }) => {
   const passwordHash = newPassword ? await bcrypt.hash(newPassword, BCRYPT_COST) : null;
   return withTransaction(ctx.db, async (client) => {
+    await lockAccountTokens(client, account.id);
     await client.query('SELECT id FROM account WHERE id = $1 FOR UPDATE', [account.id]);
     if (displayName !== undefined)
       await client.query('UPDATE account SET display_name_enc = $2 WHERE id = $1',
@@ -228,7 +236,8 @@ export const exportAccount = async (ctx, accountId) => {
 /**
  * Account deletion effects (F26), shared by UC6 and the day-30 expiry (DF2): close associations
  * where it is the last member, delete invitations and unsent emails to its address, then the
- * account (memberships and tokens cascade; activity keeps actor_id NULL).
+ * account (memberships and tokens cascade; activity keeps actor_id NULL). The caller holds the
+ * `lockAccountTokens` lock first (#378 R4), so the cascade never inverts the lock order.
  */
 export const deleteAccountRow = async (client, ctx, accountId) => {
   const { rows: [row] } = await client.query(
@@ -255,4 +264,7 @@ export const deleteAccountRow = async (client, ctx, accountId) => {
 };
 
 export const deleteAccount = (ctx, accountId) =>
-  withTransaction(ctx.db, (client) => deleteAccountRow(client, ctx, accountId));
+  withTransaction(ctx.db, async (client) => {
+    await lockAccountTokens(client, accountId);
+    return deleteAccountRow(client, ctx, accountId);
+  });

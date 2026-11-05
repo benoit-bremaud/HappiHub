@@ -7,6 +7,14 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-11-05
 
+- **#378 account and token lock order** (branch `fix/378-align-account-token-lock-order`).
+  Conception [account-token-lock-order](docs/architecture/specs/account-token-lock-order.md)
+  approved by the owner: option A tokens → account everywhere (480/500; B account → tokens 335,
+  C retry on 40P01 310). Inventory: L1–L5 already tokens first, `updateAccount` and
+  `deleteAccount` were account first. New `lockAccountTokens` (`ORDER BY id FOR UPDATE`) now runs
+  before the account lock in both, and replaces the inline lock in `resendVerification` and the
+  maintenance `lockUnverified`. The new integration tests reproduced `deadlock detected` on the
+  old code and pass with the fix.
 - **#368 shared useSend hook** (branch `refactor/368-shared-usesend-hook`). Conception
   [shared-usesend-hook](docs/architecture/specs/shared-usesend-hook.md) validated by the owner:
   D1 first validated as A (reset to null, 450/500), then revalidated as C after the pre-push

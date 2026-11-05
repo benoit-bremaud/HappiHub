@@ -7,7 +7,7 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 ## [Unreleased]
 
 The following changes are merged to main (recovery PR #257, bricks D #276 and B #282, fixes
-#283 (PR #299), #319, #320, #328, #329, #341 and #346, refactor #368, event client #252, encryption #310, demo
+#283 (PR #299), #319, #320, #328, #329, #341, #346 and #378, refactor #368, event client #252, encryption #310, demo
 seed #251, public agenda #366 and cultural poster #382 with #285, #302, #347 and #355) and have
 not been released or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
 history and [handover](../HANDOVER.md) for the current state.
@@ -66,6 +66,9 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Fixed
 
+- Account and token locks follow one order (#378): an email change or an account deletion
+  racing a verification, a password reset or the maintenance purge on the same account no
+  longer fails with a PostgreSQL deadlock (HTTP 500).
 - Confirmation dialogs are modal (#346): publish, delete and cancel of an event, and member
   removal, leaving and closing an association, share one `ConfirmDialog` built on the native
   `<dialog>` (`showModal()`); focus moves inside, Esc closes, focus returns to the trigger, and
