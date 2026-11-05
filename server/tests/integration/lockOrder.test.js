@@ -8,11 +8,11 @@ beforeAll(() => { migrate(); pool = createPool(); });
 beforeEach(async () => { await resetData(pool); ({ app } = buildApp(pool)); });
 afterAll(() => pool.end());
 
-const waitForLockWait = async () => {
+const waitForLockWait = async (waiters = 1, done = () => false) => {
   for (let i = 0; i < 200; i += 1) {
     const { rows } = await pool.query(
       "SELECT 1 FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database() AND pid <> pg_backend_pid()");
-    if (rows.length) return;
+    if (rows.length >= waiters || done()) return;
     await new Promise((resolve) => { setTimeout(resolve, 10); });
   }
   throw new Error('no session ever waited on a lock');
@@ -73,8 +73,10 @@ const raceTwoTokens = async (id, purpose, expiresIn, other) => {
     await tx.query('SELECT 1 FROM auth_token WHERE id = $1 FOR UPDATE', [ids[0]]);
     const locked = start();
     await waitForLockWait();
-    const competing = other();
-    await new Promise((resolve) => { setTimeout(resolve, 50); });
+    let settled = false;
+    const competing = other().finally(() => { settled = true; });
+    // Old code: the competitor queues behind the held row. Fixed purge: it skips it and finishes.
+    await waitForLockWait(2, () => settled);
     await tx.query('COMMIT');
     return Promise.all([locked, competing]);
   });
@@ -100,7 +102,7 @@ describe('account and token lock order (#378)', () => {
     await signUpVerified(app, pool, 'two@example.org');
     const id = await accountId(pool, 'two@example.org');
     const [, { tokensPurged }] = await raceTwoTokens(id, 'RESET', '-1 hour', () => runMaintenance(app.locals.ctx));
-    expect(tokensPurged).toBeLessThanOrEqual(2);
+    expect(tokensPurged).toBe(1); // the held lower-id row is skipped until the next run
   });
 
   test('AC378-5: a reset request racing lockAccountTokens on two RESET rows does not deadlock', async () => {
@@ -108,7 +110,7 @@ describe('account and token lock order (#378)', () => {
     const id = await accountId(pool, 'reset@example.org');
     const reset = await browser(app);
     const [, answer] = await raceTwoTokens(id, 'RESET', '1 hour',
-      () => reset.post('/api/password-reset', { email: 'reset@example.org' }).then((r) => r));
+      () => reset.post('/api/password-reset', { email: 'reset@example.org' }).then((r) => r)); // then() sends it now
     expect(answer.status).toBe(202);
   });
 });

@@ -57,10 +57,13 @@ deadlock between R2 and L5 or L9 with no account lock involved (reproduced in ra
   `DELETE FROM auth_token WHERE id IN (SELECT id FROM auth_token WHERE expires_at <= $1 FOR UPDATE SKIP LOCKED)`.
   A row skipped because a request holds it is purged at the next hourly run.
 - R7. Accepted residual window: `FOR UPDATE` locks only the rows visible when it runs. A token
-  committed between `lockAccountTokens` and the account lock (one round-trip) is not covered; a
-  consumer of that token racing an account deletion can still get `40P01`. It needs a fresh
-  link to be clicked within milliseconds of the deletion; closing it would need a per-account
-  advisory lock everywhere (option C of the D1 revalidation), judged disproportionate.
+  committed between `lockAccountTokens` and the account lock (one round-trip) is not covered.
+  Trigger: during an account deletion, one password-reset or verification-resend request commits
+  a token inside that window, and a second such request (or a consumer of that token) then
+  locks it and waits on the account: one of them gets `40P01`. Both requests are
+  unauthenticated and need only the address, but must land within the same round-trip as the
+  deletion. Closing it would need a per-account advisory lock everywhere (option C of the D1
+  revalidation), judged disproportionate.
 
 No API, schema or migration change; responses are unchanged.
 
@@ -70,9 +73,10 @@ No API, schema or migration change; responses are unchanged.
   account lock (the L1 pattern), runs concurrently with `updateAccount` changing the email →
   both complete, no `40P01`, no 500.
 - AC378-2. Same as AC378-1 with `deleteAccount` (UC6): both complete without `40P01`; the
-  deletion wins or waits, never deadlocks.
+  deletion wins or waits, and this scenario never deadlocks (see R7 for the residual window).
 - AC378-3. Unit tests: `updateAccount` and `deleteAccount` issue the token lock query before the
-  account lock query; L3/L4/L5 lock queries carry `ORDER BY id`; L9 uses `SKIP LOCKED`.
+  account lock query; L3/L4/L5 lock queries carry `ORDER BY id` (L9 `SKIP LOCKED` is covered by
+  AC378-5).
 - AC378-5. Integration test: a session holds the lower-id token of an account with two tokens;
   `lockAccountTokens` and the L9 purge (then L5) contend for both rows → no `40P01`.
 - AC378-4. Existing UC2, UC3, UC4, UC6 and AC328/AC341 tests stay green.
