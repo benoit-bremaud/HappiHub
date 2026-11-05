@@ -27,8 +27,8 @@ project-specific context and must remain useful in a checkout on another machine
   Clean/SOLID, simplicity, pattern fit and security.
 - Clément/Yazii's feedback is requested for the future visual design. Contacting another
   person requires explicit authorization; no design consultation has occurred yet.
-- The logo remains pending; the demo dataset and local test accounts come from the #251 seed
-  (`npm run seed:demo -- --confirm`).
+- The logo and cover illustrations remain pending; the demo dataset and local test accounts
+  come from the #251 seed (`npm run seed:demo -- --confirm`).
 - Explain and document work in English, including code comments and commit messages.
 - New or touched modules use named exports; never introduce a TypeScript `any` type.
   New features require meaningful tests against the approved acceptance criteria.
