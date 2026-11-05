@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { send } from '../accounts/request';
+import { useSend } from '../accounts/request';
 import { EVENT_TYPES } from './eventFields';
 
 /**
@@ -10,16 +10,8 @@ import { EVENT_TYPES } from './eventFields';
  */
 export const AgendaFilters = ({ type, city, onChange }) => {
   const [open, setOpen] = useState(Boolean(type || city));
-  const [cities, setCities] = useState([]);
-  useEffect(() => {
-    if (!open) return undefined;
-    let current = true;
-    void (async () => {
-      const { ok, data } = await send('/events/cities');
-      if (current && ok) setCities(data);
-    })();
-    return () => { current = false; };
-  }, [open]);
+  const { response } = useSend(open ? '/events/cities' : null);
+  const cities = response?.ok ? response.data : [];
   return (
     <div className="hh-agenda__filters">
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>Filter</button>

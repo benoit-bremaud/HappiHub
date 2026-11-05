@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useSearchParams } from 'react-router-dom';
-import { send } from '../accounts/request';
+import { useSend } from '../accounts/request';
 import { AgendaFilters } from './AgendaFilters';
 import { EventPoster } from './EventPoster';
 import { dayHeading, formatDate, fromServer } from './eventFields';
@@ -39,17 +38,8 @@ export const Agenda = () => {
   const query = new URLSearchParams(Object.entries({ type, city, page: page > 1 ? page : null })
     .filter(([, value]) => value !== null)).toString();
   const path = query ? `/events?${query}` : '/events';
-  const [result, setResult] = useState(null);
-  const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    let current = true;
-    setResult(null);
-    void (async () => {
-      const { ok, data } = await send(path);
-      if (current) setResult(ok ? data : { failed: true });
-    })();
-    return () => { current = false; };
-  }, [path, attempt]);
+  const { response, retry } = useSend(path);
+  const result = response && (response.ok ? response.data : { failed: true });
 
   /** Writes the non-empty values to the URL; any filter change goes back to page 1. */
   const navigate = (next) => setParams(Object.fromEntries(Object.entries({ type, city, page: null, ...next })
@@ -61,7 +51,7 @@ export const Agenda = () => {
       <AgendaFilters type={type} city={city} onChange={navigate} />
       {!result && <output>Loading…</output>}
       {result?.failed && <p role="alert">Unable to load events.{' '}
-        <button type="button" onClick={() => setAttempt(attempt + 1)}>Retry</button></p>}
+        <button type="button" onClick={retry}>Retry</button></p>}
       {result?.items?.length === 0 && (
         <p>No upcoming event{type || city ? ' matches these filters' : ' yet'}.{' '}
           {(type || city) && <button type="button" onClick={() => navigate({ type: null, city: null })}>Clear filters</button>}

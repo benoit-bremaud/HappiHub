@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useSession } from '../session';
-import { send } from '../accounts/request';
+import { useSend } from '../accounts/request';
 import { formatDate, STATUS_LABELS, typeLabel } from './eventFields';
 import '../accounts/accounts.css';
 import './events.css';
@@ -14,18 +14,12 @@ export const EventListPage = () => {
   const { state } = useLocation();
   const { status: sessionStatus } = useSession();
   const [filter, setFilter] = useState('');
-  const [result, setResult] = useState(null);
-  useEffect(() => {
-    if (sessionStatus !== 'authenticated') return undefined;
-    let current = true;
-    // send() resolves even on network failure (status 0), so nothing is left to catch.
-    void (async () => {
-      const query = filter ? `?${new URLSearchParams({ status: filter })}` : '';
-      const { ok, data } = await send(`/associations/${encodeURIComponent(slug)}/events${query}`);
-      if (current) setResult(ok ? { events: data.events } : { failed: data.message ?? 'Unable to load the events.' });
-    })();
-    return () => { current = false; };
-  }, [slug, filter, sessionStatus]);
+  const query = filter ? `?${new URLSearchParams({ status: filter })}` : '';
+  // The previous list stays on screen while another filter loads, as before #368.
+  const { response } = useSend(sessionStatus === 'authenticated' ? `/associations/${encodeURIComponent(slug)}/events${query}` : null,
+    { keepPrevious: true });
+  const result = response && (response.ok ? { events: response.data.events }
+    : { failed: response.data.message ?? 'Unable to load the events.' });
   if (sessionStatus === 'anonymous') return <Navigate to="/signin" state={{ from: `/associations/${slug}/events` }} replace />;
   return (
     <section className="hh-page">

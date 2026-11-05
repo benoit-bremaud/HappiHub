@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
-import { useEffect, useId, useState } from 'react';
-import { send } from '../accounts/request';
+import { useId, useState } from 'react';
+import { useSend } from '../accounts/request';
 
 export const CITY_SEARCH_DELAY_MS = 250;
 
@@ -11,21 +11,12 @@ export const CITY_SEARCH_DELAY_MS = 250;
  */
 export const CityPicker = ({ code, name, onChange, onBlur, invalid }) => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [failed, setFailed] = useState(false);
   const listId = useId();
-  useEffect(() => {
-    if (query.trim().length < 2) { setResults([]); return undefined; }
-    let current = true;
-    const timer = setTimeout(async () => {
-      const { ok, data } = await send(`/communes?q=${encodeURIComponent(query.trim())}`);
-      if (!current) return;
-      setFailed(!ok);
-      setResults(ok ? data.communes : []);
-    }, CITY_SEARCH_DELAY_MS);
-    return () => { current = false; clearTimeout(timer); };
-  }, [query]);
-  const pick = (commune) => { onChange(commune.code, commune.name); setQuery(''); setResults([]); onBlur?.(); };
+  const term = query.trim();
+  const { response } = useSend(term.length < 2 ? null : `/communes?q=${encodeURIComponent(term)}`, { delay: CITY_SEARCH_DELAY_MS, keepPrevious: true });
+  const failed = response?.ok === false;
+  const results = response?.ok ? response.data.communes : [];
+  const pick = (commune) => { onChange(commune.code, commune.name); setQuery(''); onBlur?.(); };
   if (code) return (
     <p className="hh-city">City: {name ?? code} <button type="button" className="hh-link" aria-label="Change the city" onClick={() => { onChange(null, null); onBlur?.(); }}>Change</button></p>
   );
