@@ -3,7 +3,8 @@
 Status: validated by the owner on 2026-11-05 (D1 = A), revalidated the same day as D1 = C after
 the pre-push review corrected the parity facts; implemented. Date: 2026-11-05. Work item: issue #368.
 This note specifies one client hook that replaces five copies of the same fetch-with-cancel
-effect, without changing any screen's visible behaviour or the API contract.
+effect without changing the API contract. Visible changes are limited to two, both accepted:
+PublicEventPage shows loading when its `id` changes, and AgendaFilters reloads its city list on reopen.
 
 ## Evidence
 
@@ -14,7 +15,7 @@ return () => { current = false; };` (verified at 89bab08):
 |---|---|---|
 | `events/PublicEventPage.jsx:14` | `/events/:id` | maps 404 to a message; keeps the old event if `id` changes |
 | `events/Agenda.jsx:45` | `/events?…` | resets to loading on path change; retry via `attempt` |
-| `events/AgendaFilters.jsx:16` | `/events/cities` | only once the panel is open; keeps the list on reopen |
+| `events/AgendaFilters.jsx:16` | `/events/cities` | only once the panel is open; kept the list on reopen (now reloads, idle forgets) |
 | `events/EventListPage.jsx:20` | `/associations/:slug/events` | only when authenticated; keeps the old list while a new filter loads |
 | `events/CityPicker.jsx:19` | `/communes?q=` | 250 ms debounce; idle below 2 letters; keeps results and alert while typing |
 

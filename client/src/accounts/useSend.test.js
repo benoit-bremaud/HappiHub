@@ -88,4 +88,6 @@ test('AC8 keepPrevious shows the last loaded reply until the new path lands', as
   expect(result.current.response.data).toEqual({ from: 'b' });
   rerender({ path: null });
   expect(result.current.response).toBeNull();
+  rerender({ path: '/c' });
+  expect(result.current.response).toBeNull();
 });

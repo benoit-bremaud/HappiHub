@@ -270,6 +270,27 @@ describe('steps (UC15 5–9)', () => {
     expect(screen.queryByPlaceholderText('Type at least 2 letters')).toBeNull();
   });
 
+  test('#368 city results stay while typing, and never come back after a pick', async () => {
+    jest.useFakeTimers();
+    routes['GET /communes?q=vill'] = [200, { communes: [{ code: '69266', name: 'Villeurbanne', department: '69' }] }];
+    routes['GET /communes?q=villa'] = [200, { communes: [] }];
+    routes['GET /communes?q=ma'] = [200, { communes: [] }];
+    routes[`PATCH ${EVENTS}/${ID}`] = [200, event({ version: 2, venueCity: { code: '69266', name: 'Villeurbanne' } })];
+    await openEditor(2, event({ venueCity: null }));
+    const type = (value) => fireEvent.change(screen.getByPlaceholderText('Type at least 2 letters'), { target: { value } });
+    type('vill');
+    await act(async () => { jest.advanceTimersByTime(CITY_SEARCH_DELAY_MS); });
+    await screen.findByRole('button', { name: 'Villeurbanne (69)' });
+    type('villa');
+    expect(screen.getByRole('button', { name: 'Villeurbanne (69)' })).toBeInTheDocument();
+    type('vill');
+    await act(async () => { jest.advanceTimersByTime(CITY_SEARCH_DELAY_MS); });
+    fireEvent.click(await screen.findByRole('button', { name: 'Villeurbanne (69)' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Change the city' }));
+    type('ma');
+    expect(screen.queryByRole('button', { name: 'Villeurbanne (69)' })).toBeNull();
+  });
+
   test('city search failures are reported; short queries do not call the API', async () => {
     jest.useFakeTimers();
     routes['GET /communes?q=ly'] = [503, { message: 'down' }];
@@ -429,6 +450,9 @@ describe('list and public page', () => {
     expect(screen.getByText('Updated by a member')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '<b>Talk</b>' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Draft' }));
+    // #368 keepPrevious: the previous list and chips stay while the new filter loads.
+    expect(screen.getByRole('link', { name: 'Concert' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Filter by status' })).toBeInTheDocument();
     expect(await screen.findByText('No events yet.')).toBeInTheDocument();
   });
 

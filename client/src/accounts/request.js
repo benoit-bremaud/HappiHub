@@ -26,7 +26,8 @@ export const useSend = (path, { delay = 0, keepPrevious = false } = {}) => {
   const [attempt, setAttempt] = useState(0);
   const key = path === null ? null : `${attempt} ${path}`;
   useEffect(() => {
-    if (key === null) return undefined;
+    // Idle forgets the last reply in both modes, so a new search never shows an older one.
+    if (key === null) { setLoaded(IDLE); return undefined; }
     let current = true;
     const run = async () => {
       const response = await send(path);
@@ -41,7 +42,7 @@ export const useSend = (path, { delay = 0, keepPrevious = false } = {}) => {
     };
   }, [key, path, delay, keepPrevious]);
   const retry = useCallback(() => setAttempt((count) => count + 1), []);
-    if (key === null) return { response: null, retry };
+  if (key === null) return { response: null, retry };
   return { response: keepPrevious || loaded.key === key ? loaded.response : null, retry };
 };
 
