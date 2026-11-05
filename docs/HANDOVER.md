@@ -1,6 +1,6 @@
 # HappiHub handover
 
-Updated: 2026-10-28. The recovery work and V1 bricks D (accounts/associations), B (event
+Updated: 2026-11-05. The recovery work and V1 bricks D (accounts/associations), B (event
 lifecycle backend) and the event client (#252) are merged to main. No further application code is authorized without the
 owner's completed UML approval gate for that increment.
 
@@ -14,7 +14,7 @@ for current behavior, not historical tutorials or old issue titles.
 
 Repository: benoit-bremaud/HappiHub. On the current machine the working checkout is
 `/home/vev/Documents/02_personal/HappiHub`; the chat's default directory may differ.
-At this update origin/main resolves to `3c56657` (#244 partner API study, PR #327). The recovery
+At this update origin/main resolves to `0179df5` (#382 cultural poster, PR #385). The recovery
 branch fix/security-boundaries was merged through PR #257 (`c831c6b` is in main). Inspect `git status`/`git log` and open PRs at resumption rather than trusting these SHAs.
 
 Owner: Benoît (benoit-bremaud). Retained collaborator: Clément/Yazii
@@ -119,7 +119,7 @@ folders as an approved implementation plan.
 
 ## Next actions
 
-#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). #367 visual design: the cultural poster direction was chosen on 2026-10-29 ([study](architecture/specs/agenda-visual-design.md), D1–D7; PR #381, `8d09f29`). #382 implements it and folds #347, #285, #302 and #355 (study § 8). Next: #368 shared `useSend` hook. UI rule: always mobile first.
+#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). #367 visual design: the cultural poster direction was chosen on 2026-10-29 ([study](architecture/specs/agenda-visual-design.md), D1–D7; PR #381, `8d09f29`). #382 implemented it and folded #347, #285, #302 and #355 (merged 2026-10-29, PR #385, `0179df5`). Follow-ups: #383 (year in day headings), #384 (Bootstrap CDN), #386 (staging environment, none exists yet). Next: #368 shared `useSend` hook, or #378 (lock-order deadlock). UI rule: always mobile first.
 
 QA backlog from the 2026-10-24 inspector pass: #319 (edge security headers) and #320 (source maps)
 are fixed and merged (PR #326, squash `9cb6a3d`, both issues closed); #321–#324 (P3) remain.
