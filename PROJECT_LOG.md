@@ -7,7 +7,18 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-11-05
 
-- **#346 modal confirmation dialogs** (branch `fix/346-modal-confirmation-dialogs`,
+- **#387 plan, handover and changelog status refresh** (branch
+  `docs/387-refresh-plan-handover-changelog`, documentation only). Every claim checked live
+  (`gh`, `git log`): 94 open issues on Project #6; #251, #294, #295, #307, #329 closed; #296
+  open; latest verification is the #346 pre-merge run (client 113, server unit 164, integration
+  222, SonarQube passed). Next candidates: #368, #378, #390. Owner chose option A (445/500; 375
+  for intro only plus a new issue, 290 for ignore): the changelog also gains the missing #366
+  public agenda and #341 resend-race entries. Pre-push review round 1 (2 Must, 3 Should) also
+  added the #319/#320 changelog entry (#345 has none: it moved the demo domain, no validation
+  change) and corrected stale #251 test-account statements (WORK_PLAN, HANDOVER, AGENTS.md).
+  Round 2 removed a false #345 entry; round 3 gate open.
+- **#346 modal confirmation dialogs** (merged 2026-11-05, PR #389, squash `72e563f`;
+  branch `fix/346-modal-confirmation-dialogs`,
   [spec](docs/architecture/specs/modal-confirmation-dialog.md)). Benoît approved the conception:
   D1 native `<dialog>` with `showModal()` (460/500 vs library 365, custom focus trap 320), D2 one
   shared `ConfirmDialog` replacing `window.confirm()` on the association page (470 vs 315, 230),

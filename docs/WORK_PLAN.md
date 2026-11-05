@@ -1,6 +1,6 @@
 # HappiHub prioritized work plan
 
-Updated: 2026-10-23. This plan orders the work; it does not approve implementation.
+Updated: 2026-11-05. This plan orders the work; it does not approve implementation.
 Owner: Benoît. Clément/Yazii contributes to product and visual-design review.
 
 ## Product direction and decision status
@@ -19,7 +19,8 @@ HappiHub's website and external integrations must share authoritative event rule
 | Combine useful competitor ideas into one coherent product | Confirmed ambition; feature priorities and behavior unresolved |
 | Complete and approve UML conception before any code implementation | Mandatory owner instruction |
 | Revisit visual design and obtain Clément's feedback | Requested; review not held |
-| Original logo, about ten demo events, dedicated local test credentials | Requested; implementation plan not approved |
+| Original logo and event cover illustrations | Requested; implementation plan not approved |
+| Demo dataset and dedicated local test accounts | Merged (#251, PR #365: `npm run seed:demo -- --confirm`) |
 | Target audience and first-release scope | Validated 2026-10-15 (V1 product framing) |
 | Database | PostgreSQL (ADR-0003, 2026-10-16) |
 | Business model and hosting | Unresolved |
@@ -105,7 +106,7 @@ verified duplication/coupling/configuration findings and the planned design gate
 
 A local SonarQube server runs the pre-merge quality gate ([SONARQUBE](SONARQUBE.md)).
 Architecture review remains semantic as well as automated. File moves, pipeline changes
-and refactoring still need their own approved conception (see #295).
+and refactoring still need their own approved conception.
 
 ## Feature selection method
 
@@ -145,12 +146,19 @@ target a designated demo database, preserve unrelated data and be safe to rerun.
 
 Merged to main (not a deployed release): the security/configuration/Docker/session recovery
 (PR #257), V1 brick D accounts and associations (PR #276), brick B event lifecycle
-backend UC15–UC20 (PR #282) and the event client #252 (PR #309, 8ff8177), on PostgreSQL.
+backend UC15–UC20 (PR #282), the event client #252 (PR #309, 8ff8177), encryption at rest
+#310 (PR #312), the local demo seed #251 (PR #365), the public agenda #366 (PR #369), the
+cultural poster design #382 (PR #385) and modal confirmation dialogs #346 (PR #389, `72e563f`),
+on PostgreSQL.
 
-- Latest recorded verification (2026-10-23, #252): 69 unit and 98 PostgreSQL integration server
-  tests, 84 client tests, SonarQube gate passed, gitleaks clean, browser QA.
-- Not implemented: partner/external API authentication, booking
-  or payment, logo and demo dataset. QA bugs #284, #286–#292 and audit follow-ups #294–#296 are open (#283 fixed by PR #299).
+- Latest recorded verification (2026-11-05, #346 pre-merge run): 113 client, 164 server unit
+  and 222 PostgreSQL integration tests, SonarQube gate passed, gitleaks clean
+  ([review-local](architecture/review-local.md)).
+- Not implemented: partner/external API authentication, booking or payment, the logo and cover
+  illustrations.
+  Open at 2026-11-05 among others (see Project #6): QA issues #284, #286–#292, #303–#306, #308,
+  #321–#324, #372–#376, #383, #384, #390; audit follow-up #296 (#294 and #295 are closed;
+  #283 fixed by PR #299).
 - PR creation, merge and CI/CD changes require explicit approval.
 - Prepare deployment topology, image/security checks, private configuration, backup/restore
   and recovery before real external use. No production rollout is authorized by this plan.
@@ -171,9 +179,9 @@ Found during the #252 tests and browser QA; none blocks the brick; each is filed
 4. `datetime-local` shows the browser locale (US `mm/dd/yyyy` here) while the UI formats
    dates en-GB; decide one locale with the visual design. (#304)
 5. Conflict panel, in-place sign-in and creation quota are covered by tests only; a
-   two-account browser QA needs the pending dedicated local test accounts. (#305)
+   two-account browser QA can now use the #251 seed accounts. (#305)
 6. Test noise: `ReactDOMTestUtils.act` deprecation and React Router v7 future-flag warnings. (#306)
-7. ~~Branch coverage 76 % in the server integration run~~: 82.5 % with an 80 % floor (#307). Follow-ups #372–#376.
+7. ~~Branch coverage 76 % in the server integration run~~: closed, 82.5 % with an 80 % floor (#307). Follow-ups #372–#376.
 8. No accessibility audit (Lighthouse/axe) and no dark mode check on the new screens. (#308)
 
 ## Research references
@@ -198,7 +206,8 @@ identify implemented behavior, proposals and missing approvals without chat hist
 
 V1 conception is approved (implementation gate 2026-10-16); bricks D, B and the event client
 (#252) are merged, #310 encryption at rest is merged (PR #312) and the #244 partner API
-conception is approved and merged (PR #327; implementation is a later brick). Next P1:
-#251 demo data, test accounts and persona scenarios, after its own conception is approved.
-P2/P3 labels on the
-remaining QA and audit issues. See [HANDOVER](HANDOVER.md) for the live state.
+conception is approved and merged (PR #327; implementation is a later brick). #251 demo seed
+(PR #365), #366 public agenda, #382 cultural poster and #346 modal dialogs are merged.
+Candidates at 2026-11-05, each after its own conception is approved: #368 shared `useSend`
+hook, #378 account/token lock-order deadlock, #390 stale error on the association page.
+P2/P3 labels on the remaining QA and audit issues. See [HANDOVER](HANDOVER.md) for the live state.

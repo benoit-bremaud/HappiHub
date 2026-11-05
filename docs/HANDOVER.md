@@ -1,7 +1,7 @@
 # HappiHub handover
 
-Updated: 2026-10-28; #382 merge recorded 2026-11-05 (verification counts, issue totals and older status lines not refreshed). The recovery work and V1 bricks D (accounts/associations), B (event
-lifecycle backend) and the event client (#252) are merged to main. No further application code is authorized without the
+Updated: 2026-11-05 (#387 status refresh after the #346 merge). The recovery work and V1 bricks D (accounts/associations), B (event
+lifecycle backend), the event client (#252), encryption at rest (#310), the demo seed (#251), the public agenda (#366), the cultural poster (#382) and modal dialogs (#346) are merged to main. No further application code is authorized without the
 owner's completed UML approval gate for that increment.
 
 ## Read in order
@@ -14,7 +14,7 @@ for current behavior, not historical tutorials or old issue titles.
 
 Repository: benoit-bremaud/HappiHub. On the current machine the working checkout is
 `/home/vev/Documents/02_personal/HappiHub`; the chat's default directory may differ.
-At this update origin/main resolves to `0179df5` (#382 cultural poster, PR #385). The recovery
+At this update origin/main resolves to `72e563f` (#346 modal confirmation dialogs, PR #389). The recovery
 branch fix/security-boundaries was merged through PR #257 (`c831c6b` is in main). Inspect `git status`/`git log` and open PRs at resumption rather than trusting these SHAs.
 
 Owner: Benoît (benoit-bremaud). Retained collaborator: Clément/Yazii
@@ -28,7 +28,7 @@ independently verified. The owning Project is
 
 The 2026-10-12 cleanup audited all 121 then-open issues (38 retained, 83 closed, 15 new studies
 #242–#256); see the [reconciliation](architecture/roadmap-backlog-reconciliation-2026-10-12.md),
-which is dated evidence. At this update 54 issues are open on
+which is dated evidence. At this update (2026-11-05) 94 issues are open on
 [Project #6](https://github.com/users/benoit-bremaud/projects/6). The 2026-10-19 QA pass filed
 #283–#292 and the repository audit filed #294–#296 (documentation refresh, code/config
 leftovers, status notes on approved architecture documents). The 2026-10-23 triage (owner MCDA
@@ -44,7 +44,7 @@ feature code. Raw earlier audit exports remain untracked and must not be bulk-st
 - Support external website servers consuming the event backend API.
 - Study a coherent combined feature set inspired by relevant competitors and actual needs.
 - Complete detailed UML conception and receive explicit owner validation before code.
-- Revisit visual identity with Clément; logo and expanded local demo remain pending.
+- Revisit visual identity with Clément; logo and cover illustrations remain pending.
 
 These are direction decisions. Since 2026-10-15 the V1 audience (cultural associations),
 first-release scope, organization model, publication destinations and partner API
@@ -65,10 +65,11 @@ Event client (#252): merged 2026-10-23 (PR #309, 8ff8177; gate: server unit 69 +
 98, client 84, SonarQube passed, gitleaks clean, browser QA). QA leftovers: work plan "QA backlog".
 
 Not implemented: partner/external API authentication, booking or
-payment, logo and expanded demo dataset. Compose files on main use PostgreSQL; #292 needs re-checking (stale local containers).
+payment, logo and cover illustrations. Compose files on main use PostgreSQL; #292 needs re-checking (stale local containers).
 
-Latest recorded verification (#252 gate, 2026-10-23): 69 unit and 98 PostgreSQL
-integration server tests, 84 client tests, SonarQube gate passed, gitleaks clean, browser QA. Since #295 the CI server coverage uses the `jest.config.cjs` scope (all server modules); #307 raised the integration run to 82.5 % branches with an 80 % floor in `jest.integration.cjs`; the integration suite is not yet in CI (#373).
+Latest recorded verification (#346 pre-merge run, 2026-11-05): 113 client, 164 server unit
+and 222 PostgreSQL integration tests, SonarQube gate passed, gitleaks clean
+([review-local](architecture/review-local.md)). Since #295 the CI server coverage uses the `jest.config.cjs` scope (all server modules); #307 raised the integration run to 82.5 % branches with an 80 % floor in `jest.integration.cjs`; the integration suite is not yet in CI (#373).
 
 Last recorded dependency audit: runtime server zero findings, full server tree 33 affected
 entries, client 104. Counts are dated and include dependency chains. CRA/Jest migration,
@@ -119,13 +120,13 @@ folders as an approved implementation plan.
 
 ## Next actions
 
-#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). #367 visual design: the cultural poster direction was chosen on 2026-10-29 ([study](architecture/specs/agenda-visual-design.md), D1–D7; PR #381, `8d09f29`). #382 implemented it and folded #347, #285, #302 and #355 (merged 2026-10-29, PR #385, `0179df5`). Follow-ups: #383 (year in day headings), #384 (Bootstrap CDN), #386 (staging environment, none exists yet). #346 (2026-11-05): event and association confirmations use one modal `ConfirmDialog` ([spec](architecture/specs/modal-confirmation-dialog.md)). Next: #387 docs refresh, #368 shared `useSend` hook, or #378 (lock-order deadlock). UI rule: always mobile first.
+#366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). #367 visual design: the cultural poster direction was chosen on 2026-10-29 ([study](architecture/specs/agenda-visual-design.md), D1–D7; PR #381, `8d09f29`). #382 implemented it and folded #347, #285, #302 and #355 (merged 2026-10-29, PR #385, `0179df5`). Follow-ups: #383 (year in day headings), #384 (Bootstrap CDN), #386 (staging environment, none exists yet). #346 (2026-11-05): event and association confirmations use one modal `ConfirmDialog` ([spec](architecture/specs/modal-confirmation-dialog.md)). #387 refreshed the plan, handover and changelog status (2026-11-05). Next: #368 shared `useSend` hook, #378 (lock-order deadlock) or #390 (stale error on the association page). UI rule: always mobile first.
 
 QA backlog from the 2026-10-24 inspector pass: #319 (edge security headers) and #320 (source maps)
 are fixed and merged (PR #326, squash `9cb6a3d`, both issues closed); #321–#324 (P3) remain.
 #244 partner API conception validated and merged 2026-10-24 (PR #327, `3c56657`, [spec](architecture/specs/partner-api.md));
-its implementation is a later brick. #251 test-environment conception validated 2026-10-24, amended D8 and G1–G5 on 2026-10-26 ([spec](architecture/specs/test-environment.md)); the demo seed (`npm run seed:demo -- --confirm`) and the rejection-catalogue tests are implemented on branch `feat/demo-seed-251` (closes #251 and #345, demo domain `demo.example.com`). Global review 2026-10-24
-([report](architecture/review-global-2026-10-24.md)) added P1 bugs #328, #329 and CI gaps #295, #307. #328 is merged (PR #342, `96e5535`); its follow-up #341 (resend rechecks under lock, [spec](architecture/specs/resend-verification-purge-race.md)) is merged (PR #380, `d317403`); #329 current-password reservation is fixed in its PR ([spec](architecture/specs/current-password-reservation.md)).
+its implementation is a later brick. #251 test-environment conception validated 2026-10-24, amended D8 and G1–G5 on 2026-10-26 ([spec](architecture/specs/test-environment.md)); the demo seed (`npm run seed:demo -- --confirm`) and the rejection-catalogue tests are merged (PR #365, `d09a642`; #251 and #345 closed, demo domain `demo.example.com`). Global review 2026-10-24
+([report](architecture/review-global-2026-10-24.md)) added P1 bugs #328, #329 and CI gaps #295, #307. #328 is merged (PR #342, `96e5535`); its follow-up #341 (resend rechecks under lock, [spec](architecture/specs/resend-verification-purge-race.md)) is merged (PR #380, `d317403`); #329 current-password reservation is merged (PR #343, `b6775f8`; [spec](architecture/specs/current-password-reservation.md)).
 
 1. Done 2026-10-15: V1 framing, personas and journeys J1–J6 validated.
 2. Research synthesis is superseded for V1 by the validated framing.
@@ -147,7 +148,7 @@ its implementation is a later brick. #251 test-environment conception validated 
    #310 encryption at rest: conception validated 2026-10-23
    ([spec](architecture/specs/db-encryption-at-rest.md), ADR-0004 accepted). Implementation on
    `feat/310-db-encryption`, merged (PR #312, `b1445c5`); one design gap (Compose production
-   transport, socket volume option A 425/500) validated 2026-10-23 and recorded in spec § 7. Then #244 partner API and #251 persona scenarios (P1), each after conception approval.
+   transport, socket volume option A 425/500) validated 2026-10-23 and recorded in spec § 7. #244 partner API conception approved (PR #327, implementation later); #251 demo seed merged (PR #365).
    T11a blocks deployment. Open: email provider, hosting/backups (must provide EU PostgreSQL) and Géoplateforme quota (T11). Backup retention is decided with hosting.
 5. Only then implement the validated increment and verify it.
 
@@ -167,8 +168,8 @@ In development, emails (verification, invitations) are printed in the server log
 
 Follow [configuration](CONFIGURATION.md) and [Docker workflows](DOCKER.md) for reproducible
 startup on another machine. Supply a new private session key and a designated local database.
-Existing preview credentials are synthetic temporary fixtures documented in the session
-report; the requested durable dedicated demo accounts are not yet implemented.
+Local test accounts come from the #251 demo seed (`npm run seed:demo -- --confirm`, passwords
+in an ignored `0600` file); see the [test-environment spec](architecture/specs/test-environment.md).
 
 The disposable production validation stack/proxy were stopped and synthetic volumes retained.
 No production release was performed. Never terminate unrelated port occupants, connect tests
