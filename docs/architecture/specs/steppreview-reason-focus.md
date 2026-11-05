@@ -24,9 +24,9 @@ useEffect(() => { if (reasonOpen) reasonRef.current?.focus(); }, [reasonOpen]);
 // <textarea ref={reasonRef} … /> (no autoFocus)
 ```
 
-The effect re-runs only when the boolean flips, so typing or a `busy` re-render never steals focus. The reason is kept when
-the dialog closes; on reopen the field is already shown and `ConfirmDialog` keeps its initial
-focus on the safe button (rule R2), as before this change.
+The effect re-runs only when the boolean flips, so typing or a `busy` re-render never
+steals focus. The reason is kept when the dialog closes; on reopen the field is already
+shown and `ConfirmDialog` keeps its initial focus on the safe button (rule R2), as before.
 
 ## Decision D1 — focus mechanism
 
