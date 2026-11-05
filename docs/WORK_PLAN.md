@@ -1,6 +1,6 @@
 # HappiHub prioritized work plan
 
-Updated: 2026-10-23. This plan orders the work; it does not approve implementation.
+Updated: 2026-11-05. This plan orders the work; it does not approve implementation.
 Owner: Benoît. Clément/Yazii contributes to product and visual-design review.
 
 ## Product direction and decision status
@@ -145,12 +145,17 @@ target a designated demo database, preserve unrelated data and be safe to rerun.
 
 Merged to main (not a deployed release): the security/configuration/Docker/session recovery
 (PR #257), V1 brick D accounts and associations (PR #276), brick B event lifecycle
-backend UC15–UC20 (PR #282) and the event client #252 (PR #309, 8ff8177), on PostgreSQL.
+backend UC15–UC20 (PR #282), the event client #252 (PR #309, 8ff8177), encryption at rest
+#310 (PR #312), the local demo seed #251 (PR #365), the public agenda #366 (PR #369), the
+cultural poster design #382 (PR #385) and modal confirmation dialogs #346 (PR #389, `72e563f`),
+on PostgreSQL.
 
-- Latest recorded verification (2026-10-23, #252): 69 unit and 98 PostgreSQL integration server
-  tests, 84 client tests, SonarQube gate passed, gitleaks clean, browser QA.
-- Not implemented: partner/external API authentication, booking
-  or payment, logo and demo dataset. QA bugs #284, #286–#292 and audit follow-ups #294–#296 are open (#283 fixed by PR #299).
+- Latest recorded verification (2026-11-05, #346 pre-merge run): 113 client, 164 server unit
+  and 222 PostgreSQL integration tests, SonarQube gate passed, gitleaks clean
+  ([review-local](architecture/review-local.md)).
+- Not implemented: partner/external API authentication, booking or payment, and the logo.
+  Open at 2026-11-05: QA bugs #284, #286–#292, #303–#306, #308 and #321–#324; audit follow-up
+  #296 (#294 and #295 are closed; #283 fixed by PR #299).
 - PR creation, merge and CI/CD changes require explicit approval.
 - Prepare deployment topology, image/security checks, private configuration, backup/restore
   and recovery before real external use. No production rollout is authorized by this plan.
@@ -173,7 +178,7 @@ Found during the #252 tests and browser QA; none blocks the brick; each is filed
 5. Conflict panel, in-place sign-in and creation quota are covered by tests only; a
    two-account browser QA needs the pending dedicated local test accounts. (#305)
 6. Test noise: `ReactDOMTestUtils.act` deprecation and React Router v7 future-flag warnings. (#306)
-7. ~~Branch coverage 76 % in the server integration run~~: 82.5 % with an 80 % floor (#307). Follow-ups #372–#376.
+7. ~~Branch coverage 76 % in the server integration run~~: closed, 82.5 % with an 80 % floor (#307). Follow-ups #372–#376.
 8. No accessibility audit (Lighthouse/axe) and no dark mode check on the new screens. (#308)
 
 ## Research references
@@ -198,7 +203,8 @@ identify implemented behavior, proposals and missing approvals without chat hist
 
 V1 conception is approved (implementation gate 2026-10-16); bricks D, B and the event client
 (#252) are merged, #310 encryption at rest is merged (PR #312) and the #244 partner API
-conception is approved and merged (PR #327; implementation is a later brick). Next P1:
-#251 demo data, test accounts and persona scenarios, after its own conception is approved.
-P2/P3 labels on the
-remaining QA and audit issues. See [HANDOVER](HANDOVER.md) for the live state.
+conception is approved and merged (PR #327; implementation is a later brick). #251 demo seed
+(PR #365), #366 public agenda, #382 cultural poster and #346 modal dialogs are merged.
+Candidates at 2026-11-05, each after its own conception is approved: #368 shared `useSend`
+hook, #378 account/token lock-order deadlock, #390 stale error on the association page.
+P2/P3 labels on the remaining QA and audit issues. See [HANDOVER](HANDOVER.md) for the live state.

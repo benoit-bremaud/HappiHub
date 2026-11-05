@@ -7,6 +7,13 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-11-05
 
+- **#387 plan, handover and changelog status refresh** (branch
+  `docs/387-refresh-plan-handover-changelog`, documentation only). Every claim checked live
+  (`gh`, `git log`): 94 open issues on Project #6; #251, #294, #295, #307, #329 closed; #296
+  open; latest verification is the #346 pre-merge run (client 113, server unit 164, integration
+  222, SonarQube passed). Next candidates: #368, #378, #390. Owner chose option A (445/500 vs
+  intro only with a new issue 375, ignore 290): the changelog also gains the missing #366 public
+  agenda and #341 resend-race entries.
 - **#346 modal confirmation dialogs** (branch `fix/346-modal-confirmation-dialogs`,
   [spec](docs/architecture/specs/modal-confirmation-dialog.md)). Benoît approved the conception:
   D1 native `<dialog>` with `showModal()` (460/500 vs library 365, custom focus trap 320), D2 one
