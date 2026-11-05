@@ -15,7 +15,7 @@ focus move, so SonarQube rule `javascript:S9379` passes while keyboard users kee
 ## Design
 
 Use the user's click as the trigger. A `useRef` on the textarea and a `useEffect` keyed on
-`reason !== null` call `textareaRef.current?.focus()` once, when the field is revealed:
+`reason !== null` call `reasonRef.current?.focus()` once, when the field is revealed:
 
 ```jsx
 const reasonRef = useRef(null);
@@ -24,7 +24,9 @@ useEffect(() => { if (reasonOpen) reasonRef.current?.focus(); }, [reasonOpen]);
 // <textarea ref={reasonRef} … /> (no autoFocus)
 ```
 
-The effect re-runs only when the boolean flips, so typing or a `busy` re-render never steals focus.
+The effect re-runs only when the boolean flips, so typing or a `busy` re-render never steals focus. The reason is kept when
+the dialog closes; on reopen the field is already shown and `ConfirmDialog` keeps its initial
+focus on the safe button (rule R2), as before this change.
 
 ## Decision D1 — focus mechanism
 
@@ -34,9 +36,10 @@ The effect re-runs only when the boolean flips, so typing or a `busy` re-render 
 | Sonar S9379 passes (25) | 5 | 5 | 5 |
 | Simplicity (20) | 4 — one ref, one effect | 5 — one attribute | 5 — delete only |
 | No focus stealing (15) | 5 — fires once per reveal | 2 — new ref identity each render re-focuses | 5 |
-| **Total /500** | **480** | **405** | **300** |
+| **Total /500** | **480** | **415** | **300** |
 
-Sensitivity: A stays first unless simplicity outweighs keyboard focus by more than 3×.
+Sensitivity: C passes A only if the simplicity weight exceeds 5× the focus weight; B passes A only
+if it exceeds the focus weight plus 3× the focus-stealing weight. The ranking is stable.
 
 ## Acceptance criteria
 

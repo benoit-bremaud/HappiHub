@@ -9,7 +9,7 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 - **#393 StepPreview cancel-reason focus** (branch `fix/393-drop-steppreview-autofocus`).
   Conception [steppreview-reason-focus](docs/architecture/specs/steppreview-reason-focus.md)
-  validated by the owner: D1 A ref + effect on reveal (480/500; B callback ref 405, C no focus
+  validated by the owner: D1 A ref + effect on reveal (480/500; B callback ref 415, C no focus
   move 300). The textarea drops `autoFocus` (Sonar `javascript:S9379`, introduced by #346) and is
   focused once when "+ Add a reason for the public" reveals it. Also records #378 merged below.
 - **#378 account and token lock order** (merged 2026-11-05, PR #394, `b22390c`, with
