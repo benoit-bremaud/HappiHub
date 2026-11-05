@@ -9,12 +9,15 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 - **#368 shared useSend hook** (branch `refactor/368-shared-usesend-hook`). Conception
   [shared-usesend-hook](docs/architecture/specs/shared-usesend-hook.md) validated by the owner:
-  D1 = A (reset to null while a new path loads, 450/500; flag 410, keep previous 340).
-  `useSend(path, { delay })` in `client/src/accounts/request.js` returns `{ response, retry }`;
-  `path === null` is idle. The five effects (Agenda, AgendaFilters, PublicEventPage,
-  EventListPage, CityPicker) now use it; EventListPage keeps its status chips from the last
-  loaded list so they do not vanish during a reload. Client 118 tests (5 new, AC1–AC5), build
-  clean.
+  D1 first validated as A (reset to null, 450/500), then revalidated as C after the pre-push
+  review showed three screens would change visibly (CityPicker list flicker per keystroke,
+  EventListPage and PublicEventPage loading states): C `keepPrevious` option 425, A 400,
+  per-screen holds 395. `useSend(path, { delay, keepPrevious })` in
+  `client/src/accounts/request.js` returns `{ response, retry }`; `path === null` is idle; a
+  reset-mode run forgets its reply so revisiting a path reloads it. CityPicker, EventListPage and
+  AgendaFilters keep the previous reply; Agenda and PublicEventPage reset. Client 121 tests
+  (8 new, AC1–AC5, AC8), build clean. Review round 1: 2 Must (parity facts, stale
+  HANDOVER/WORK_PLAN), 5 Should, all addressed.
 - **#387 plan, handover and changelog status refresh** (branch
   `docs/387-refresh-plan-handover-changelog`, documentation only). Every claim checked live
   (`gh`, `git log`): 94 open issues on Project #6; #251, #294, #295, #307, #329 closed; #296

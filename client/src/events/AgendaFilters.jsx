@@ -10,7 +10,7 @@ import { EVENT_TYPES } from './eventFields';
  */
 export const AgendaFilters = ({ type, city, onChange }) => {
   const [open, setOpen] = useState(Boolean(type || city));
-  const { response } = useSend(open ? '/events/cities' : null);
+  const { response } = useSend(open ? '/events/cities' : null, { keepPrevious: true });
   const cities = response?.ok ? response.data : [];
   return (
     <div className="hh-agenda__filters">

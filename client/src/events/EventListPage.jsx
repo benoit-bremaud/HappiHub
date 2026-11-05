@@ -15,20 +15,18 @@ export const EventListPage = () => {
   const { status: sessionStatus } = useSession();
   const [filter, setFilter] = useState('');
   const query = filter ? `?${new URLSearchParams({ status: filter })}` : '';
-  const { response } = useSend(sessionStatus === 'authenticated' ? `/associations/${encodeURIComponent(slug)}/events${query}` : null);
+  // The previous list stays on screen while another filter loads, as before #368.
+  const { response } = useSend(sessionStatus === 'authenticated' ? `/associations/${encodeURIComponent(slug)}/events${query}` : null,
+    { keepPrevious: true });
   const result = response && (response.ok ? { events: response.data.events }
     : { failed: response.data.message ?? 'Unable to load the events.' });
-  // The chips stay while a new filter loads, so they follow the last loaded list (#368 D1).
-  const [several, setSeveral] = useState(false);
-  const loadedSeveral = result?.events && result.events.length > 1;
-  if (result?.events && several !== loadedSeveral) setSeveral(loadedSeveral);
   if (sessionStatus === 'anonymous') return <Navigate to="/signin" state={{ from: `/associations/${slug}/events` }} replace />;
   return (
     <section className="hh-page">
       <h2>Events</h2>
       {state?.notice && <output>{state.notice}</output>}
       <p><Link className="hh-button" to={`/associations/${slug}/events/new`}>Create an event</Link></p>
-      {(filter || several) && <fieldset className="hh-chips" aria-label="Filter by status">
+      {(filter || result?.events?.length > 1) && <fieldset className="hh-chips" aria-label="Filter by status">
         {FILTERS.map(([key, label]) => (
           <button key={label} type="button" className={`hh-chip${filter === key ? ' hh-chip--on' : ''}`}
             aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>

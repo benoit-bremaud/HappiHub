@@ -13,7 +13,7 @@ export const CityPicker = ({ code, name, onChange, onBlur, invalid }) => {
   const [query, setQuery] = useState('');
   const listId = useId();
   const term = query.trim();
-  const { response } = useSend(term.length < 2 ? null : `/communes?q=${encodeURIComponent(term)}`, { delay: CITY_SEARCH_DELAY_MS });
+  const { response } = useSend(term.length < 2 ? null : `/communes?q=${encodeURIComponent(term)}`, { delay: CITY_SEARCH_DELAY_MS, keepPrevious: true });
   const failed = response?.ok === false;
   const results = response?.ok ? response.data.communes : [];
   const pick = (commune) => { onChange(commune.code, commune.name); setQuery(''); onBlur?.(); };

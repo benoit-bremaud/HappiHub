@@ -16,11 +16,13 @@ export const send = async (path, method = 'GET', body) => {
 
 /**
  * GET `path` once mounted and whenever it changes (#368). `response` is the send() result of the
- * current path, or null while it loads or while `path` is null (idle); a late response from an
- * earlier path or an unmounted screen is ignored. `delay` debounces the request; `retry()` resends.
+ * current path, or null while it loads or while `path` is null (idle); with `keepPrevious` the last
+ * loaded response stays until the new one lands. A late response from an earlier run or an
+ * unmounted screen is ignored. `delay` debounces the request; `retry()` resends.
  */
-export const useSend = (path, { delay = 0 } = {}) => {
-  const [loaded, setLoaded] = useState({ key: null, response: null });
+const IDLE = { key: null, response: null };
+export const useSend = (path, { delay = 0, keepPrevious = false } = {}) => {
+  const [loaded, setLoaded] = useState(IDLE);
   const [attempt, setAttempt] = useState(0);
   const key = path === null ? null : `${attempt} ${path}`;
   useEffect(() => {
@@ -31,10 +33,16 @@ export const useSend = (path, { delay = 0 } = {}) => {
       if (current) setLoaded({ key, response });
     };
     const timer = delay > 0 ? setTimeout(run, delay) : void run();
-    return () => { current = false; clearTimeout(timer); };
-  }, [key, path, delay]);
+    return () => {
+      current = false;
+      clearTimeout(timer);
+      // Forget this run's response so a later return to the same path loads again.
+      if (!keepPrevious) setLoaded(IDLE);
+    };
+  }, [key, path, delay, keepPrevious]);
   const retry = useCallback(() => setAttempt((count) => count + 1), []);
-  return { response: key !== null && loaded.key === key ? loaded.response : null, retry };
+    if (key === null) return { response: null, retry };
+  return { response: keepPrevious || loaded.key === key ? loaded.response : null, retry };
 };
 
 /**

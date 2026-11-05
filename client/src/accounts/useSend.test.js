@@ -60,3 +60,32 @@ test('AC5 delay debounces: a change within the delay sends only the last path', 
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(pending[0].url).toContain('/q=par');
 });
+
+test('AC3 a reply from an earlier run of the same path never overwrites the latest one', async () => {
+  const { result, rerender } = renderHook(({ path }) => useSend(path), { initialProps: { path: '/a' } });
+  rerender({ path: '/b' });
+  rerender({ path: '/a' });
+  expect(result.current.response).toBeNull();
+  await reply(2, { n: 2 });
+  await reply(0, { n: 1 });
+  expect(result.current.response.data).toEqual({ n: 2 });
+});
+
+test('AC1 returning to a loaded path loads it again instead of showing the old reply', async () => {
+  const { result, rerender } = renderHook(({ path }) => useSend(path), { initialProps: { path: '/a' } });
+  await reply(0, { n: 1 });
+  rerender({ path: null });
+  rerender({ path: '/a' });
+  expect(result.current.response).toBeNull();
+});
+
+test('AC8 keepPrevious shows the last loaded reply until the new path lands', async () => {
+  const { result, rerender } = renderHook(({ path }) => useSend(path, { keepPrevious: true }), { initialProps: { path: '/a' } });
+  await reply(0, { from: 'a' });
+  rerender({ path: '/b' });
+  expect(result.current.response.data).toEqual({ from: 'a' });
+  await reply(1, { from: 'b' });
+  expect(result.current.response.data).toEqual({ from: 'b' });
+  rerender({ path: null });
+  expect(result.current.response).toBeNull();
+});

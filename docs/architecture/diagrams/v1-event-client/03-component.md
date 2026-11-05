@@ -2,7 +2,7 @@
 
 > **Source spec**: [client event workflow](../../specs/v1-brick-b-client-event-workflow.md) § 5
 
-Status: validated by Benoît on 2026-10-22; progressive-disclosure split (EventSteps, StepPreview, InPlaceSignIn) amended the same day, to revalidate. `ConfirmDialog` moved to `client/src/components/` (#346, 2026-11-05).
+Status: validated by Benoît on 2026-10-22; progressive-disclosure split (EventSteps, StepPreview, InPlaceSignIn) amended the same day, to revalidate. `ConfirmDialog` moved to `client/src/components/` (#346, 2026-11-05). Screen reads go through `useSend` (#368, 2026-11-05).
 
 ```mermaid
 flowchart LR
@@ -29,8 +29,11 @@ flowchart LR
     Ed --> F
     U --> S
     CP --> S
+    Ag[Agenda] --> S
+    Ag --> AF[AgendaFilters]
+    AF --> S
   end
-  S[accounts/request.js send] --> A[api.js apiFetch + CSRF]
+  S[accounts/request.js send, useSend] --> A[api.js apiFetch + CSRF]
   Ed --> Ses[session.js refresh]
   Ses -. refreshSession callback .-> U
   A --> API[(HappiHub API /api)]
