@@ -7,7 +7,7 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 ## [Unreleased]
 
 The following changes are merged to main (recovery PR #257, bricks D #276 and B #282, fixes
-#283 (PR #299), #319, #320, #328, #329, #341 and #346, event client #252, encryption #310, demo
+#283 (PR #299), #319, #320, #328, #329, #341, #346 and #368, event client #252, encryption #310, demo
 seed #251, public agenda #366 and cultural poster #382 with #285, #302, #347 and #355) and have
 not been released or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
 history and [handover](../HANDOVER.md) for the current state.
@@ -52,6 +52,9 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Changed
 
+- Client screens share one `useSend` hook for cancellable API reads (#368): the agenda,
+  its filters, the public event page, the member event list and the city search no longer
+  repeat the same effect; visible behaviour is unchanged.
 - Current account/role authority, event visibility and ownership boundaries are enforced
   server-side. Public responses exclude relationship identifiers.
 - Client event/comment/profile flows follow the actual API contracts.

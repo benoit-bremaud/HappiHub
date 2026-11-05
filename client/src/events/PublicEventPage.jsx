@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { send } from '../accounts/request';
+import { useSend } from '../accounts/request';
 import { EventPoster } from './EventPoster';
 import { formatDate, fromServer } from './eventFields';
 import '../accounts/accounts.css';
@@ -9,16 +8,9 @@ import './events.css';
 /** Minimal public page of a published, cancelled or archived event (UC18 4, UC19 4). */
 export const PublicEventPage = () => {
   const { id } = useParams();
-  const [result, setResult] = useState(null);
-  useEffect(() => {
-    let current = true;
-    // send() resolves even on network failure (status 0), so nothing is left to catch.
-    void (async () => {
-      const { ok, status, data } = await send(`/events/${encodeURIComponent(id)}`);
-      if (current) setResult(ok ? { event: data } : { failed: status === 404 ? 'Event not found.' : 'Unable to load the event. Try again later.' });
-    })();
-    return () => { current = false; };
-  }, [id]);
+  const { response } = useSend(`/events/${encodeURIComponent(id)}`);
+  const result = response && (response.ok ? { event: response.data }
+    : { failed: response.status === 404 ? 'Event not found.' : 'Unable to load the event. Try again later.' });
   if (!result) return <section className="hh-page"><output>Loading…</output></section>;
   if (result.failed) return <section className="hh-page"><p role="alert">{result.failed}</p></section>;
   const { event } = result;

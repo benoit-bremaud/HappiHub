@@ -7,6 +7,14 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-11-05
 
+- **#368 shared useSend hook** (branch `refactor/368-shared-usesend-hook`). Conception
+  [shared-usesend-hook](docs/architecture/specs/shared-usesend-hook.md) validated by the owner:
+  D1 = A (reset to null while a new path loads, 450/500; flag 410, keep previous 340).
+  `useSend(path, { delay })` in `client/src/accounts/request.js` returns `{ response, retry }`;
+  `path === null` is idle. The five effects (Agenda, AgendaFilters, PublicEventPage,
+  EventListPage, CityPicker) now use it; EventListPage keeps its status chips from the last
+  loaded list so they do not vanish during a reload. Client 118 tests (5 new, AC1–AC5), build
+  clean.
 - **#387 plan, handover and changelog status refresh** (branch
   `docs/387-refresh-plan-handover-changelog`, documentation only). Every claim checked live
   (`gh`, `git log`): 94 open issues on Project #6; #251, #294, #295, #307, #329 closed; #296

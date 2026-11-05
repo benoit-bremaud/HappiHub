@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '../api';
 
 /** JSON call to the API; never throws for HTTP errors so screens can show the server message. */
@@ -12,6 +12,29 @@ export const send = async (path, method = 'GET', body) => {
   } catch {
     return { ok: false, status: 0, data: { message: 'Network error. Your input has been kept; try again.' } };
   }
+};
+
+/**
+ * GET `path` once mounted and whenever it changes (#368). `response` is the send() result of the
+ * current path, or null while it loads or while `path` is null (idle); a late response from an
+ * earlier path or an unmounted screen is ignored. `delay` debounces the request; `retry()` resends.
+ */
+export const useSend = (path, { delay = 0 } = {}) => {
+  const [loaded, setLoaded] = useState({ key: null, response: null });
+  const [attempt, setAttempt] = useState(0);
+  const key = path === null ? null : `${attempt} ${path}`;
+  useEffect(() => {
+    if (key === null) return undefined;
+    let current = true;
+    const run = async () => {
+      const response = await send(path);
+      if (current) setLoaded({ key, response });
+    };
+    const timer = delay > 0 ? setTimeout(run, delay) : void run();
+    return () => { current = false; clearTimeout(timer); };
+  }, [key, path, delay]);
+  const retry = useCallback(() => setAttempt((count) => count + 1), []);
+  return { response: key !== null && loaded.key === key ? loaded.response : null, retry };
 };
 
 /**

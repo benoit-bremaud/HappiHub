@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useSession } from '../session';
-import { send } from '../accounts/request';
+import { useSend } from '../accounts/request';
 import { formatDate, STATUS_LABELS, typeLabel } from './eventFields';
 import '../accounts/accounts.css';
 import './events.css';
@@ -14,25 +14,21 @@ export const EventListPage = () => {
   const { state } = useLocation();
   const { status: sessionStatus } = useSession();
   const [filter, setFilter] = useState('');
-  const [result, setResult] = useState(null);
-  useEffect(() => {
-    if (sessionStatus !== 'authenticated') return undefined;
-    let current = true;
-    // send() resolves even on network failure (status 0), so nothing is left to catch.
-    void (async () => {
-      const query = filter ? `?${new URLSearchParams({ status: filter })}` : '';
-      const { ok, data } = await send(`/associations/${encodeURIComponent(slug)}/events${query}`);
-      if (current) setResult(ok ? { events: data.events } : { failed: data.message ?? 'Unable to load the events.' });
-    })();
-    return () => { current = false; };
-  }, [slug, filter, sessionStatus]);
+  const query = filter ? `?${new URLSearchParams({ status: filter })}` : '';
+  const { response } = useSend(sessionStatus === 'authenticated' ? `/associations/${encodeURIComponent(slug)}/events${query}` : null);
+  const result = response && (response.ok ? { events: response.data.events }
+    : { failed: response.data.message ?? 'Unable to load the events.' });
+  // The chips stay while a new filter loads, so they follow the last loaded list (#368 D1).
+  const [several, setSeveral] = useState(false);
+  const loadedSeveral = result?.events && result.events.length > 1;
+  if (result?.events && several !== loadedSeveral) setSeveral(loadedSeveral);
   if (sessionStatus === 'anonymous') return <Navigate to="/signin" state={{ from: `/associations/${slug}/events` }} replace />;
   return (
     <section className="hh-page">
       <h2>Events</h2>
       {state?.notice && <output>{state.notice}</output>}
       <p><Link className="hh-button" to={`/associations/${slug}/events/new`}>Create an event</Link></p>
-      {(filter || result?.events?.length > 1) && <fieldset className="hh-chips" aria-label="Filter by status">
+      {(filter || several) && <fieldset className="hh-chips" aria-label="Filter by status">
         {FILTERS.map(([key, label]) => (
           <button key={label} type="button" className={`hh-chip${filter === key ? ' hh-chip--on' : ''}`}
             aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>
