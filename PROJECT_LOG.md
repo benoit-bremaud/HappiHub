@@ -7,6 +7,12 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-11-06
 
+- **#373 integration suite in CI** (branch `ci/373-integration-suite-postgresql`). Conception
+  [ci-integration-suite](docs/architecture/specs/ci-integration-suite.md) validated by the owner
+  on 2026-11-06 with the authorization to change the workflow: D1 A separate `integration` job
+  with a PostgreSQL service at the harness digest and `TEST_DATABASE_URL` (465/500; job without
+  service 415, steps in the `test` job 395). Local run with Node 22.23.3 against that digest:
+  226 passed, 1 todo, branches 82.57 % (floor 80 %), no container started by `globalSetup`.
 - **#390 association page stale error** (branch `fix/390-association-stale-error`). Conception
   [association-stale-error](docs/architecture/specs/association-stale-error.md) validated by the
   owner on 2026-11-06: D1 A clear the page message when a confirmed action succeeds (480/500;
