@@ -15,12 +15,12 @@
 | Step | Result |
 |---|---|
 | 0 CI mirror | `quality-tests.yml`: collector tests OK · server jest with coverage 168/168 · client tests with coverage 123/123 (Node 22.23.3) · client build OK |
-| 1 Tests | ✅ server unit 168 · client 123 · integration ⏸ pre-merge run |
-| 2 Coverage | client 93.84 % stmts / 84.79 % branches / 94.69 % funcs / 96.89 % lines · docs ⏸ pre-merge run |
-| 3 SonarQube | ⏸ deferred to the pre-merge run (`--push`) |
+| 1 Tests | ✅ server unit 168 · integration 226 (1 todo) · client 123 |
+| 2 Coverage | client 93.84 % stmts / 84.79 % branches / 94.69 % funcs / 96.89 % lines · docs: no counter in this repo (no doc-coverage script) |
+| 3 SonarQube | ✅ PASSED (local scan on 978e9b4, all lcov reports) |
 | 4 Secrets | ✅ gitleaks clean (`origin/main..HEAD`) · no tracked .env · diff read: nothing sensitive |
-| 5 E2E/smoke | ⏸ deferred to the pre-merge run (`--push`) |
-- Gate: `--push`: **pre-push green**; SonarQube, integration, E2E and doc coverage deferred (not GREEN)
+| 5 E2E/smoke | ✅ 6/6 on the local prod build (`cd e2e && npm test`) · QA pass: on staging after merge (no staging yet, #386) |
+- Gate: steps run on `978e9b4`; this commit changes only this report. CI green on 978e9b4. **GREEN once Copilot's review is posted and answered.**
 
 ## 🔴 Must Have
 _None._
