@@ -10,7 +10,7 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 - **#390 association page stale error** (branch `fix/390-association-stale-error`). Conception
   [association-stale-error](docs/architecture/specs/association-stale-error.md) validated by the
   owner on 2026-11-06: D1 A clear the page message when a confirmed action succeeds (480/500;
-  per-action success message 425, clear on dialog open 400). One `setMessage(null)` in
+  per-action success message 430, clear on dialog open 405). One `setMessage(null)` in
   `confirmPending` plus a refusal-then-success test (fails without the fix); client 123/123.
 - **#395 E2E and smoke tests on the local production build** (branch
   `test/395-e2e-smoke-prod-build`). Conception

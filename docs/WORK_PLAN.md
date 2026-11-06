@@ -208,6 +208,6 @@ V1 conception is approved (implementation gate 2026-10-16); bricks D, B and the 
 (#252) are merged, #310 encryption at rest is merged (PR #312) and the #244 partner API
 conception is approved and merged (PR #327; implementation is a later brick). #251 demo seed
 (PR #365), #366 public agenda, #382 cultural poster and #346 modal dialogs are merged; #368 shared
-`useSend` hook is merged (PR #392) and #378 lock order is merged (PR #394). Candidates at 2026-11-05, each after its own conception is
+`useSend` hook is merged (PR #392) and #378 lock order is merged (PR #394). Candidates at 2026-11-06, each after its own conception is
 approved: #393 StepPreview autoFocus (merged, `6c1afa7`), #395 E2E/smoke (merged, PR #403, `f10c8a1`), #390 stale error on the association page (in review), then #373/#374 and #397 OpenAPI contract.
 P2/P3 labels on the remaining QA and audit issues. See [HANDOVER](HANDOVER.md) for the live state.

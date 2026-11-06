@@ -20,7 +20,7 @@ the refreshed page. Leave navigates away, so it is not affected. The `Invitation
 | Simplicity, KISS/YAGNI, minimal diff (25) | 5 — one call | 3 — a label per action, new copy | 5 — one call |
 | UX consistency with the rest of the page (20) | 4 — the reloaded list is the feedback | 5 — matches Invitations ("Invitation revoked.") | 3 — the error vanishes before anything happens |
 | Testability (20) | 5 | 4 | 4 |
-| **Total /500** | **480** | 425 | 400 |
+| **Total /500** | **480** | 430 | 405 |
 
 Sensitivity: B overtakes A only if UX consistency weighs 50 or more; with ±10 on any weight A
 stays first. Decision: A.

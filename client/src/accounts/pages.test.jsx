@@ -286,7 +286,8 @@ describe('AssociationPage (UC7, UC8, UC10, UC12)', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Other members remain.');
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
-    await waitFor(() => expect(screen.queryByText('Other members remain.')).not.toBeInTheDocument());
+    await waitFor(() => expect(calls()).toContain('DELETE /associations/troupe/members/other'));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
   });
 
   test('cancelling the confirmation sends nothing', async () => {
