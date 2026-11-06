@@ -62,13 +62,14 @@ A 450). Recommendation: **A**.
 
 - Same permissions (`contents: read`), same action pins, no secret.
 - The image digest is pinned in several files (both harnesses, both compose files, the
-  workflow); no automated bump exists, so a bump updates every hit of `git grep -n 'postgres:17.6-alpine@sha256'`
+  workflow); no automated bump exists, so a bump updates every pin listed by
+`git grep -nE 'postgres:[^ ]*@sha256'`
   together (noted in CONTRIBUTING.md next to the integration command).
 - A main-push run is eligible for the SonarQube collector only when the whole workflow
   succeeds (`docs/SONARQUBE.md`), which now includes the `integration` job: a red integration
   job means no scan for that SHA. This is intended.
 - Out of scope: uploading `coverage/integration/lcov.info` to the coverage artifact
-  (the SonarQube collector contract is unchanged), the E2E job (#400).
+  (the coverage artifact contract is unchanged), the E2E job (#400).
 
 ## 4. Acceptance criteria
 
