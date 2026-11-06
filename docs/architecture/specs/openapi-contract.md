@@ -2,8 +2,8 @@
 
 A machine-readable OpenAPI 3.1 contract for every `/api` route and `/ready`, kept honest by a server test that fails when the Express routes and the contract diverge.
 
-Status: validated by the owner on 2026-11-06 (D1 A, D2 A, D3 A); implemented. Work item: issue #397 (approach A chosen by
-MCDA on 2026-11-06, 415/500).
+Status: validated by the owner on 2026-11-06 (D1 A, D2 A, D3 A); implemented. Work item: issue #397 (approach A of the issue,
+hand-written contract + drift test, 415/500; D1–D3 below: 435, 455, 470).
 
 ## Scope
 
@@ -31,7 +31,7 @@ No UML diagram: no behavior changes; the contract describes the existing compone
 | **Total /500** | **435** | 310 | 405 |
 
 Sensitivity: simplicity 40 / drift 20 gives A 420 = C 420; any heavier weight on drift keeps A
-first. **Proposed: A.** Express `:param` becomes `{param}`; the disabled legacy
+first. **Chosen: A.** Express `:param` becomes `{param}`; the disabled legacy
 `router.all(['/comments', '/comments/*'])` is mapped to the documented `/comments` (all methods,
 503) through one explicit, commented exception so any other wildcard still fails.
 
@@ -45,7 +45,7 @@ first. **Proposed: A.** Express `:param` becomes `{param}`; the disabled legacy
 | Maintainability (20) | 5 | 3 | 2 |
 | **Total /500** | **455** | 315 | 275 |
 
-Sensitivity: dependency cost 40 / validation 15 gives A 420 > C 340 > B 270. **Proposed: A**
+Sensitivity: dependency cost 40 / validation 15 gives A 435 > C 355 > B 275. **Chosen: A**
 (pinned devDependency, `npm ci --ignore-scripts` compatible).
 
 ## Decision D3 — file location
@@ -57,7 +57,7 @@ Sensitivity: dependency cost 40 / validation 15 gives A 420 > C 340 > B 270. **P
 | Fits the layout (`docs/` = published docs, `architecture/` = conception) (30) | 5 | 3 | 4 |
 | **Total /500** | **470** | 360 | 360 |
 
-Sensitivity: test proximity 60 gives A 440 > B 420. **Proposed: A.**
+Sensitivity: test proximity 60 gives A 440 > B 420. **Chosen: A.**
 
 Totals recomputed by script.
 

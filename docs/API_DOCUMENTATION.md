@@ -5,8 +5,8 @@ PostgreSQL. Source of truth for behavior: [brick D specification](architecture/s
 and [brick B specification](architecture/specs/v1-brick-b-event-lifecycle.md).
 Historical FAQ/GUIDE/tutorials do not define current behavior.
 
-Machine-readable contract: [OpenAPI 3.1](api/openapi.yaml). A server test fails when it and the
-routes diverge; this guide is the narrative companion.
+Machine-readable contract: [OpenAPI 3.1](api/openapi.yaml). A server test validates it and fails when a
+route is added or removed without a contract change; this guide is the narrative companion.
 
 ## Authentication and transport
 
@@ -58,7 +58,8 @@ routes diverge; this guide is the narrative companion.
 | `GET /events/cities` | public | 200 | No session, query ignored. `[{code, name}]` of cities that have at least one agenda event, sorted by name |
 | `GET /events/:id` | public | 200 | No session. Published, cancelled or archived events of an active association, not hidden by moderation; includes `association: {name, slug}`, no account ids, version or editing metadata. Anything else (draft, hidden, unknown or malformed id) is the same `404 EVENT_NOT_FOUND` |
 | `GET /ready` (no `/api` prefix) | operations | 200 | `{ready: true}` when the database answers, else `503 {ready: false}` |
-| `/comments` | — | 503 | Legacy routes disabled until the participation/comment brick (S3) |
+| `GET /communes?q=` | public | 200 | No session; see [Communes](#communes) |
+| `/comments`, `/comments/*` | — | 503 | Legacy routes disabled until the participation/comment brick (S3) |
 
 ### Events
 

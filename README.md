@@ -88,7 +88,7 @@ Pour des instructions détaillées sur comment, quand et pourquoi mettre à jour
 
 ## Documentation de l'API
 
-Pour une documentation détaillée de l'API de HappiHub, veuillez consulter le fichier [API_DOCUMENTATION](docs/API_DOCUMENTATION.md). Ce document inclut des descriptions des endpoints, des paramètres, et des exemples de requêtes et de réponses.
+Pour une documentation détaillée de l'API de HappiHub, veuillez consulter le fichier [API_DOCUMENTATION](docs/API_DOCUMENTATION.md) et le contrat [OpenAPI 3.1](docs/api/openapi.yaml). Ce document inclut des descriptions des endpoints, des paramètres, et des exemples de requêtes et de réponses.
 
 ## Authentication
 
