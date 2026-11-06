@@ -133,7 +133,7 @@ describe('UC16/UC17 edit (BC3–BC7)', () => {
   });
 
   test('a save that waited on the event lock reports the committed editor, not a stale join (AC374-1)', async () => {
-    const { claire, malik } = await twoMembers();
+    const { claire } = await twoMembers();
     const event = await create(claire);
     const tx = await pool.connect();
     let pending;
