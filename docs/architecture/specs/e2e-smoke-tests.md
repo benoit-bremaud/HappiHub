@@ -36,9 +36,9 @@ remain in unit and integration tests; E2E only proves the assembled product work
 | --- | --- | --- |
 | PostgreSQL | disposable container, same pinned image as the integration harness, `--tmpfs` data, random loopback port, database `happihub_e2e_demo` | removed at teardown |
 | Field keyring | generated per run with `npm run keyring:generate` into a temporary directory | deleted at teardown |
-| API | `server/`: `npm run migrate`, `npm run seed:demo -- --confirm`, then `npm start` on port 5100 | DEV tier (`NODE_ENV` unset): log email transport, non-`Secure` cookie on plain HTTP; `APP_URL_DEV=http://localhost:3100` |
+| API | `server/`: `npm run migrate`, `npm run seed:demo -- --confirm`, then `node server.js` on port 5100 (all interfaces: `server.js` has no host setting) | DEV tier (`NODE_ENV` unset): log email transport, non-`Secure` cookie on plain HTTP; `APP_URL_DEV=http://localhost:3100` |
 | Client | `client/`: `npm run build` with `REACT_APP_API_URL=http://localhost:5100/api`, `GENERATE_SOURCEMAP=false`, `INLINE_RUNTIME_CHUNK=false` (same build flags as the Docker image) | static production bundle |
-| Static server | small Node script in `e2e/` serving `client/build` on port 3100 with the SPA fallback to `index.html` | no dependency |
+| Static server | small Node script in `e2e/` serving the bundle built into `e2e/.run/build` on port 3100, loopback only with the SPA fallback to `index.html` | no dependency |
 | Browser | Playwright Chromium, headless | — |
 
 Why DEV and not `NODE_ENV=production` for the API: production mode refuses the log email
@@ -59,9 +59,9 @@ A new root folder `e2e/` with its own `package.json` and lockfile, like `client/
 e2e/
   package.json          # @playwright/test only; scripts: test, smoke
   package-lock.json
-  playwright.config.js  # projects "smoke" and "e2e", globalSetup/globalTeardown
-  globalSetup.js        # container, keyring, migrate, seed, build, start API + static server
-  globalTeardown.js     # stop processes, remove container and temporary files
+  playwright.config.js  # projects "smoke" and "e2e", globalSetup
+  globalSetup.js        # container, keyring, migrate, seed, build, start API + static server;
+                        # returns the teardown (stop processes, remove container and run folder)
   serveBuild.js         # static server with SPA fallback
   support/              # mail log reader, persona credentials reader
   tests/smoke.spec.js
@@ -107,19 +107,17 @@ user would click it. No test-only endpoint, no database read, no production code
 The #251 demo seed is reused unchanged: the run database is named `happihub_e2e_demo` on a
 loopback port with `--confirm`, which satisfies every seed guard (test-environment § 2).
 Persona passwords are read from the `server/.demo-credentials.local.json` file the seed writes.
-To avoid touching a developer's own credentials file, globalSetup runs the seed with the
-working directory and file path of the run's temporary directory if the seed supports it;
-otherwise it backs up and restores the existing file (implementation detail, checked when coding;
-any production-code change it would need is a design gap to revalidate first). Passwords never
-appear in test names, logs or reports (Playwright traces are kept only on failure, under the
-ignored `e2e/test-results/`).
+The seed keeps the passwords of an existing file and creates it otherwise (N3), so a run never
+changes a developer's passwords. Passwords never appear in test names, logs or reports:
+Playwright traces are off because they would record the typed values; only failure screenshots
+(password fields masked by the browser) are kept under the ignored `e2e/test-results/`.
 
 ## 7. Smoke suite
 
 | Id | Check | Expected |
 | --- | --- | --- |
-| S1 | `GET http://localhost:5100/api/session` | 200, JSON body, no account (anonymous) |
-| S2 | open `http://localhost:3100/` | 200, the HappiHub heading renders, no console error, the agenda request to the API succeeds |
+| S1 | `GET http://localhost:5100/api/session` with the web `Origin` | 200, JSON body, no account, a CSRF token (N1) |
+| S2 | open `http://localhost:3100/` | 200, the HappiHub heading renders, no uncaught page error, `GET /api/events` answers 200 (N2) |
 
 ## 8. Gate integration
 
@@ -224,4 +222,10 @@ Gaps found while coding; none changes a decision or production code.
   developer's `client/build` is left untouched; the run folder is deleted at teardown.
 - **N5 (default exports)**: Playwright loads its configuration and global setup from default
   exports only; both modules also export the value by name and comment the exception.
+- **N6 (review-local round 1)**: setup failures report their cause (the migration error, the
+  API log tail, an exited child process) before the run folder is deleted; the static server
+  answers 400 to a malformed URL and 404 to a missing asset; paths use `fileURLToPath`, so a
+  checkout path with spaces works. The command is POSIX only (Linux/macOS, as the Docker harness).
+- **N7 (API binding)**: the API listens on every interface during a run, because `server.js`
+  takes no host setting; a loopback-only option is a follow-up issue, not this brick.
 - Playwright is pinned to 1.64.1 (released 2026-10-14) with its own lockfile in `e2e/`.

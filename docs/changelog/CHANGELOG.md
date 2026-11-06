@@ -14,6 +14,9 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Added
 
+- Smoke and E2E tests on the local production build (#395): `npm test` in `e2e/` starts a
+  disposable PostgreSQL with the demo seed, builds the production client and runs Playwright
+  checks for sign-up with email verification, sign-in, event publication and the public agenda.
 - Cultural poster design for the agenda (#382, study #367): warm paper tokens, self-hosted
   Bricolage Grotesque, six AA poster palettes chosen by organizers, a compact header, the agenda
   first on the home page, sticky day headings on phones and a 2/3-column grid on wider screens.

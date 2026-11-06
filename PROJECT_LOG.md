@@ -5,6 +5,23 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-11-06
+
+- **#395 E2E and smoke tests on the local production build** (branch
+  `test/395-e2e-smoke-prod-build`). Conception
+  [e2e-smoke-tests](docs/architecture/specs/e2e-smoke-tests.md) validated by the owner on
+  2026-11-06, all top scores: D1 A Playwright (480/500; Cypress 370, Puppeteer 220), D2 A root
+  `e2e/` package (430; client/ 285, server/ 285), D3 A verification link read from the API log
+  transport (470; outbox decryption 360, test endpoint 195), D4 A #251 demo seed on a disposable
+  `happihub_e2e_demo` database (450; UI-created data 335, SQL fixture 245), D5 A production client
+  bundle + API in DEV tier (430; full Docker prod stack 250, dev server 340). `npm test` in `e2e/`
+  (Playwright 1.64.1) runs smoke S1–S2 and journeys J-E2E-1 to J-E2E-4: 6/6 green in about 25 s,
+  no container, process or run file left (also after Ctrl-C). Notes N1–N7 in spec § 11 (session
+  endpoint needs the web Origin, flaky `ERR_NETWORK_CHANGED`, credentials file kept by the seed,
+  build into `e2e/.run/build`, Playwright default exports, review fixes, API binds every
+  interface). Pre-push review round 1 (adversarial, Opus): 2 Must (stale spec copies, project
+  docs not updated) fixed with the Shoulds. Gate step 5 is now covered by this command.
+
 ## 2026-11-05
 
 - **#393 StepPreview cancel-reason focus** (branch `fix/393-drop-steppreview-autofocus`).

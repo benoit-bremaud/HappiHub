@@ -35,8 +35,8 @@ test('J-E2E-3 an organizer creates, edits, previews and publishes an event shown
   await page.getByLabel('Venue').fill('Salle des fêtes');
   await page.getByLabel('Venue').blur();
   await page.getByLabel('City').fill('Lyon');
-  await page.getByRole('list', { name: 'Cities found' }).getByRole('button').first().click();
-  await expect(page.getByText(/^City: Lyon/)).toBeVisible();
+  await page.getByRole('list', { name: 'Cities found' }).getByRole('button', { name: /^Lyon \(/ }).click();
+  await expect(page.getByText(/^City: Lyon Change$/)).toBeVisible();
   await page.getByRole('button', { name: 'Next: Look' }).click();
 
   await page.getByRole('radio', { name: 'Night' }).check();

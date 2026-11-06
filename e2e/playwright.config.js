@@ -12,7 +12,8 @@ export const config = defineConfig({
   retries: 0,
   reporter: [['list']],
   timeout: 60_000,
-  use: { baseURL: WEB_URL, trace: 'retain-on-failure', ...devices['Desktop Chrome'] },
+  use: { baseURL: WEB_URL, // No traces: they would record the typed demo passwords (spec § 6, AC4).
+    trace: 'off', screenshot: 'only-on-failure', ...devices['Desktop Chrome'] },
   projects: [
     { name: 'smoke', testMatch: 'smoke.spec.js' },
     { name: 'e2e', testMatch: 'journeys/*.spec.js', dependencies: ['smoke'] },

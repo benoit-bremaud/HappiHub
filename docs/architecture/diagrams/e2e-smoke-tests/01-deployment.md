@@ -8,14 +8,14 @@ Question answered: which processes and containers exist during `npm test` in `e2
 
 ```mermaid
 flowchart LR
-  subgraph Host["Developer machine (loopback only)"]
+  subgraph Host["Developer machine"]
     PW["Playwright runner<br/>e2e/ (globalSetup, tests)"]
     BR["Chromium headless"]
-    SB["Static server :3100<br/>client/build (prod bundle)"]
-    API["API :5100<br/>server/ npm start, DEV tier"]
+    SB["Static server 127.0.0.1:3100<br/>e2e/.run/build (prod bundle)"]
+    API["API :5100, all interfaces<br/>server/ node server.js, DEV tier"]
     LOG[("run log<br/>e2e/.run/api.log")]
     subgraph Docker["Docker"]
-      PG[("PostgreSQL 17.6<br/>happihub_e2e_demo, tmpfs")]
+      PG[("PostgreSQL 17.6, 127.0.0.1<br/>happihub_e2e_demo, tmpfs")]
     end
   end
   PW -->|drives| BR

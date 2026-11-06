@@ -1,5 +1,7 @@
 // Shared locations and ports of one E2E run (spec e2e-smoke-tests § 2).
-const root = new URL('../../', import.meta.url).pathname;
+import { fileURLToPath } from 'node:url';
+
+const root = fileURLToPath(new URL('../../', import.meta.url));
 
 export const SERVER_DIR = `${root}server`;
 export const CLIENT_DIR = `${root}client`;
