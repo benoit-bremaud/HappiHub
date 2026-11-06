@@ -54,6 +54,9 @@ From server/: `npm ci --ignore-scripts`, `npm test -- --runInBand`,
 run `npm run migrate` first).
 From client/: `npm ci --ignore-scripts`, `CI=true npm test -- --watchAll=false --runInBand`,
 `npm run build`, `npm start` (configure the public API URL).
+From e2e/ (Docker, client/ and server/ installed): `npm ci --ignore-scripts`,
+`npx playwright install chromium`, `npm test` (smoke + E2E on the production build: gate step 5),
+`npm run smoke`.
 There is no dedicated lint or typecheck npm script. Do not invent one or treat absence
 as a successful check. See Docker/configuration docs for isolated local execution.
 

@@ -209,5 +209,5 @@ V1 conception is approved (implementation gate 2026-10-16); bricks D, B and the 
 conception is approved and merged (PR #327; implementation is a later brick). #251 demo seed
 (PR #365), #366 public agenda, #382 cultural poster and #346 modal dialogs are merged; #368 shared
 `useSend` hook is merged (PR #392) and #378 lock order is merged (PR #394). Candidates at 2026-11-05, each after its own conception is
-approved: #393 StepPreview autoFocus (in progress), #395 E2E/smoke, then #390 stale error on the association page.
+approved: #393 StepPreview autoFocus (merged, `6c1afa7`), #395 E2E/smoke (in review: `e2e/`, `npm test`), then #390 stale error on the association page.
 P2/P3 labels on the remaining QA and audit issues. See [HANDOVER](HANDOVER.md) for the live state.

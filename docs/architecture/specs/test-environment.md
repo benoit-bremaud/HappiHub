@@ -220,8 +220,8 @@ Running twice yields the same row counts; the second run reports "0 created, N u
 - **#295** (code/config leftovers): any obsolete seed or demo script found during the work is
   removed in the #295 change, not mixed into the seed; the seed adds one npm script
   (`seed:demo`) and one ignored file, nothing else.
-- A browser E2E suite (Playwright) is deferred: option C of D4 scored 310/500; it can reuse the
-  demo dataset later.
+- A browser E2E suite (Playwright) was deferred here (option C of D4, 310/500); it now exists and
+  reuses the demo dataset: [e2e-smoke-tests.md](e2e-smoke-tests.md) (#395).
 
 ## 10. Decisions (MCDA)
 

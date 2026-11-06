@@ -7,13 +7,16 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 ## [Unreleased]
 
 The following changes are merged to main (recovery PR #257, bricks D #276 and B #282, fixes
-#283 (PR #299), #319, #320, #328, #329, #341, #346, #378 and #393, refactor #368, event client #252, encryption #310, demo
+#283 (PR #299), #319, #320, #328, #329, #341, #346, #378 and #393, refactor #368, E2E/smoke suite #395, event client #252, encryption #310, demo
 seed #251, public agenda #366 and cultural poster #382 with #285, #302, #347 and #355) and have
 not been released or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
 history and [handover](../HANDOVER.md) for the current state.
 
 ### Added
 
+- Smoke and E2E tests on the local production build (#395): `npm test` in `e2e/` starts a
+  disposable PostgreSQL with the demo seed, builds the production client and runs Playwright
+  checks for sign-up with email verification, sign-in, event publication and the public agenda.
 - Cultural poster design for the agenda (#382, study #367): warm paper tokens, self-hosted
   Bricolage Grotesque, six AA poster palettes chosen by organizers, a compact header, the agenda
   first on the home page, sticky day headings on phones and a 2/3-column grid on wider screens.

@@ -140,3 +140,8 @@ __pycache__/
 # Field encryption keyrings (spec db-encryption-at-rest § 6.1) never enter version control.
 .keys/
 *keyring*.json
+
+# E2E run artefacts (docs/architecture/specs/e2e-smoke-tests.md)
+e2e/.run/
+e2e/test-results/
+e2e/playwright-report/
