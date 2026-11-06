@@ -5,7 +5,7 @@ Two Jest suites, run from `server/`.
 | Suite | Command | Files | Database |
 | --- | --- | --- | --- |
 | Fast (unit and HTTP boundary) | `npm test -- --runInBand` | `tests/*.test.js`, `tests/unit/` | none; bcrypt cost lowered by `fastBcrypt.js` |
-| Integration | `npm run test:integration` | `tests/integration/` | disposable PostgreSQL container started by `globalSetup.cjs`, removed by `globalTeardown.cjs` (Docker required) |
+| Integration | `npm run test:integration` | `tests/integration/` | disposable PostgreSQL container started by `globalSetup.cjs`, removed by `globalTeardown.cjs` (Docker required), or the existing empty database at `TEST_DATABASE_URL` (CI service container; nothing is started) |
 
 - `unit/`: pure domain rules (`domain/`, `domain/event.js`) and the constant-SQL guard
   (`queryText.test.js`).

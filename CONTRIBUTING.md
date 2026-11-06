@@ -32,7 +32,10 @@ or raw private inventories. Test against isolated synthetic data, never producti
 
 ## Verification and style
 
-From server/: `npm test -- --runInBand` and `npm run test:integration`.
+From server/: `npm test -- --runInBand` and `npm run test:integration` (CI job `integration`;
+the PostgreSQL image digest is pinned in several files: bump
+every pin listed by
+`git grep -nE 'postgres:[^ ]*@sha256'` together).
 From client/: `CI=true npm test -- --watchAll=false --runInBand` and `npm run build`
 (on PowerShell set `$env:CI='true'` first). Run the appropriate checks before pushing.
 From e2e/ (Linux/macOS, Docker required, `npm ci --ignore-scripts` done in client/ and server/; first time:

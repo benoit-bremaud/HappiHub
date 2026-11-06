@@ -106,7 +106,7 @@ application modules and production nginx.conf read-only, and uses an internal du
 network without published ports. It creates an ephemeral TLS certificate, synthetic
 sessions and an injected in-memory session store; this ingress test uses no database and
 no real credentials. (The separate server suite `npm run test:integration` starts its own
-disposable PostgreSQL container.)
+disposable PostgreSQL container, or uses the empty database at `TEST_DATABASE_URL` as in CI.)
 Only its labelled fixture resources are removed during cleanup. The fixture checks both
 proxy hops, IPv4/IPv6 provenance, quota isolation, forged headers, Secure cookies and trust
 file failures. It is separate from ordinary Jest/collector tests and is not a deployment test.
