@@ -3,8 +3,8 @@
 This study defines the automated browser E2E and smoke suites that cover step 5 of the
 pre-merge gate, run on the production client build in one local command.
 
-Status: **proposed, awaiting Benoît's validation** (D1–D5 below). No code before validation
-(AGENTS.md gate).
+Status: **validated by Benoît on 2026-11-06** (D1–D5 option A, top scores). This validates
+the conception; the implementation follows in the same brick (AGENTS.md gate).
 
 UML: [diagrams/e2e-smoke-tests/](../diagrams/e2e-smoke-tests/).
 Related: [test environment](test-environment.md) (demo seed, § 9 deferred this suite),
@@ -207,3 +207,21 @@ Sensitivity: A first unless gate fidelity weighs 60 or more (B then needs T11 re
   clean after a run (apart from ignored folders).
 - AC5: the existing server and client test suites are unchanged and still pass.
 - AC6: CONTRIBUTING.md documents the command; the gate step 5 uses it.
+
+## 11. Implementation notes (2026-11-06)
+
+Gaps found while coding; none changes a decision or production code.
+
+- **N1 (S1 origin)**: `GET /api/session` issues the CSRF token and answers 403 to a request
+  without the configured web origin. S1 sends `Origin: http://localhost:3100`, as the browser does.
+- **N2 (S2 errors)**: Chromium logs `net::ERR_NETWORK_CHANGED` while Docker adds network
+  interfaces, which made a "no console error" check flaky. S2 fails on uncaught page errors
+  (`pageerror`) and checks that the agenda request (`GET /api/events`) answers 200 instead.
+- **N3 (credentials file, § 6)**: no backup is needed. The seed keeps the passwords of an
+  existing `server/.demo-credentials.local.json` and creates the file otherwise, so a run never
+  changes a developer's passwords; the file stays ignored by git.
+- **N4 (build output)**: the client bundle is built into `e2e/.run/build` (`BUILD_PATH`), so a
+  developer's `client/build` is left untouched; the run folder is deleted at teardown.
+- **N5 (default exports)**: Playwright loads its configuration and global setup from default
+  exports only; both modules also export the value by name and comment the exception.
+- Playwright is pinned to 1.64.1 (released 2026-10-14) with its own lockfile in `e2e/`.

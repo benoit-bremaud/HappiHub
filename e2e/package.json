@@ -1,0 +1,17 @@
+{
+  "name": "happihub-e2e",
+  "private": true,
+  "description": "Browser E2E and smoke tests on the local production build (spec: docs/architecture/specs/e2e-smoke-tests.md).",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "smoke": "playwright test --project=smoke --no-deps"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}

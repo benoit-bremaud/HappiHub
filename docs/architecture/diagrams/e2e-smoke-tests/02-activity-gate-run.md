@@ -2,7 +2,7 @@
 
 > **Source spec**: [E2E and smoke tests](../../specs/e2e-smoke-tests.md) § 3, § 7, § 10
 
-Status: proposed, awaiting Benoît's validation.
+Status: validated by Benoît on 2026-11-06.
 
 Question answered: in which order does one run prepare, test and clean up, and where does it stop?
 

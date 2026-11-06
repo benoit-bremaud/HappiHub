@@ -35,7 +35,12 @@ or raw private inventories. Test against isolated synthetic data, never producti
 From server/: `npm test -- --runInBand` and `npm run test:integration`.
 From client/: `CI=true npm test -- --watchAll=false --runInBand` and `npm run build`
 (on PowerShell set `$env:CI='true'` first). Run the appropriate checks before pushing.
-There are no dedicated lint/typecheck scripts; do not report them as passing.
+From e2e/ (Docker required, `npm ci --ignore-scripts` done in client/ and server/; first time:
+`npm ci --ignore-scripts && npx playwright install chromium`): `npm test` builds the production
+client, starts the API on a disposable PostgreSQL with the demo seed, and runs the smoke and E2E
+suites ([spec](docs/architecture/specs/e2e-smoke-tests.md)); `npm run smoke` runs the smoke suite
+alone. Ports 3100 and 5100 must be free (`E2E_WEB_PORT`, `E2E_API_PORT` override them). This is
+step 5 of the pre-merge gate. There are no dedicated lint/typecheck scripts; do not report them as passing.
 The client build runs its configured lint checks and currently has documented legacy warnings.
 
 Use named exports for new/touched modules, never introduce TypeScript any, and test
