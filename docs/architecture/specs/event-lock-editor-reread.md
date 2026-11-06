@@ -2,6 +2,8 @@
 
 A save that waits on another transaction's event lock must report the editor that transaction committed, not `null`.
 
+Status: validated by the owner on 2026-11-06 (A); implemented. Work item: issue #374.
+
 ## Symptom
 
 The BC5 integration test (`events.test.js`, concurrent saves of the same field) intermittently
@@ -47,10 +49,14 @@ because only the conflict details expose the editor name.
 Totals recomputed by script. Sensitivity: with simplicity 40 and correctness 20, A 440 > C 420 >
 D 250 > B 230; A stays first.
 
-**Proposed: A.** `lockEvent` takes the row lock with `SELECT 1 FROM event WHERE id = $1 AND
+**Decision: A.** `lockEvent` takes the row lock with `SELECT 1 FROM event WHERE id = $1 AND
 association_id = $2 FOR UPDATE`, throws 404 when no row comes back, then returns `findEvent` on the
 same client. In READ COMMITTED each statement sees all data committed before it starts, so the
 read after the lock sees the committed event and its editor together.
+
+No UML diagram: the exchange of the existing autosave conflict sequence
+([02a-sequence-autosave-conflict](../diagrams/v1-events/02a-sequence-autosave-conflict.md)) is unchanged; only
+the SQL inside its `SELECT … FOR UPDATE` step splits into lock then read.
 
 ## Acceptance criteria
 

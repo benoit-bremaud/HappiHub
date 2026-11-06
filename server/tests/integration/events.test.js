@@ -136,17 +136,22 @@ describe('UC16/UC17 edit (BC3–BC7)', () => {
     const { claire, malik } = await twoMembers();
     const event = await create(claire);
     const tx = await pool.connect();
+    let pending;
     try {
       await tx.query('BEGIN');
       await tx.query("UPDATE event SET title = 'Malik', version = 2, last_edited_by = $2 WHERE id = $1",
         [event.id, await accountId(pool, 'malik@example.org')]);
-      const pending = claire.patch(`${EVENTS}/${event.id}`,
-        { baseVersion: 1, changes: { title: 'Claire' }, base: { title: 'Concert' } });
+      pending = claire.patch(`${EVENTS}/${event.id}`,
+        { baseVersion: 1, changes: { title: 'Claire' }, base: { title: 'Concert' } }).then((r) => r);
       await waitForLockWait();
       await tx.query('COMMIT');
       const response = await pending;
       expect(response.status).toBe(409);
       expect(response.body.details).toMatchObject({ version: 2, lastEditedBy: 'Malik' });
+    } catch (error) {
+      await tx.query('ROLLBACK').catch(() => {});
+      await pending?.catch(() => {});
+      throw error;
     } finally { tx.release(); }
   });
 
