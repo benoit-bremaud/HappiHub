@@ -1,55 +1,39 @@
-# Local review — HappiHub (branch diff main...HEAD, #395)
+# Local review — HappiHub (branch diff main...HEAD, #390)
 
 - Date: 2026-11-06
-- Commit: 440f76e (round 2) + round 2 fixes
+- Commit: 1a663e3
 - Scope: branch diff `origin/main...HEAD` (`--push`)
-- Checks run: adversarial (Opus, 2 rounds) · design + docs + security (test-auditor brief) · tests (test-auditor) · correctness (adversarial, suite runs)
-- Verdict: ship · Must 2 (fixed) · Should 9 (fixed or filed) · Nice 8 (7 fixed, 1 kept)
+- Checks run: adversarial (Opus, 2 rounds, covering design, docs, tests, security and correctness for a one-line fix) · suite runs · gitleaks
+- Verdict: ship · Must 0 · Should 2 (fixed) · Nice 1 (fixed)
 
 ## Adversarial review (#236)
-- Round 1 on `e6cd13d`: Must 2 · Should 6 · Nice 6 · unverified 0 · Push gate: closed
-- Round 2 on `440f76e`: 14 fixed · 1 not fixed (Nice, intentional) · 0 regressed · new Must 0 · **Push gate: open**
+- Round 1 on `db7dc61`: Must 0 · Should 2 · Nice 1 · unverified 2 · Push gate: open
+- Round 2 on `1a663e3`: 3 fixed · 0 not fixed · 0 regressed · new Must 0 · **Push gate: open**
 - Hosted reviewers (filled at the pre-merge run): Copilot pending · Codex not used
 
-## Pre-merge gate (head SHA pending push)
+## Pre-merge gate (head SHA 1a663e3)
 | Step | Result |
 |---|---|
-| 0 CI mirror | quality-tests.yml: tools unittest ✅ · server jest + coverage ✅ 168 · client jest + coverage ✅ 122 · client build ✅ (inside the e2e run); local Node 22.21.1 vs CI 22.23.3 (patch difference, not code under change) |
-| 1 Tests | ✅ server 168 unit · ✅ client 122 · integration ⏸ pre-merge run (no server change) |
-| 2 Coverage | ⏸ deferred to the pre-merge run (`--push`) |
+| 0 CI mirror | `quality-tests.yml`: collector tests OK · server jest with coverage 168/168 · client tests with coverage 123/123 (Node 22.23.3) · client build OK |
+| 1 Tests | ✅ server unit 168 · client 123 · integration ⏸ pre-merge run |
+| 2 Coverage | client 93.84 % stmts / 84.79 % branches / 94.69 % funcs / 96.89 % lines · docs ⏸ pre-merge run |
 | 3 SonarQube | ⏸ deferred to the pre-merge run (`--push`) |
-| 4 Secrets | ✅ gitleaks clean (`origin/main..HEAD`) · no tracked .env · diff read: nothing sensitive (passwords generated per run, traces off) |
-| 5 E2E/smoke | ✅ 6/6 (S1–S2, J-E2E-1 to J-E2E-4) on the local prod build, `npm test` in e2e/; formally recorded at the pre-merge run |
-- Gate: `--push`: **pre-push green** — steps 2 and 3 deferred (never GREEN)
+| 4 Secrets | ✅ gitleaks clean (`origin/main..HEAD`) · no tracked .env · diff read: nothing sensitive |
+| 5 E2E/smoke | ⏸ deferred to the pre-merge run (`--push`) |
+- Gate: `--push`: **pre-push green**; SonarQube, integration, E2E and doc coverage deferred (not GREEN)
 
 ## 🔴 Must Have
-- `docs/architecture/specs/e2e-smoke-tests.md:62` `[adversarial|docs]` · spec and diagram described a `globalTeardown.js`, `client/build` and an outdated § 6 · fixed in 440f76e
-- `PROJECT_LOG.md`, `docs/HANDOVER.md`, `docs/WORK_PLAN.md`, `docs/changelog/CHANGELOG.md` `[adversarial|docs]` · not updated · fixed in 440f76e
+_None._
 
 ## 🟡 Should Have
-- `e2e/globalSetup.js` `[adversarial|tests]` · setup failures hid their cause (API log deleted, migration error swallowed) · fixed
-- `e2e/support/paths.js:2` `[adversarial]` · `URL.pathname` broke paths with spaces · fixed (`fileURLToPath`); POSIX only documented
-- `e2e/playwright.config.js:15` `[adversarial|security|tests]` · traces recorded typed passwords · fixed (`trace: 'off'`)
-- `e2e/tests/smoke.spec.js:6` `[adversarial|tests]` · S1 did not check the anonymous body · fixed
-- `docs/architecture/diagrams/e2e-smoke-tests/01-deployment.md:11` `[adversarial]` · API binds every interface · diagram fixed, follow-up #401
-- `AGENTS.md:57` `[adversarial|docs]` · missing e2e verified command · fixed
-- `e2e/globalSetup.js:84` `[adversarial]` · `DATABASE_URL_DEV_FILE` from a developer env could redirect migrations · fixed (set empty)
-- spec § 8 / N7 `[adversarial]` · promised follow-ups not filed · filed #400, #401 (and #402)
-- `docs/changelog/CHANGELOG.md:9` `[adversarial]` · intro list lacked #395 · fixed
+- `docs/architecture/specs/association-stale-error.md:23` `[adversarial]` · D1 totals for B and C were 425/400 instead of 430/405 · fixed in `1a663e3` (ranking unchanged).
+- `client/src/accounts/pages.test.jsx:289` `[adversarial|tests]` · test passed even if the second action failed · now asserts the DELETE was sent and no alert remains.
 
 ## 🔵 Nice to Have
-- `e2e/serveBuild.js:15` `[tests|security]` · malformed URL crashed the server; missing assets served index.html · fixed (400 / 404)
-- `e2e/globalSetup.js:40` `[adversarial]` · in-place `reverse()` on double teardown · fixed (`splice`)
-- `e2e/tests/smoke.spec.js:16` · loose agenda predicate · fixed
-- `e2e/tests/journeys/events.spec.js:38` · `.first()` city pick · fixed (exact Lyon)
-- `docs/architecture/specs/test-environment.md:223` · stale "E2E deferred" · fixed
-- `CONTRIBUTING.md:38`, `e2e/globalSetup.js:39,58` · POSIX note, `error.message` fallback, SIGTERM 143 · fixed
-- `sonar-project.properties` `[tests]` · tooling files counted as tests · kept: they are test tooling, not sources
+- `docs/WORK_PLAN.md:211` `[docs]` · candidate list dated 2026-11-05 · re-dated 2026-11-06.
 
 ## ⚪ Disagree / Intentional
-- `e2e/tests/journeys/agenda.spec.js:8` · E15 absence check is weak (no start date) · kept, E19 check is meaningful
-- `e2e/playwright.config.js`, `e2e/globalSetup.js` · default exports · Playwright requires them; named exports also provided (spec N5)
-- API in DEV tier · decision D5 A validated by the owner
+- `client/src/accounts/AssociationPage.jsx:111` `[adversarial]` · the error stays when the dialog is cancelled · option C was rejected for that reason (spec D1).
 
 ## Per-dimension summary
-- Adversarial: 2 Must on stale docs, fixed; round 2 open · Design: proportional, one ~110-line setup · Docs: spec, diagrams, AGENTS, CONTRIBUTING, log aligned · Tests: 6 focused checks, role-based selectors · Security: traversal guarded, secrets per run, traces off · Correctness: 6/6 green, clean teardown incl. Ctrl-C
+- Adversarial: 0 Must in both rounds. Out-of-scope page-level persistence after profile/invitation success filed as #404. · Design: one state reset, no new structure · Docs: spec, log, handover, plan and changelog aligned · Tests: refusal-then-success test fails without the fix · Security: client-only state reset, no new surface · Correctness: no ordering or race issue introduced.
