@@ -108,6 +108,7 @@ export const AssociationPage = () => {
     const { ok, data } = await send(pending.path, pending.method, pending.payload);
     setBusy(false); setPending(null);
     if (!ok) { setMessage({ error: true, text: data.message ?? 'Action failed.' }); return; }
+    setMessage(null);
     pending.after();
   };
   const closed = association.status === 'CLOSED';
