@@ -91,19 +91,22 @@ const lockMemberWrite = async (client, accountId, association, { exclusive = fal
 };
 
 /** An event of this association, locked for the transaction; another association's id is 404 (BC19). */
-const lockEvent = async (client, cipher, association, id) => {
-  const { rows: [row] } = await client.query(
-    `SELECT ${EVENT_COLUMNS} FROM ${EVENT_SOURCE} WHERE e.id = $1 AND e.association_id = $2 FOR UPDATE OF e`,
-    [id, association.id]);
-  if (!row) throw notFound();
-  return toEvent(cipher, row);
-};
-
 const findEvent = async (db, cipher, association, id) => {
   const { rows: [row] } = await db.query(
     `SELECT ${EVENT_COLUMNS} FROM ${EVENT_SOURCE} WHERE e.id = $1 AND e.association_id = $2`, [id, association.id]);
   if (!row) throw notFound();
   return toEvent(cipher, row);
+};
+
+/**
+ * Locks the event row, then reads it in a new statement (#374): after waiting on the lock,
+ * PostgreSQL re-checks only the locked row, so a joined editor would be stale and come back NULL.
+ */
+const lockEvent = async (client, cipher, association, id) => {
+  const { rowCount } = await client.query(
+    'SELECT 1 FROM event WHERE id = $1 AND association_id = $2 FOR UPDATE', [id, association.id]);
+  if (!rowCount) throw notFound();
+  return findEvent(client, cipher, association, id);
 };
 
 /** Member view of the event as written by this transaction. */

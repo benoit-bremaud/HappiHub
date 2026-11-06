@@ -14,6 +14,15 @@ const EVENTS = '/api/associations/troupe/events';
 const future = () => new Date(clock.now + 7 * DAY).toISOString();
 const complete = () => ({ title: 'Concert', type: 'CONCERT', shortDescription: 'Live music', startsAt: future(),
   venueLabel: 'Salle des fêtes', venueCity: '69123' });
+const waitForLockWait = async () => {
+  for (let i = 0; i < 200; i += 1) {
+    const { rows } = await pool.query(
+      "SELECT 1 FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database() AND pid <> pg_backend_pid()");
+    if (rows.length) return;
+    await new Promise((resolve) => { setTimeout(resolve, 10); });
+  }
+  throw new Error('no session ever waited on a lock');
+};
 const row = async (id) => (await pool.query('SELECT * FROM event WHERE id = $1', [id])).rows[0];
 const activity = async (action) =>
   (await pool.query('SELECT * FROM activity_entry WHERE action = $1 ORDER BY occurred_at', [action])).rows;
@@ -121,6 +130,24 @@ describe('UC16/UC17 edit (BC3–BC7)', () => {
     const loserClient = winner.lastEditedBy === 'Claire' ? malik : claire;
     const resolved = await loserClient.patch(`${EVENTS}/${event.id}`, { baseVersion: 2, changes: { title: 'Agreed' } });
     expect(resolved.body).toMatchObject({ title: 'Agreed', version: 3 });
+  });
+
+  test('a save that waited on the event lock reports the committed editor, not a stale join (AC374-1)', async () => {
+    const { claire, malik } = await twoMembers();
+    const event = await create(claire);
+    const tx = await pool.connect();
+    try {
+      await tx.query('BEGIN');
+      await tx.query("UPDATE event SET title = 'Malik', version = 2, last_edited_by = $2 WHERE id = $1",
+        [event.id, await accountId(pool, 'malik@example.org')]);
+      const pending = claire.patch(`${EVENTS}/${event.id}`,
+        { baseVersion: 1, changes: { title: 'Claire' }, base: { title: 'Concert' } });
+      await waitForLockWait();
+      await tx.query('COMMIT');
+      const response = await pending;
+      expect(response.status).toBe(409);
+      expect(response.body.details).toMatchObject({ version: 2, lastEditedBy: 'Malik' });
+    } finally { tx.release(); }
   });
 
   test('clearing a required field of a published event answers 422 and changes nothing (BC6)', async () => {

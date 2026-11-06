@@ -7,6 +7,13 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-11-06
 
+- **#374 conflict details lose the editor name** (branch `fix/374-conflict-editor-name`).
+  Cause confirmed by a deterministic test: after waiting on `FOR UPDATE OF e`, PostgreSQL
+  re-checks only the locked event row, the joined editor stays stale and the `LEFT JOIN` gives
+  `NULL`. Conception [event-lock-editor-reread](docs/architecture/specs/event-lock-editor-reread.md)
+  validated by the owner on 2026-11-06: A lock with `SELECT 1 … FOR UPDATE`, then read in a new
+  statement (455/500; scalar subquery 405, REPEATABLE READ + retry 295, lock the editor too 185).
+  The AC374-1 test fails without the fix; server 168/168, integration 227 passed, 1 todo.
 - **#373 integration suite in CI** (branch `ci/373-integration-suite-postgresql`). Conception
   [ci-integration-suite](docs/architecture/specs/ci-integration-suite.md) validated by the owner
   on 2026-11-06 with the authorization to change the workflow: D1 A separate `integration` job
