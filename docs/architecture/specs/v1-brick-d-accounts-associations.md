@@ -288,6 +288,6 @@ Gaps found while implementing brick D. Benoît validated the "Implemented" colum
 | A-D5 | Members see each other's email in the member list | Kept (needed to identify co-organizers) | Display names only |
 
 Follow-ups outside brick D: a real password blocklist (current list is a short placeholder),
-running `npm run test:integration` in CI (`quality-tests.yml` needs owner authorization), a
+running `npm run test:integration` in CI (done by #373), a
 least-privilege PostgreSQL application role, and the T11a email transport (production start is
 refused until then).

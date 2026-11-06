@@ -61,9 +61,12 @@ A 450). Recommendation: **A**.
 ```
 
 - Same permissions (`contents: read`), same action pins, no secret.
-- The image digest is now in three places (globalSetup, docker-compose, workflow); Dependabot
-  docker does not see workflow service images, so a bump must update all three (noted in
-  CONTRIBUTING.md next to the integration command).
+- The image digest is pinned in several files (both harnesses, both compose files, the
+  workflow); no automated bump exists, so a bump updates every hit of `git grep -n 'postgres:17.6-alpine@sha256'`
+  together (noted in CONTRIBUTING.md next to the integration command).
+- A main-push run is eligible for the SonarQube collector only when the whole workflow
+  succeeds (`docs/SONARQUBE.md`), which now includes the `integration` job: a red integration
+  job means no scan for that SHA. This is intended.
 - Out of scope: uploading `coverage/integration/lcov.info` to the coverage artifact
   (the SonarQube collector contract is unchanged), the E2E job (#400).
 
@@ -72,7 +75,8 @@ A 450). Recommendation: **A**.
 1. On every push and pull request, a job named `integration` runs `npm run test:integration`
    against the service and fails when a test fails or branch coverage drops below 80 %.
 2. The service uses exactly the image digest of `globalSetup.cjs`.
-3. No container is started by `globalSetup` in CI (the `TEST_DATABASE_URL` path is taken).
+3. No container is started by `globalSetup` in CI (the `TEST_DATABASE_URL` path is taken;
+   checked by reading the job's `env`, since a missing URL would fall back to `docker run`).
 4. Local check: the same command passes with Node 22.23.3 against a manually started
    container of that digest through `TEST_DATABASE_URL`.
 5. The job is green on the pull request.

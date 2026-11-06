@@ -81,7 +81,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        # Same digest as server/tests/integration/globalSetup.cjs and docker-compose.yml.
+        # Same digest as every other postgres:17.6-alpine pin (git grep the digest).
         image: postgres:17.6-alpine@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
         env:
           # Disposable CI-only database, not a secret.
