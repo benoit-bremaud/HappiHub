@@ -35,7 +35,7 @@ or raw private inventories. Test against isolated synthetic data, never producti
 From server/: `npm test -- --runInBand` and `npm run test:integration`.
 From client/: `CI=true npm test -- --watchAll=false --runInBand` and `npm run build`
 (on PowerShell set `$env:CI='true'` first). Run the appropriate checks before pushing.
-From e2e/ (Docker required, `npm ci --ignore-scripts` done in client/ and server/; first time:
+From e2e/ (Linux/macOS, Docker required, `npm ci --ignore-scripts` done in client/ and server/; first time:
 `npm ci --ignore-scripts && npx playwright install chromium`): `npm test` builds the production
 client, starts the API on a disposable PostgreSQL with the demo seed, and runs the smoke and E2E
 suites ([spec](docs/architecture/specs/e2e-smoke-tests.md)); `npm run smoke` runs the smoke suite

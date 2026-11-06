@@ -20,7 +20,9 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   endpoint needs the web Origin, flaky `ERR_NETWORK_CHANGED`, credentials file kept by the seed,
   build into `e2e/.run/build`, Playwright default exports, review fixes, API binds every
   interface). Pre-push review round 1 (adversarial, Opus): 2 Must (stale spec copies, project
-  docs not updated) fixed with the Shoulds. Gate step 5 is now covered by this command.
+  docs not updated) fixed with the Shoulds; round 2 push gate open (0 Must), its Shoulds fixed
+  (`DATABASE_URL_DEV_FILE` neutralised). Follow-ups #400 (CI job), #401 (API loopback host),
+  #402 (`URL.pathname` in server jobs). Gate step 5 is now covered by this command.
 
 ## 2026-11-05
 

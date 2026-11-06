@@ -36,7 +36,7 @@ const migrateWhenReady = async (env) => {
   let last = null;
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try { run('npm', ['run', '--silent', 'migrate'], { cwd: SERVER_DIR, env, stdio: 'pipe' }); return; }
-    catch (error) { last = error.stderr?.toString().trim().split('\n').slice(-5).join('\n'); await delay(500); }
+    catch (error) { last = error.stderr?.toString().trim().split('\n').slice(-5).join('\n') || error.message; await delay(500); }
   }
   throw new Error(`The migrations failed on the disposable PostgreSQL:\n${last}`);
 };
@@ -55,7 +55,7 @@ export const globalSetup = async () => {
     }
   };
   // Ctrl-C or a crash must not leave the container running (AC1).
-  const onExit = async () => { await teardown(); process.exit(130); };
+  const onExit = async (signal) => { await teardown(); process.exit(signal === 'SIGTERM' ? 143 : 130); };
   process.once('SIGINT', onExit);
   process.once('SIGTERM', onExit);
   try {
@@ -81,7 +81,7 @@ export const globalSetup = async () => {
     // (read by dotenv-flow, which never overrides) cannot point the run elsewhere.
     const env = { ...process.env, NODE_ENV: '',
       DATABASE_URL_DEV: `postgres://postgres:${dbPassword}@127.0.0.1:${dbPort}/${DATABASE}`,
-      DATABASE_URL_PROD: '', FIELD_KEYRING_FILE_PROD: '', FIELD_KEYRING_FILE_DEV: keyring,
+      DATABASE_URL_PROD: '', DATABASE_URL_DEV_FILE: '', SESSION_SECRET_DEV_FILE: '', FIELD_KEYRING_FILE_PROD: '', FIELD_KEYRING_FILE_DEV: keyring,
       SESSION_SECRET_DEV: randomBytes(32).toString('base64url'),
       APP_URL_DEV: WEB_URL, PORT_DEV: String(API_PORT) };
     await migrateWhenReady(env);

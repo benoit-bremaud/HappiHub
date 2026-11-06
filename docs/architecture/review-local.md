@@ -1,47 +1,55 @@
-# Local review — HappiHub (branch diff main...HEAD, #378)
+# Local review — HappiHub (branch diff main...HEAD, #395)
 
-- Date: 2026-11-05
-- Commit: 90540d2
+- Date: 2026-11-06
+- Commit: 440f76e (round 2) + round 2 fixes
 - Scope: branch diff `origin/main...HEAD` (`--push`)
-- Checks run: adversarial (Opus, 2 rounds) · design + docs (architecture-guardian) · tests (test-auditor) · security and correctness (diff read, adversarial)
-- Verdict: ship · Must 3 (fixed) · Should 7 (fixed) · Nice 7 (fixed)
+- Checks run: adversarial (Opus, 2 rounds) · design + docs + security (test-auditor brief) · tests (test-auditor) · correctness (adversarial, suite runs)
+- Verdict: ship · Must 2 (fixed) · Should 9 (fixed or filed) · Nice 8 (7 fixed, 1 kept)
 
 ## Adversarial review (#236)
-- Round 1 on `a2cc573`: Must 1 · Should 3 · Nice 2 · unverified 1 · Push gate: closed
-- Round 2 on `80903b1`: 6 fixed · 0 not fixed · 0 regressed · new Must 0 · **Push gate: open** (its 2 Should and 2 Nice fixed in `90540d2`)
-- Hosted reviewers: Copilot not enabled; Codex reviews ignored (owner rule).
+- Round 1 on `e6cd13d`: Must 2 · Should 6 · Nice 6 · unverified 0 · Push gate: closed
+- Round 2 on `440f76e`: 14 fixed · 1 not fixed (Nice, intentional) · 0 regressed · new Must 0 · **Push gate: open**
+- Hosted reviewers (filled at the pre-merge run): Copilot pending · Codex not used
 
-## Pre-merge gate (head SHA 90540d2)
+## Pre-merge gate (head SHA pending push)
 | Step | Result |
 |---|---|
-| 0 CI mirror | server unit + integration run locally as in CI |
-| 1 Tests | ✅ server unit 168 · ✅ server integration 226 (+1 todo) · client untouched |
+| 0 CI mirror | quality-tests.yml: tools unittest ✅ · server jest + coverage ✅ 168 · client jest + coverage ✅ 122 · client build ✅ (inside the e2e run); local Node 22.21.1 vs CI 22.23.3 (patch difference, not code under change) |
+| 1 Tests | ✅ server 168 unit · ✅ client 122 · integration ⏸ pre-merge run (no server change) |
 | 2 Coverage | ⏸ deferred to the pre-merge run (`--push`) |
 | 3 SonarQube | ⏸ deferred to the pre-merge run (`--push`) |
-| 4 Secrets | ✅ gitleaks clean (`origin/main..HEAD`) · no tracked .env · diff read: nothing sensitive |
-| 5 E2E/smoke | ⏸ deferred to the pre-merge run (`--push`) |
-- Gate: **pre-push green**; coverage, SonarQube and E2E deferred (not GREEN).
+| 4 Secrets | ✅ gitleaks clean (`origin/main..HEAD`) · no tracked .env · diff read: nothing sensitive (passwords generated per run, traces off) |
+| 5 E2E/smoke | ✅ 6/6 (S1–S2, J-E2E-1 to J-E2E-4) on the local prod build, `npm test` in e2e/; formally recorded at the pre-merge run |
+- Gate: `--push`: **pre-push green** — steps 2 and 3 deferred (never GREEN)
 
 ## 🔴 Must Have
-- `server/services/accounts.js` `ORDER BY id` vs `server/jobs/maintenance.js` purge and `requestPasswordReset` `[adversarial|design]` · token-against-token deadlock (random UUID order vs physical order) · fixed in `80903b1`: purge `SKIP LOCKED`, reset locks first (conception revalidated, D1 A).
-- `docs/architecture/specs/account-token-lock-order.md` R6 `[design]` · false "cannot form a cycle" claim · fixed in `80903b1` (R6, R7).
-- `server/tests/integration/lockOrder.test.js` AC378-1 + `PROJECT_LOG.md` `[design|tests|adversarial]` · RESET token did not reproduce the L6 cycle; log over-claimed · fixed in `80903b1` (VERIFY token, red verified on origin/main).
+- `docs/architecture/specs/e2e-smoke-tests.md:62` `[adversarial|docs]` · spec and diagram described a `globalTeardown.js`, `client/build` and an outdated § 6 · fixed in 440f76e
+- `PROJECT_LOG.md`, `docs/HANDOVER.md`, `docs/WORK_PLAN.md`, `docs/changelog/CHANGELOG.md` `[adversarial|docs]` · not updated · fixed in 440f76e
 
 ## 🟡 Should Have
-- `server/services/accounts.js` `deleteAccountRow` `[design]` · lock contract only in a comment · fixed (lock moved inside, D2 A).
-- `docs/changelog/CHANGELOG.md` `[design]` · over-broad race list · fixed.
-- `lockOrder.test.js` `[tests|adversarial]` · connection left in an open transaction on failure · fixed (`holding()` rollback).
-- AC378-3 L4 `ORDER BY id` not asserted `[tests]` · fixed (`lockAccountTokens` SQL unit test, all sites use it).
-- Spec R7 trigger `[adversarial r2]` · wrong trigger · fixed in `90540d2`, owner re-confirmed acceptance.
-- Spec AC378-3 SKIP LOCKED unit claim `[adversarial r2]` · fixed (covered by AC378-5).
-- `deleteAccount` doc `[adversarial]` · no longer applies after D2 A.
+- `e2e/globalSetup.js` `[adversarial|tests]` · setup failures hid their cause (API log deleted, migration error swallowed) · fixed
+- `e2e/support/paths.js:2` `[adversarial]` · `URL.pathname` broke paths with spaces · fixed (`fileURLToPath`); POSIX only documented
+- `e2e/playwright.config.js:15` `[adversarial|security|tests]` · traces recorded typed passwords · fixed (`trace: 'off'`)
+- `e2e/tests/smoke.spec.js:6` `[adversarial|tests]` · S1 did not check the anonymous body · fixed
+- `docs/architecture/diagrams/e2e-smoke-tests/01-deployment.md:11` `[adversarial]` · API binds every interface · diagram fixed, follow-up #401
+- `AGENTS.md:57` `[adversarial|docs]` · missing e2e verified command · fixed
+- `e2e/globalSetup.js:84` `[adversarial]` · `DATABASE_URL_DEV_FILE` from a developer env could redirect migrations · fixed (set empty)
+- spec § 8 / N7 `[adversarial]` · promised follow-ups not filed · filed #400, #401 (and #402)
+- `docs/changelog/CHANGELOG.md:9` `[adversarial]` · intro list lacked #395 · fixed
 
 ## 🔵 Nice to Have
-- Unit `.catch(() => {})`, `test.each`, code comments for R3/R2, HANDOVER #368 link, deterministic second waiter, exact `tokensPurged` · all fixed. `.then((r) => r)` kept: it sends the supertest request immediately.
+- `e2e/serveBuild.js:15` `[tests|security]` · malformed URL crashed the server; missing assets served index.html · fixed (400 / 404)
+- `e2e/globalSetup.js:40` `[adversarial]` · in-place `reverse()` on double teardown · fixed (`splice`)
+- `e2e/tests/smoke.spec.js:16` · loose agenda predicate · fixed
+- `e2e/tests/journeys/events.spec.js:38` · `.first()` city pick · fixed (exact Lyon)
+- `docs/architecture/specs/test-environment.md:223` · stale "E2E deferred" · fixed
+- `CONTRIBUTING.md:38`, `e2e/globalSetup.js:39,58` · POSIX note, `error.message` fallback, SIGTERM 143 · fixed
+- `sonar-project.properties` `[tests]` · tooling files counted as tests · kept: they are test tooling, not sources
 
 ## ⚪ Disagree / Intentional
-- `deleteAccountRow` double lock inside the purge · no-op in the same transaction (R4, D2 A).
-- CHANGELOG lists #378 under merged before merge · precedent `d16b283`.
+- `e2e/tests/journeys/agenda.spec.js:8` · E15 absence check is weak (no start date) · kept, E19 check is meaningful
+- `e2e/playwright.config.js`, `e2e/globalSetup.js` · default exports · Playwright requires them; named exports also provided (spec N5)
+- API in DEV tier · decision D5 A validated by the owner
 
 ## Per-dimension summary
-- Adversarial: one real regression found and reproduced, fixed and verified · Design: helper proportionate, no over-engineering · Docs: claims now match code · Tests: deterministic red/green races · Security: parameterized SQL, nothing sensitive · Correctness: unit 168, integration 226.
+- Adversarial: 2 Must on stale docs, fixed; round 2 open · Design: proportional, one ~110-line setup · Docs: spec, diagrams, AGENTS, CONTRIBUTING, log aligned · Tests: 6 focused checks, role-based selectors · Security: traversal guarded, secrets per run, traces off · Correctness: 6/6 green, clean teardown incl. Ctrl-C

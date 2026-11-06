@@ -126,7 +126,7 @@ Playwright traces are off because they would record the typed values; only failu
   instead of "not covered".
 - `.gitignore` adds `e2e/test-results/`, `e2e/playwright-report/` and `e2e/.run/`.
 - SonarQube: `e2e/` is test code (`sonar.tests`), excluded from coverage.
-- Follow-up issue (not this brick): run the suite in GitHub CI (needs CI/CD authorization).
+- Follow-up issue #400 (not this brick): run the suite in GitHub CI (needs CI/CD authorization).
 
 ## 9. Decisions (MCDA)
 
@@ -227,5 +227,5 @@ Gaps found while coding; none changes a decision or production code.
   answers 400 to a malformed URL and 404 to a missing asset; paths use `fileURLToPath`, so a
   checkout path with spaces works. The command is POSIX only (Linux/macOS, as the Docker harness).
 - **N7 (API binding)**: the API listens on every interface during a run, because `server.js`
-  takes no host setting; a loopback-only option is a follow-up issue, not this brick.
+  takes no host setting; a loopback-only option is follow-up #401, not this brick.
 - Playwright is pinned to 1.64.1 (released 2026-10-14) with its own lockfile in `e2e/`.
