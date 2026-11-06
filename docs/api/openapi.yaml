@@ -1,0 +1,1200 @@
+openapi: 3.1.0
+info:
+  title: HappiHub API
+  version: 1.0.0
+  summary: Accounts, associations and event lifecycle API of HappiHub.
+  description: >
+    Machine-readable contract of the HappiHub backend (bricks D and B, public agenda).
+    The narrative guide is docs/API_DOCUMENTATION.md; the behavior source of truth is the
+    brick D and brick B specifications under docs/architecture/specs/. A server test
+    (server/tests/unit/openapiContract.test.js) fails when the routes and this file diverge.
+
+
+    Transport rules for every `/api` request: the session is an HttpOnly cookie (no bearer
+    token). Every write (POST, PATCH, DELETE) sends the CSRF token from `GET /api/session`
+    in `X-CSRF-Token` and comes from the configured Origin, otherwise `403`. A write with a
+    body must be `application/json`, otherwise `415`. Responses carry
+    `Cache-Control: no-store` and `Referrer-Policy: no-referrer`. Rate limits are
+    process-local and answer `429` with `Retry-After` (seconds).
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: /
+    description: Same origin as the client; API paths start with /api.
+tags:
+  - name: Session
+  - name: Accounts
+  - name: Associations
+  - name: Invitations
+  - name: Events
+    description: Member event lifecycle (brick B), errors use the coded envelope.
+  - name: Public
+    description: No session required.
+  - name: Operations
+paths:
+  /ready:
+    get:
+      tags: [Operations]
+      operationId: getReady
+      summary: Readiness probe (database reachable)
+      responses:
+        '200':
+          description: Ready.
+          content:
+            application/json:
+              schema: { type: object, required: [ready], properties: { ready: { const: true } } }
+        '503':
+          description: Database unreachable.
+          content:
+            application/json:
+              schema: { type: object, required: [ready], properties: { ready: { const: false } } }
+
+  /api/session:
+    get:
+      tags: [Session]
+      operationId: getSession
+      summary: Bootstrap a visit; returns the signed-in account or null, and the CSRF token
+      description: Rate-limited (bootstrap). Answers 403 when the Origin is not the configured one.
+      responses:
+        '200':
+          description: Anonymous or signed-in session.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [account, csrfToken]
+                properties:
+                  account: { oneOf: [{ $ref: '#/components/schemas/Account' }, { type: 'null' }] }
+                  csrfToken: { type: string }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Session]
+      operationId: signIn
+      summary: Sign in
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email, password]
+              properties: { email: { type: string, format: email }, password: { type: string } }
+      responses:
+        '200':
+          description: Signed in; a new session cookie is set.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [account, csrfToken]
+                properties:
+                  account: { $ref: '#/components/schemas/Account' }
+                  csrfToken: { type: string }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401':
+          description: Neutral refusal for an unknown email, a wrong password or an unverified email.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    delete:
+      tags: [Session]
+      operationId: signOut
+      summary: Sign out
+      security: [{ session: [], csrf: [] }]
+      responses:
+        '204': { description: Session destroyed and cookie cleared. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/signup:
+    post:
+      tags: [Accounts]
+      operationId: signUp
+      summary: Create an account (UC1); same answer whether or not the email exists
+      description: >
+        Without `associationName` it is an invitee sign-up (UC11 3a). No session is opened.
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+                associationName: { type: string, minLength: 2, maxLength: 100 }
+      responses:
+        '202':
+          description: Check your inbox.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message, similarAssociation]
+                properties:
+                  message: { type: string }
+                  similarAssociation: { type: boolean, description: True when an association with a similar name exists (always false without associationName). }
+        '400': { $ref: '#/components/responses/InvalidField' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /api/email-verification:
+    post:
+      tags: [Accounts]
+      operationId: verifyEmail
+      summary: Verify an email with the token from the link fragment (UC2); never opens a session
+      security: [{ session: [], csrf: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Token' }
+      responses:
+        '200':
+          description: Verified; `signedIn` is true when the current session is the verified account.
+          content:
+            application/json:
+              schema: { type: object, required: [signedIn], properties: { signedIn: { type: boolean } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/email-verification/resend:
+    post:
+      tags: [Accounts]
+      operationId: resendVerification
+      summary: Resend the verification email (neutral answer)
+      security: [{ session: [], csrf: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Email' }
+      responses:
+        '202': { $ref: '#/components/responses/CheckInbox' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/password-reset:
+    post:
+      tags: [Accounts]
+      operationId: requestPasswordReset
+      summary: Request a password reset email (UC3, neutral answer)
+      security: [{ session: [], csrf: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Email' }
+      responses:
+        '202': { $ref: '#/components/responses/CheckInbox' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/password-reset/confirm:
+    post:
+      tags: [Accounts]
+      operationId: confirmPasswordReset
+      summary: Set a new password (UC3); revokes other sessions, verifies the email and signs in
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [token, password]
+              properties: { token: { type: string, maxLength: 100 }, password: { type: string } }
+      responses:
+        '200':
+          description: Password changed; a new session cookie is set.
+          content:
+            application/json:
+              schema: { type: object, required: [csrfToken], properties: { csrfToken: { type: string } } }
+        '400': { $ref: '#/components/responses/InvalidField' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /api/account:
+    get:
+      tags: [Accounts]
+      operationId: getAccount
+      summary: Signed-in account with memberships, pending invitations and sole memberships (UC4)
+      security: [{ session: [] }]
+      responses:
+        '200':
+          description: Account.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Account'
+                  - type: object
+                    required: [soleMemberOf]
+                    properties:
+                      soleMemberOf:
+                        type: array
+                        items: { $ref: '#/components/schemas/AssociationRef' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    patch:
+      tags: [Accounts]
+      operationId: updateAccount
+      summary: Update the profile (UC4); email or password changes need `currentPassword`
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                displayName: { type: string, maxLength: 100 }
+                email: { type: string, format: email }
+                newPassword: { type: string }
+                currentPassword: { type: string }
+      responses:
+        '200':
+          description: Updated account.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Account' } } }
+        '400': { $ref: '#/components/responses/InvalidField' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    delete:
+      tags: [Accounts]
+      operationId: deleteAccount
+      summary: Delete the account (UC6)
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [password, confirm]
+              properties: { password: { type: string }, confirm: { const: true } }
+      responses:
+        '204': { description: Account deleted and session cleared. }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/account/export:
+    get:
+      tags: [Accounts]
+      operationId: exportAccount
+      summary: Download the personal data export (UC5), 3 per day per account
+      security: [{ session: [] }]
+      responses:
+        '200':
+          description: JSON attachment (`Content-Disposition attachment; filename="happihub-export.json"`).
+          headers:
+            Content-Disposition: { schema: { type: string } }
+          content: { application/json: { schema: { type: object } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /api/associations:
+    post:
+      tags: [Associations]
+      operationId: createAssociation
+      summary: Create an association (UC1 1b); at most 5 created per account
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [name]
+              properties: { name: { type: string, minLength: 2, maxLength: 100 } }
+      responses:
+        '201':
+          description: Created.
+          content: { application/json: { schema: { $ref: '#/components/schemas/AssociationRef' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}:
+    parameters: [{ $ref: '#/components/parameters/Slug' }]
+    get:
+      tags: [Associations]
+      operationId: getAssociation
+      summary: Association profile and members (UC7), members only
+      security: [{ session: [] }]
+      responses:
+        '200':
+          description: Association.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Association' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    patch:
+      tags: [Associations]
+      operationId: updateAssociation
+      summary: Update the profile text fields (UC7); only the fields sent change, the slug never changes
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                name: { type: string, minLength: 2, maxLength: 100 }
+                city: { type: [string, 'null'], maxLength: 100, description: An empty string is stored as null. }
+                presentation: { type: [string, 'null'], maxLength: 2000, description: An empty string is stored as null. }
+                websiteUrl: { type: [string, 'null'], maxLength: 300, pattern: '^(https?://.+)?$', description: http or https URL; an empty string is stored as null. }
+                contactEmail: { anyOf: [{ type: string, format: email }, { const: '' }, { type: 'null' }], description: An empty string is stored as null. }
+      responses:
+        '204': { description: Updated (no body). }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}/close:
+    parameters: [{ $ref: '#/components/parameters/Slug' }]
+    post:
+      tags: [Associations]
+      operationId: closeAssociation
+      summary: Close the association (UC8), only by its last member
+      security: [{ session: [], csrf: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Confirm' }
+      responses:
+        '204': { description: Closed. }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}/leave:
+    parameters: [{ $ref: '#/components/parameters/Slug' }]
+    post:
+      tags: [Associations]
+      operationId: leaveAssociation
+      summary: Leave the association (UC12); never leaves it without a member
+      security: [{ session: [], csrf: [] }]
+      responses:
+        '204': { description: Left. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}/members/{accountId}:
+    parameters:
+      - $ref: '#/components/parameters/Slug'
+      - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      tags: [Associations]
+      operationId: removeMember
+      summary: Remove a member (UC12); the removed member is emailed
+      security: [{ session: [], csrf: [] }]
+      responses:
+        '204': { description: Removed. }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}/invitations:
+    parameters: [{ $ref: '#/components/parameters/Slug' }]
+    get:
+      tags: [Invitations]
+      operationId: listInvitations
+      summary: Pending invitations (UC10)
+      security: [{ session: [] }]
+      responses:
+        '200':
+          description: Pending invitations.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [invitations]
+                properties:
+                  invitations:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, email, expiresAt]
+                      properties:
+                        id: { type: string, format: uuid }
+                        email: { type: string, format: email }
+                        expiresAt: { type: string, format: date-time }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    post:
+      tags: [Invitations]
+      operationId: createInvitation
+      summary: Invite an email (UC10); verified inviter, 10 per association per day
+      security: [{ session: [], csrf: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Email' }
+      responses:
+        '201':
+          description: Invitation created and emailed.
+          content: { application/json: { schema: { $ref: '#/components/schemas/InvitationSent' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}/invitations/{id}:
+    parameters: [{ $ref: '#/components/parameters/Slug' }, { $ref: '#/components/parameters/Id' }]
+    delete:
+      tags: [Invitations]
+      operationId: revokeInvitation
+      summary: Revoke an invitation (UC10 3a); the link stops at once
+      security: [{ session: [], csrf: [] }]
+      responses:
+        '204': { description: Revoked. }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}/invitations/{id}/resend:
+    parameters: [{ $ref: '#/components/parameters/Slug' }, { $ref: '#/components/parameters/Id' }]
+    post:
+      tags: [Invitations]
+      operationId: resendInvitation
+      summary: Resend with a new token (UC10); counts in the daily quota
+      security: [{ session: [], csrf: [] }]
+      responses:
+        '200':
+          description: Invitation re-sent.
+          content: { application/json: { schema: { $ref: '#/components/schemas/InvitationSent' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /api/invitations/lookup:
+    post:
+      tags: [Invitations]
+      operationId: lookupInvitation
+      summary: Describe an invitation from its link token (UC11); every invalid case is the same 410
+      security: [{ session: [], csrf: [] }]
+      requestBody: { $ref: '#/components/requestBodies/Token' }
+      responses:
+        '200':
+          description: Valid invitation.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [associationName, associationSlug, email]
+                properties:
+                  associationName: { type: string }
+                  associationSlug: { type: string }
+                  email: { type: string, format: email }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/invitations/accept:
+    post:
+      tags: [Invitations]
+      operationId: acceptInvitation
+      summary: Join with a link token or a pending invitation id of the same verified address (UC11)
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  additionalProperties: false
+                  required: [token]
+                  properties: { token: { type: string, maxLength: 100 } }
+                - type: object
+                  additionalProperties: false
+                  required: [invitationId]
+                  properties: { invitationId: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Joined.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, associationSlug]
+                properties: { status: { const: JOINED }, associationSlug: { type: string } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /api/associations/{slug}/events:
+    parameters: [{ $ref: '#/components/parameters/Slug' }]
+    get:
+      tags: [Events]
+      operationId: listEvents
+      summary: Events of the association (UC16), members only, most recently updated first
+      security: [{ session: [] }]
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/EventStatus' } }
+      responses:
+        '200':
+          description: Event summaries.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events]
+                properties:
+                  events: { type: array, items: { $ref: '#/components/schemas/EventSummary' } }
+        '400': { $ref: '#/components/responses/CodedError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/CodedNotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    post:
+      tags: [Events]
+      operationId: createEvent
+      summary: Create a DRAFT at version 1 (UC15); 20 per association per 24 h (429 EVENT_QUOTA)
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/EventFields'
+                - required: [title, type]
+      responses:
+        '201': { $ref: '#/components/responses/MemberEvent' }
+        '400': { $ref: '#/components/responses/CodedError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/CodedNotFound' }
+        '409': { $ref: '#/components/responses/CodedConflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}/events/{id}:
+    parameters: [{ $ref: '#/components/parameters/Slug' }, { $ref: '#/components/parameters/Id' }]
+    get:
+      tags: [Events]
+      operationId: readEvent
+      summary: Full member view of an event (UC16)
+      security: [{ session: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/MemberEvent' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/CodedNotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    patch:
+      tags: [Events]
+      operationId: editEvent
+      summary: Save changes with the three-way merge (UC16, UC17)
+      description: >
+        With `baseVersion` equal to the current version the changes apply. Otherwise each
+        changed field needs its original value in `base` (400 BASE_REQUIRED); a field still
+        equal to it applies, else 409 EDIT_CONFLICT with `details.conflicts`.
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [baseVersion, changes]
+              properties:
+                baseVersion: { type: integer, minimum: 1 }
+                changes: { allOf: [{ $ref: '#/components/schemas/EventFields' }], minProperties: 1 }
+                base: { $ref: '#/components/schemas/EventFields' }
+      responses:
+        '200': { $ref: '#/components/responses/MemberEvent' }
+        '400': { $ref: '#/components/responses/CodedError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/CodedNotFound' }
+        '409': { $ref: '#/components/responses/CodedConflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '422': { $ref: '#/components/responses/Refused' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}/events/{id}/publish:
+    parameters: [{ $ref: '#/components/parameters/Slug' }, { $ref: '#/components/parameters/Id' }]
+    post:
+      tags: [Events]
+      operationId: publishEvent
+      summary: Publish a draft (UC18); guard failures answer 422 PUBLICATION_REFUSED
+      security: [{ session: [], csrf: [] }]
+      requestBody: { $ref: '#/components/requestBodies/BaseVersion' }
+      responses:
+        '200': { $ref: '#/components/responses/MemberEvent' }
+        '400': { $ref: '#/components/responses/CodedError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/CodedNotFound' }
+        '409': { $ref: '#/components/responses/CodedConflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '422': { $ref: '#/components/responses/Refused' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}/events/{id}/cancel:
+    parameters: [{ $ref: '#/components/parameters/Slug' }, { $ref: '#/components/parameters/Id' }]
+    post:
+      tags: [Events]
+      operationId: cancelEvent
+      summary: Cancel a published event (UC19); final
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [baseVersion, confirm]
+              properties:
+                baseVersion: { type: integer, minimum: 1 }
+                confirm: { const: true }
+                reason: { type: [string, 'null'], maxLength: 500 }
+      responses:
+        '200': { $ref: '#/components/responses/MemberEvent' }
+        '400': { $ref: '#/components/responses/CodedError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/CodedNotFound' }
+        '409': { $ref: '#/components/responses/CodedConflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/associations/{slug}/events/{id}/delete:
+    parameters: [{ $ref: '#/components/parameters/Slug' }, { $ref: '#/components/parameters/Id' }]
+    post:
+      tags: [Events]
+      operationId: deleteEvent
+      summary: Delete a draft (UC20)
+      security: [{ session: [], csrf: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [baseVersion, confirm]
+              properties: { baseVersion: { type: integer, minimum: 1 }, confirm: { const: true } }
+      responses:
+        '204': { description: Deleted. }
+        '400': { $ref: '#/components/responses/CodedError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/CodedNotFound' }
+        '409': { $ref: '#/components/responses/CodedConflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /api/events:
+    get:
+      tags: [Public]
+      operationId: listPublicEvents
+      summary: Public agenda page (UC21), soonest first; no session
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 1 } }
+        - { name: type, in: query, schema: { $ref: '#/components/schemas/EventType' } }
+        - { name: city, in: query, description: Known INSEE commune code., schema: { type: string } }
+      responses:
+        '200':
+          description: One page of event cards.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, page, pageSize, hasMore]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/EventCard' } }
+                  page: { type: integer }
+                  pageSize: { const: 20 }
+                  hasMore: { type: boolean }
+        '400': { $ref: '#/components/responses/CodedError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/events/cities:
+    get:
+      tags: [Public]
+      operationId: listPublicCities
+      summary: Cities with at least one agenda event, sorted by name (UC21a)
+      responses:
+        '200':
+          description: Cities.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/City' } }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/events/{id}:
+    parameters: [{ $ref: '#/components/parameters/Id' }]
+    get:
+      tags: [Public]
+      operationId: readPublicEvent
+      summary: Public view of a published, cancelled or archived event
+      description: A draft, hidden, unknown or malformed id is the same 404 EVENT_NOT_FOUND.
+      responses:
+        '200':
+          description: Public event.
+          content: { application/json: { schema: { $ref: '#/components/schemas/PublicEvent' } } }
+        '404': { $ref: '#/components/responses/CodedNotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/communes:
+    get:
+      tags: [Public]
+      operationId: searchCommunes
+      summary: Commune search by INSEE code or accent-insensitive name prefix, at most 20
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 2, maxLength: 60 } }
+      responses:
+        '200':
+          description: Matching communes.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [communes]
+                properties: { communes: { type: array, items: { $ref: '#/components/schemas/City' } } }
+        '400': { $ref: '#/components/responses/CodedError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /api/comments:
+    summary: Legacy comment routes, disabled until the participation/comment brick (S3).
+    description: Every sub-path (`/api/comments/*`) and every method answer the same 503.
+    get:
+      tags: [Operations]
+      operationId: legacyCommentsGet
+      deprecated: true
+      responses: { '503': { $ref: '#/components/responses/CommentsDisabled' } }
+    post:
+      tags: [Operations]
+      operationId: legacyCommentsPost
+      deprecated: true
+      responses: { '503': { $ref: '#/components/responses/CommentsDisabled' } }
+    put:
+      tags: [Operations]
+      operationId: legacyCommentsPut
+      deprecated: true
+      responses: { '503': { $ref: '#/components/responses/CommentsDisabled' } }
+    patch:
+      tags: [Operations]
+      operationId: legacyCommentsPatch
+      deprecated: true
+      responses: { '503': { $ref: '#/components/responses/CommentsDisabled' } }
+    delete:
+      tags: [Operations]
+      operationId: legacyCommentsDelete
+      deprecated: true
+      responses: { '503': { $ref: '#/components/responses/CommentsDisabled' } }
+
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: __Host-happihub.sid
+      description: >
+        HttpOnly session cookie (`happihub.sid` outside production); idle 30 min, absolute 8 h.
+        Anonymous writes (sign-in, sign-up, email links) need the anonymous session that
+        `GET /api/session` opens, because the CSRF token is bound to it.
+    csrf:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Token from `GET /api/session`, required with the configured Origin on every write.
+
+  parameters:
+    Slug: { name: slug, in: path, required: true, schema: { type: string } }
+    Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+
+  requestBodies:
+    Token:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [token]
+            properties: { token: { type: string, maxLength: 100 } }
+    Email:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [email]
+            properties: { email: { type: string, format: email } }
+    Confirm:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [confirm]
+            properties: { confirm: { const: true } }
+    BaseVersion:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [baseVersion]
+            properties: { baseVersion: { type: integer, minimum: 1 } }
+
+  responses:
+    ServerError:
+      description: Unexpected failure; the body echoes no input.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    PayloadTooLarge:
+      description: JSON body over 100 kB.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    CommentsDisabled:
+      description: Comments are temporarily unavailable.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    CheckInbox:
+      description: Neutral answer, whether or not the email has an account.
+      content:
+        application/json:
+          schema: { type: object, required: [message], properties: { message: { type: string } } }
+    InvalidRequest:
+      description: Invalid input; `field` names the first invalid field when known.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    InvalidField:
+      description: Invalid input; `hint` describes the password rule when relevant.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: Not signed in or session expired.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: Forbidden, wrong current password, or bad CSRF token / Origin.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Not a member of the association, or unknown resource.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: State conflict (for example the last member, a closed association, a quota).
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Gone:
+      description: Invalid, expired or already used link (always the same answer).
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    UnsupportedMediaType:
+      description: A write with a body that is not `application/json`.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    TooManyRequests:
+      description: Rate limit or quota reached; event quotas add `code` EVENT_QUOTA (the body still matches Error).
+      headers:
+        Retry-After: { description: Seconds to wait., schema: { type: integer } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unavailable:
+      description: A dependency (session store, database) is unavailable.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    CodedError:
+      description: >
+        INVALID_REQUEST, UNKNOWN_FIELD, INVALID_FIELD or BASE_REQUIRED with `details.field`;
+        a malformed JSON body answers the plain envelope `{message}` without `code`.
+      content: { application/json: { schema: { $ref: '#/components/schemas/AnyError' } } }
+    CodedNotFound:
+      description: >
+        EVENT_NOT_FOUND (also for an event of another association); on member routes a
+        non-member gets the plain `{message}` envelope from the membership check first.
+      content: { application/json: { schema: { $ref: '#/components/schemas/AnyError' } } }
+    CodedConflict:
+      description: >
+        STALE_VERSION, INVALID_TRANSITION, EVENT_ENDED, EVENT_READ_ONLY, ASSOCIATION_CLOSED,
+        or EDIT_CONFLICT with `details: {conflicts: [{field, yours, theirs}], lastEditedBy, version}`.
+      content: { application/json: { schema: { $ref: '#/components/schemas/CodedError' } } }
+    Refused:
+      description: >
+        PUBLICATION_REFUSED with `details.failures` (MISSING_FIELD:<field>, EMAIL_NOT_VERIFIED,
+        START_IN_PAST), or PUBLISHED_FIELD_REQUIRED.
+      content: { application/json: { schema: { $ref: '#/components/schemas/CodedError' } } }
+    MemberEvent:
+      description: Member view of the event.
+      content: { application/json: { schema: { $ref: '#/components/schemas/MemberEvent' } } }
+
+  schemas:
+    Error:
+      description: Brick D envelope.
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+        field: { type: string }
+        hint: { type: string }
+    AnyError:
+      description: Either envelope; `code` is present when the event service answered.
+      anyOf: [{ $ref: '#/components/schemas/CodedError' }, { $ref: '#/components/schemas/Error' }]
+    CodedError:
+      description: Brick B envelope; `code` is a stable upper-case identifier.
+      type: object
+      required: [message, code]
+      properties:
+        message: { type: string }
+        code: { type: string, pattern: '^[A-Z_]+$' }
+        details: { type: object }
+    AssociationRef:
+      type: object
+      required: [name, slug]
+      properties: { name: { type: string }, slug: { type: string } }
+    Account:
+      type: object
+      required: [id, email, emailVerified, pendingEmail, displayName, associations, invitations]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        emailVerified: { type: boolean }
+        pendingEmail: { type: [string, 'null'], format: email }
+        displayName: { type: [string, 'null'] }
+        associations:
+          type: array
+          items:
+            type: object
+            required: [name, slug, status, joinedAt]
+            properties:
+              name: { type: string }
+              slug: { type: string }
+              status: { type: string, enum: [ACTIVE, CLOSED] }
+              joinedAt: { type: string, format: date-time }
+        invitations:
+          type: array
+          items:
+            type: object
+            required: [id, associationName, associationSlug]
+            properties:
+              id: { type: string, format: uuid }
+              associationName: { type: string }
+              associationSlug: { type: string }
+    Association:
+      type: object
+      required: [name, slug, city, presentation, websiteUrl, contactEmail, status, closedAt, members]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        city: { type: [string, 'null'] }
+        presentation: { type: [string, 'null'] }
+        websiteUrl: { type: [string, 'null'] }
+        contactEmail: { type: [string, 'null'] }
+        status: { type: string, enum: [ACTIVE, CLOSED] }
+        closedAt: { type: [string, 'null'], format: date-time }
+        members:
+          type: array
+          items:
+            type: object
+            required: [accountId, displayName, email, joinedAt]
+            properties:
+              accountId: { type: string, format: uuid }
+              displayName: { type: [string, 'null'] }
+              email: { type: string, format: email }
+              joinedAt: { type: string, format: date-time }
+    InvitationSent:
+      type: object
+      required: [id, email, expiresAt, link]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        expiresAt: { type: string, format: date-time }
+        link: { type: string, description: Invitation link carrying its secret token (in the URL fragment), to share with the invited address only. }
+    EventStatus: { type: string, enum: [DRAFT, PUBLISHED, CANCELLED, ARCHIVED] }
+    EventType: { type: string, enum: [THEATRE, CONCERT, EXHIBITION, WORKSHOP, DANCE, CINEMA, TALK, OTHER] }
+    City:
+      type: object
+      required: [code, name]
+      properties: { code: { type: string, description: INSEE commune code. }, name: { type: [string, 'null'] } }
+    EventFields:
+      description: Editable fields (allow-list; anything else answers 400 UNKNOWN_FIELD). Plain text only.
+      type: object
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 120 }
+        type: { $ref: '#/components/schemas/EventType' }
+        shortDescription: { type: [string, 'null'], maxLength: 280 }
+        longDescription: { type: [string, 'null'], maxLength: 10000 }
+        startsAt: { type: [string, 'null'], format: date-time }
+        endsAt: { type: [string, 'null'], format: date-time }
+        venueLabel: { type: [string, 'null'], maxLength: 200 }
+        venueAddress: { type: [string, 'null'], maxLength: 200 }
+        venueCity: { type: [string, 'null'], description: INSEE commune code (answered as a City). }
+        priceKind: { type: string, enum: [FREE, AMOUNT, PAY_WHAT_YOU_WANT] }
+        priceAmountCents: { type: [integer, 'null'], minimum: 1, maximum: 100000000 }
+        posterStyle: { type: string, enum: [classic, bold, paper, night, pastel, minimal] }
+    EventContent:
+      type: object
+      required: [id, status, title, type, startsAt, endsAt, ended, venueCity]
+      properties:
+        id: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/EventStatus' }
+        title: { type: string }
+        type: { $ref: '#/components/schemas/EventType' }
+        shortDescription: { type: [string, 'null'] }
+        longDescription: { type: [string, 'null'] }
+        startsAt: { type: [string, 'null'], format: date-time }
+        endsAt: { type: [string, 'null'], format: date-time }
+        ended: { type: boolean }
+        venueLabel: { type: [string, 'null'] }
+        venueAddress: { type: [string, 'null'] }
+        venueCity: { oneOf: [{ $ref: '#/components/schemas/City' }, { type: 'null' }] }
+        priceKind: { type: [string, 'null'] }
+        priceAmountCents: { type: [integer, 'null'] }
+        posterStyle: { type: [string, 'null'] }
+        cancellationReason: { type: [string, 'null'] }
+        publishedAt: { type: [string, 'null'], format: date-time }
+        scheduleChangedAt: { type: [string, 'null'], format: date-time }
+    MemberEvent:
+      allOf:
+        - $ref: '#/components/schemas/EventContent'
+        - type: object
+          required: [version, lastEditedBy, lastEditedByFormerMember, createdAt, updatedAt]
+          properties:
+            version: { type: integer, minimum: 1 }
+            lastEditedBy: { type: [string, 'null'], description: Display name of the last editor. }
+            lastEditedByFormerMember: { type: boolean }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+    PublicEvent:
+      allOf:
+        - $ref: '#/components/schemas/EventContent'
+        - type: object
+          required: [association]
+          properties: { association: { $ref: '#/components/schemas/AssociationRef' } }
+    EventSummary:
+      type: object
+      required: [id, title, type, status, startsAt, ended, updatedAt, lastEditedBy, lastEditedByFormerMember]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        type: { $ref: '#/components/schemas/EventType' }
+        status: { $ref: '#/components/schemas/EventStatus' }
+        startsAt: { type: [string, 'null'], format: date-time }
+        ended: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+        lastEditedBy: { type: [string, 'null'] }
+        lastEditedByFormerMember: { type: boolean }
+    EventCard:
+      description: Agenda card allow-list; no account ids, address, version or editing metadata.
+      type: object
+      required: [id, status, title, type, startsAt, association]
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [PUBLISHED, CANCELLED] }
+        title: { type: string }
+        type: { $ref: '#/components/schemas/EventType' }
+        shortDescription: { type: [string, 'null'] }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: [string, 'null'], format: date-time }
+        venueLabel: { type: [string, 'null'] }
+        venueCity: { oneOf: [{ $ref: '#/components/schemas/City' }, { type: 'null' }] }
+        priceKind: { type: [string, 'null'] }
+        priceAmountCents: { type: [integer, 'null'] }
+        posterStyle: { type: [string, 'null'] }
+        association: { $ref: '#/components/schemas/AssociationRef' }

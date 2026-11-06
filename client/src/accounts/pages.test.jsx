@@ -315,7 +315,7 @@ describe('AssociationPage (UC7, UC8, UC10, UC12)', () => {
   });
 
   test('the profile saves the text fields', async () => {
-    routes['PATCH /associations/troupe'] = [200, {}];
+    routes['PATCH /associations/troupe'] = [204, null];
     open();
     fireEvent.change(await screen.findByLabelText('City'), { target: { value: 'Paris' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save the profile' }));
