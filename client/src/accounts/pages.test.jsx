@@ -277,6 +277,19 @@ describe('AssociationPage (UC7, UC8, UC10, UC12)', () => {
     expect(bodyOf('POST /associations/troupe/close')).toEqual({ confirm: true });
   });
 
+  test('a later successful action clears the previous error', async () => {
+    routes['POST /associations/troupe/close'] = [409, { message: 'Other members remain.' }];
+    routes['DELETE /associations/troupe/members/other'] = [204, {}];
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Close the association' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close the association' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Other members remain.');
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(calls()).toContain('DELETE /associations/troupe/members/other'));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+  });
+
   test('cancelling the confirmation sends nothing', async () => {
     open();
     fireEvent.click(await screen.findByRole('button', { name: 'Leave the association' }));

@@ -7,6 +7,11 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-11-06
 
+- **#390 association page stale error** (branch `fix/390-association-stale-error`). Conception
+  [association-stale-error](docs/architecture/specs/association-stale-error.md) validated by the
+  owner on 2026-11-06: D1 A clear the page message when a confirmed action succeeds (480/500;
+  per-action success message 430, clear on dialog open 405). One `setMessage(null)` in
+  `confirmPending` plus a refusal-then-success test (fails without the fix); client 123/123.
 - **#395 E2E and smoke tests on the local production build** (branch
   `test/395-e2e-smoke-prod-build`). Conception
   [e2e-smoke-tests](docs/architecture/specs/e2e-smoke-tests.md) validated by the owner on
@@ -23,6 +28,8 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   docs not updated) fixed with the Shoulds; round 2 push gate open (0 Must), its Shoulds fixed
   (`DATABASE_URL_DEV_FILE` neutralised). Follow-ups #400 (CI job), #401 (API loopback host),
   #402 (`URL.pathname` in server jobs). Gate step 5 is now covered by this command.
+  Merged 2026-11-06 as PR #403 (squash `f10c8a1`); gate: server unit 168, integration 226,
+  client 122, E2E 6/6, SonarQube passed.
 
 ## 2026-11-05
 
