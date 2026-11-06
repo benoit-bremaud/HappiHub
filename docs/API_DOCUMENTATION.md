@@ -5,6 +5,9 @@ PostgreSQL. Source of truth for behavior: [brick D specification](architecture/s
 and [brick B specification](architecture/specs/v1-brick-b-event-lifecycle.md).
 Historical FAQ/GUIDE/tutorials do not define current behavior.
 
+Machine-readable contract: [OpenAPI 3.1](api/openapi.yaml). A server test fails when it and the
+routes diverge; this guide is the narrative companion.
+
 ## Authentication and transport
 
 - Browser sessions use an HttpOnly cookie stored in PostgreSQL (`connect-pg-simple`, ADR-0001):
@@ -34,8 +37,8 @@ Historical FAQ/GUIDE/tutorials do not define current behavior.
 | `DELETE /account` | UC6 | 204 | `{password, confirm: true}` |
 | `POST /associations` | UC1 1b | 201 | `{name}`; at most 5 created per account (`409`) |
 | `GET /associations/:slug` | UC7 | 200 | Members only; membership re-checked on each request |
-| `PATCH /associations/:slug` | UC7 | 200 | Text fields; slug never changes |
-| `POST /associations/:slug/close` | UC8 | 204 | Only the last member |
+| `PATCH /associations/:slug` | UC7 | 204 | Text fields; slug never changes |
+| `POST /associations/:slug/close` | UC8 | 204 | `{confirm: true}`; only the last member |
 | `POST /associations/:slug/leave` | UC12 | 204 | Never leaves an association without a member |
 | `DELETE /associations/:slug/members/:accountId` | UC12 | 204 | Removed member is emailed |
 | `GET /associations/:slug/invitations` | UC10 | 200 | Pending invitations |
@@ -54,6 +57,7 @@ Historical FAQ/GUIDE/tutorials do not define current behavior.
 | `GET /events` | public | 200 | No session ([public agenda](architecture/specs/public-agenda.md)). Published or cancelled events not yet ended (ongoing included), not hidden, of an active association; soonest first (`startsAt`, then `id`). Query `page` 1–50 (default 1), `type` (event type), `city` (known INSEE commune code); anything else is `400 INVALID_REQUEST`. Body `{items, page, pageSize: 20, hasMore}`; items are cards (`id, status, title, type, shortDescription, startsAt, endsAt, venueLabel, venueCity {code, name}, priceKind, priceAmountCents, posterStyle, association {name, slug}`), no account ids, address, version or editing metadata |
 | `GET /events/cities` | public | 200 | No session, query ignored. `[{code, name}]` of cities that have at least one agenda event, sorted by name |
 | `GET /events/:id` | public | 200 | No session. Published, cancelled or archived events of an active association, not hidden by moderation; includes `association: {name, slug}`, no account ids, version or editing metadata. Anything else (draft, hidden, unknown or malformed id) is the same `404 EVENT_NOT_FOUND` |
+| `GET /ready` (no `/api` prefix) | operations | 200 | `{ready: true}` when the database answers, else `503 {ready: false}` |
 | `/comments` | — | 503 | Legacy routes disabled until the participation/comment brick (S3) |
 
 ### Events

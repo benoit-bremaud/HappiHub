@@ -7,13 +7,16 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 ## [Unreleased]
 
 The following changes are merged to main (recovery PR #257, bricks D #276 and B #282, fixes
-#283 (PR #299), #319, #320, #328, #329, #341, #346, #378, #390, #393 and #374, refactor #368, E2E/smoke suite #395, CI integration job #373, event client #252, encryption #310, demo
+#283 (PR #299), #319, #320, #328, #329, #341, #346, #378, #390, #393 and #374, OpenAPI contract #397, refactor #368, E2E/smoke suite #395, CI integration job #373, event client #252, encryption #310, demo
 seed #251, public agenda #366 and cultural poster #382 with #285, #302, #347 and #355) and have
 not been released or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
 history and [handover](../HANDOVER.md) for the current state.
 
 ### Added
 
+- OpenAPI 3.1 contract of every `/api` route and `/ready` in `docs/api/openapi.yaml` (#397):
+  request bodies, response schemas, both error envelopes, cookie session and CSRF schemes. A
+  server test validates it and fails when the served routes and the contract diverge.
 - The server integration suite and its 80 % branch floor run in CI against a PostgreSQL service
   (#373, job `integration`).
 - Smoke and E2E tests on the local production build (#395): `npm test` in `e2e/` starts a
@@ -71,6 +74,7 @@ history and [handover](../HANDOVER.md) for the current state.
 
 ### Fixed
 
+- The API guide documents `204` for `PATCH /api/associations/:slug`, as the server answers (#333, via #397).
 - An edit conflict that waited on a concurrent save names that save's editor instead of
   `null` (#374).
 - The association page clears a refused action's error once a later confirmed action

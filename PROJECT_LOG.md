@@ -7,6 +7,13 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 
 ## 2026-11-06
 
+- **#397 OpenAPI 3.1 contract with a route-drift test** (branch `docs/397-openapi-contract`).
+  Conception [openapi-contract](docs/architecture/specs/openapi-contract.md) validated by the
+  owner on 2026-11-06: D1 A walk the routes served by `createApp` (435/500; `apiRoutes` + constant
+  405, source regex 310), D2 A `@apidevtools/swagger-parser` in Jest (455; hand asserts 275, Redocly
+  in CI 315), D3 A `docs/api/openapi.yaml` (470). Pinned 12.1.0: 13.x pulls an ESM-only dependency
+  that babel-jest does not transform. Removing a route, renaming a contract path or adding an
+  invalid top-level field each makes the test fail. Fixes #333 in the guide (204).
 - **#374 conflict details lose the editor name** (branch `fix/374-conflict-editor-name`).
   Cause confirmed by a deterministic test: after waiting on `FOR UPDATE OF e`, PostgreSQL
   re-checks only the locked event row, the joined editor stays stale and the `LEFT JOIN` gives
