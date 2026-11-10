@@ -1,7 +1,7 @@
 # Local review — HappiHub (branch diff main...HEAD, #410)
 
 - Date: 2026-11-10
-- Commit: f2ae89a
+- Commit: 3384eea
 - Scope: branch diff `origin/main...HEAD` (`--push`), 48 files (local CI wiring, workflow and collector removal, ADR-0005, docs)
 - Checks run: adversarial (Opus, 3 rounds) · design (architecture-guardian) · docs (doc-auditor) · tests (test-auditor) · security and correctness folded into the adversarial pass (shell, hooks, token handling)
 - Verdict: ship as-is · Must 0 · Should 0 · Nice 6
@@ -12,16 +12,17 @@
 - Round 3 on `f2ae89a`: 1 Must fixed · 3 Should fixed · 2 Nice fixed · 0 regressed · new Must 0 · new Should 1 (four mixed server/client waiver reasons cited #414 only: fixed in the report commit, both issues cited) · **Push gate: open**
 - Optional second review (owner's OpenAI account): ChatGPT/Codex not run (never a gate step)
 
-## Pre-merge gate (head SHA f2ae89a)
+## Pre-merge gate (head SHA 3384eea, `just gate` runs on `c0475a9`, `7b3ae03`, `3384eea`)
 | Step | Result |
 |---|---|
 | 0 CI mirror | n/a: no PR workflow left (`.github/workflows/` deleted, ADR-0005); the former `test` and `integration` jobs are `just test` / `just integration` on the same Node 22.23.3 |
-| 1 Tests | ✅ server unit 173 · ✅ client 123 · ✅ client build · ✅ `test-local-ci` 63 · ✅ `test-attest` 30 · ⏸ integration (227 + 1 todo, `just gate`) |
-| 2 Coverage | server unit suite 47.74 % stmts / 49.39 % branches (unit only; the integration run adds the rest and SonarQube reads all three lcov reports) · client 93.84 % stmts / 84.79 % branches / 94.69 % funcs / 96.89 % lines · docs ⏸ deferred to the pre-merge run |
-| 3 SonarQube | ⏸ deferred to the pre-merge run (`--push`); project `happihub` exists (API 200) |
-| 4 Secrets | ✅ gitleaks clean (279 commits, `--redact`) · no tracked `.env` (only `.env.example`) · diff read: `.github/allowed_signers` holds the author's public key and commit email, nothing else sensitive |
-| 5 E2E/smoke | ⏸ deferred to the pre-merge run (`just gate` runs `e2e/` on the local production build) |
-- Gate: `--push`: **pre-push green** — `mise x -- just check` passed from a clean environment (`env -i`) on `f2ae89a`; integration, SonarQube, E2E, Trivy images and doc coverage deferred to `just gate` on the pushed head.
+| 1 Tests | ✅ server unit 173 · ✅ client 123 · ✅ client build · ✅ `test-local-ci` 65 · ✅ `test-attest` 30 · ✅ integration 227 + 1 todo (disposable PostgreSQL) |
+| 2 Coverage | server unit 47.74 % stmts (unit only; the integration run adds the rest and SonarQube reads all three lcov reports) · client 93.84 % stmts / 84.79 % branches / 94.69 % funcs / 96.89 % lines · docs: no counter in this repository (n/a) |
+| 3 SonarQube | ✅ `QUALITY GATE STATUS: PASSED` on `happihub` (first run 403: the scanner defaulted to SonarCloud without `sonar.host.url`, fixed in `7b3ae03`) |
+| 4 Secrets | ✅ gitleaks clean (whole history, `--redact`) · no tracked `.env` (only `.env.example`) · diff read: `.github/allowed_signers` holds the author's public key and commit email, nothing else sensitive |
+| 5 E2E/smoke | ✅ 6 journeys (smoke + E2E, Playwright) on the local production build · JRN- not covered: no test plan in this repository · QA pass: no staging yet (#386) |
+| Images | ✅ `trivy config` clean on both Dockerfiles · ⚠️ `trivy image` report-only: 44 (server, Debian 12) + 12 (client, Alpine 3.24) OS-package findings, none in the application code, same backlog on the newest base digests, tracked by #416 |
+- Gate: **attested on `3384eea`** (`attest: gate recorded`, commit status `gate` = success, note on `refs/notes/gate`), **one ⚠️ step** (image scan report-only, #416) → the owner's waiver question (`common.md` § Attestation and merge). `sh scripts/attest.sh verify gate 3384eea` fails on purpose: `.github/allowed_signers` is not on `main` yet, so this first merge is the bootstrap waiver of ADR-0005. The report commit that follows is re-gated.
 
 ## 🔴 Must Have
 _None open._ Fixed in `e7ac9bb`, `500a2b2`, `f2ae89a`:
