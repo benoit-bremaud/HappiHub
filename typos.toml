@@ -1,0 +1,61 @@
+# typos (skill local-ci, L0 on the staged files, L1 on the whole repository, #410). No French
+# dictionary: the French commune dataset, the archived French tutorials and the lockfiles are
+# excluded; the French words of the README, docs, UI tests and log are allow-listed, with a few
+# deliberate strings (a test's invalid column, a prefix search, a historical branch name).
+[files]
+extend-exclude = [
+  "server/domain/data/communes.json",
+  "docs/archive/",
+  "mise.lock",
+  "package-lock.json",
+]
+
+[default.extend-identifiers]
+emial_enc = "emial_enc"           # fieldCipher.test.js: an unknown column must be refused
+sercurity_front = "sercurity_front" # PROJECT_LOG.md: historical branch name
+CHECKs = "CHECKs"                 # server/domain/event.js: the SQL CHECK constraints
+
+[default.extend-words]
+# French words in the README, docs, tests and log
+projet = "projet"
+Projet = "Projet"
+sur = "sur"
+informations = "informations"
+vill = "vill"                     # events.test.jsx: prefix search "vill"
+AKS = "AKS"                       # partner-api component diagram: API key service
+branche = "branche"
+Exemples = "Exemples"
+Exemple = "Exemple"
+exemples = "exemples"
+langage = "langage"
+initiale = "initiale"
+espaces = "espaces"
+environnement = "environnement"
+daa = "daa"                       # review-local.md: commit prefix daa4959
+commentaires = "commentaires"
+ba = "ba"
+Ressources = "Ressources"
+Pris = "Pris"
+Contient = "Contient"
+Canva = "Canva"                   # the design tool
+reste = "reste"
+raison = "raison"
+mis = "mis"
+mesures = "mesures"
+maintenir = "maintenir"
+limite = "limite"
+explicite = "explicite"
+empathie = "empathie"
+culturels = "culturels"
+contributeurs = "contributeurs"
+contribuer = "contribuer"
+contribuent = "contribuent"
+commen = "commen"
+avances = "avances"
+authentification = "authentification"
+apparence = "apparence"
+annonce = "annonce"
+adresse = "adresse"
+Responsable = "Responsable"
+Davantage = "Davantage"
+Clonez = "Clonez"

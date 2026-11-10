@@ -1,6 +1,7 @@
 # 01 use case — Local SonarQube collector
 
 Status: owner-approved conception, 2026-10-13.
+**Superseded by [ADR-0005](../../decisions/0005-local-first-ci.md) on 2026-11-10** (#410: collector removed).
 Source: [collector conception](../../specs/sonarqube-local-collector.md).
 
 ![UML view](01-use-case.svg)

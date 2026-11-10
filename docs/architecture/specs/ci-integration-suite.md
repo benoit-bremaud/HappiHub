@@ -3,7 +3,9 @@
 This study adds the server integration suite, with its 80 % branch floor, to GitHub CI.
 
 Status: **validated by Benoît on 2026-11-06** (D1 option A, 465/500), including the explicit
-authorization to change `quality-tests.yml`.
+authorization to change `quality-tests.yml`; **superseded by
+[ADR-0005](../decisions/0005-local-first-ci.md) on 2026-11-10** (#410: the workflow is deleted, the
+suite runs in `just integration`, called by `just gate` and `just nightly`).
 
 Related: [test environment](test-environment.md), [e2e-smoke-tests](e2e-smoke-tests.md)
 (its CI job is the separate follow-up #400), issue #373 (found during #307).

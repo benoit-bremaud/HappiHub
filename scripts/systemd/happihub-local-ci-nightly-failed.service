@@ -1,0 +1,6 @@
+[Unit]
+Description=Desktop notification when the HappiHub nightly local CI fails
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/notify-send --urgency=critical "HappiHub local CI nightly failed" "journalctl --user -u happihub-local-ci-nightly.service"

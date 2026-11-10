@@ -1,0 +1,11 @@
+# Semgrep CE scan scope (just security, #410): shipped sources only. A project .semgrepignore
+# replaces the defaults, so node_modules is listed here.
+node_modules/
+coverage/
+build/
+.claude/
+server/tests/
+server/domain/data/
+*.test.js
+*.test.jsx
+e2e/tests/

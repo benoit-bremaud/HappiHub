@@ -104,7 +104,7 @@ placement. Preserve proportionality: no speculative layers or generic frameworks
 See the [current folder audit](architecture/folder-architecture-audit-2026-10-12.md) for
 verified duplication/coupling/configuration findings and the planned design gate.
 
-A local SonarQube server runs the pre-merge quality gate ([SONARQUBE](SONARQUBE.md)).
+The pre-merge quality gate is `just gate` on the laptop, SonarQube included ([ADR-0005](architecture/decisions/0005-local-first-ci.md), [SONARQUBE](SONARQUBE.md)); no GitHub workflow.
 Architecture review remains semantic as well as automated. File moves, pipeline changes
 and refactoring still need their own approved conception.
 

@@ -5,6 +5,45 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-11-10
+
+- **#410 local-first CI, zero GitHub workflow** (branch `ci/410-local-ci-no-workflows`,
+  [ADR-0005](docs/architecture/decisions/0005-local-first-ci.md)). GitHub Actions bills the owner
+  since October 2026; owner rule 2026-11-07: every check runs locally, only a signed-tag prod deploy
+  may stay as a workflow, and HappiHub deploys nothing from GitHub. Plan validated by the owner on
+  2026-11-10 after a second analysis round with measured timings (server unit 3 s, client 5 s, build
+  7 s, integration 172 s, Semgrep 10 s, gitleaks 1 s, osv-scanner 3 s, typos 10 s). Decisions: D1 A
+  remove the GitHub-artefact SonarQube collector (`tools/quality/`, 450/500 vs dormant 295, rewrite
+  245): `just gate` scans the pushed head; integration suite in L2 (172 s > the 3 min L1 budget);
+  D2 A osv-scanner waivers per advisory with `ignoreUntil` 2026-12-10 and issue #411 for the five
+  fixable server advisories (385/500 vs bump here 320, nightly only 325); D3 A Semgrep
+  `gcm-no-tag-length` excluded with issue #412 (415/500 vs fix here 325, `nosemgrep` 290).
+  Added: `justfile` (fast / check / gate / nightly, integration, security, secrets, merge, setup),
+  `mise.toml` + `mise.lock` (Node 22.23.3 as the former workflow and the Dockerfiles), `lefthook.yml`,
+  `typos.toml`, `.semgrepignore`, `osv-scanner.toml`, `.nvmrc`, `scripts/{attest,check-commit-msg,
+  test-attest,test-local-ci}.sh` (30 + 63 cases), `scripts/systemd/happihub-local-ci-nightly.*`,
+  `.github/allowed_signers`, `.github/branch-protection.md`. Removed: `.github/workflows/`,
+  `tools/quality/`. `docs/SONARQUBE.md` rewritten for the local scan; CONTRIBUTING, AGENTS,
+  HANDOVER, WORK_PLAN, DOCKER, changelog updated. #400 (E2E in GitHub CI) closed by this PR: the
+  suites run in `just gate`. Follow-ups for the owner: revoke the collector's SonarQube and GitHub
+  tokens, remove the `happihub-sonar.*` user units, convert the clone to a full one, enable the
+  nightly timer; `.github/branch-protection.md` is applied before the bootstrap merge (`main` still
+  required the deleted `test` status, which nothing could post; `attest.sh write` reads no trust store). Review-local round 1 (adversarial 5 Must: Trivy config scanned
+  `node_modules` so the gate could never attest, `cd e2e && npm test` did not stop the gate under
+  `set -e`, documented branch protection not applied, TruffleHog red on the partial clone, stale
+  specs; design, docs, tests) fixed in the same round: `test-attest.sh` resynced from upstream with
+  the write-with-commit refusals and a tampered signature (30 cases), `test-local-ci.sh` 63 cases
+  (set -eu, subshell, node-guard, L0 shellcheck/hadolint, lockfile drift), `gate` reinstalls the
+  three lockfiles and loses its unused `base` parameter, react-router runtime advisories moved to
+  #413 and the toolchain ones to #414, Semgrep rule set recorded as the one unpinned input (ADR-0005). `attest.sh` stays
+  byte-identical to `~/.claude/scripts` (its ADR numbers are agents-skills', resync by `diff`).
+  First `just gate` on the pushed head (PR #415): red at SonarQube, the scanner defaulted to
+  SonarCloud (403) because `sonar-project.properties` carried no `sonar.host.url`; fixed with the
+  local URL and a wiring assertion. Second run: SonarQube PASSED, smoke + E2E 6/6, Trivy config
+  clean, Trivy image 44 (server, Debian 12) + 12 (client, Alpine 3.24) OS findings with the same
+  backlog on the newest base digests: report-only with a WARNING line until #416 (docker-hardening
+  rule for an existing backlog), the merge question names it.
+
 ## 2026-11-06
 
 - **#397 OpenAPI 3.1 contract with a route-drift test** (branch `docs/397-openapi-contract`).
