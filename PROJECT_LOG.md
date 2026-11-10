@@ -27,15 +27,15 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   HANDOVER, WORK_PLAN, DOCKER, changelog updated. #400 (E2E in GitHub CI) closed by this PR: the
   suites run in `just gate`. Follow-ups for the owner: revoke the collector's SonarQube and GitHub
   tokens, remove the `happihub-sonar.*` user units, convert the clone to a full one, enable the
-  nightly timer, apply `.github/branch-protection.md` right after the bootstrap merge (`main` still
-  requires the deleted `test` status). Review-local round 1 (adversarial 5 Must: Trivy config scanned
+  nightly timer; `.github/branch-protection.md` is applied before the bootstrap merge (`main` still
+  required the deleted `test` status, which nothing could post; `attest.sh write` reads no trust store). Review-local round 1 (adversarial 5 Must: Trivy config scanned
   `node_modules` so the gate could never attest, `cd e2e && npm test` did not stop the gate under
   `set -e`, documented branch protection not applied, TruffleHog red on the partial clone, stale
   specs; design, docs, tests) fixed in the same round: `test-attest.sh` resynced from upstream with
   the write-with-commit refusals and a tampered signature (30 cases), `test-local-ci.sh` 63 cases
   (set -eu, subshell, node-guard, L0 shellcheck/hadolint, lockfile drift), `gate` reinstalls the
   three lockfiles and loses its unused `base` parameter, react-router runtime advisories moved to
-  #413, Semgrep rule set recorded as the one unpinned input (ADR-0005). `attest.sh` stays
+  #413 and the toolchain ones to #414, Semgrep rule set recorded as the one unpinned input (ADR-0005). `attest.sh` stays
   byte-identical to `~/.claude/scripts` (its ADR numbers are agents-skills', resync by `diff`).
 
 ## 2026-11-06

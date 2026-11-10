@@ -2,22 +2,22 @@
 # new advisory on the same package is red again. Every entry names its follow-up issue and expires: after
 # ignoreUntil the finding is red again. Client: the react-scripts 5 build toolchain (development only, nothing
 # of it ships in the bundle) and react-router 6 (fixed in 7 only); server: five fixable production advisories
-# and one dev dependency without a fix. Refresh the list when #411 lands.
+# and one dev dependency without a fix. Issues: #411 (server), #413 (react-router), #414 (toolchain).
 
 [[IgnoredVulns]]
 id = "GHSA-27r3-jxmh-p828"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client body-parser 1.20.8; server body-parser 1.20.8, #411"
+reason = "client body-parser 1.20.8; server body-parser 1.20.8, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-2p49-hgcm-8545"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client svgo 1.3.2, #411"
+reason = "client svgo 1.3.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-333x-w4r6-6crp"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client fast-uri 3.1.8, #411"
+reason = "client fast-uri 3.1.8, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-337j-9hxr-rhxg"
@@ -27,12 +27,12 @@ reason = "client react-router 6.30.6, runtime, #413"
 [[IgnoredVulns]]
 id = "GHSA-3g3m-2fjr-6pw4"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client glob 10.5.0; server glob 13.0.6, #411"
+reason = "client glob 10.5.0; server glob 13.0.6, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-4487-j8r4-4g2f"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-4528-x5fx-h6hg"
@@ -42,197 +42,197 @@ reason = "server joi 17.13.8, #411"
 [[IgnoredVulns]]
 id = "GHSA-4642-5mcj-2rqw"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-4v9v-hfq4-rm2v"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client webpack-dev-server 4.15.2, #411"
+reason = "client webpack-dev-server 4.15.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-4vpr-x523-8j87"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client svgo 1.3.2, #411"
+reason = "client svgo 1.3.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-525v-9gp9-w22h"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-5c6j-r48x-rmvq"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client serialize-javascript 4.0.0; client serialize-javascript 6.0.2, #411"
+reason = "client serialize-javascript 4.0.0; client serialize-javascript 6.0.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-5cwg-6vw7-rj6p"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-5x38-2vff-x55p"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-6g55-p6wh-862q"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client postcss 7.0.39, #411"
+reason = "client postcss 7.0.39, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-6pq8-jhm2-2vcw"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client qs 6.16.0; server qs 6.16.0, #411"
+reason = "client qs 6.16.0; server qs 6.16.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-6wvx-3r32-xmcg"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-79cf-xcqc-c78w"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client webpack-dev-server 4.15.2, #411"
+reason = "client webpack-dev-server 4.15.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-7fh5-64p2-3v2j"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client postcss 7.0.39, #411"
+reason = "client postcss 7.0.39, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-7wch-p9px-956x"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-86w9-cpqp-85rv"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-8hrf-8g6f-7xwp"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-9jgg-88mc-972h"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client webpack-dev-server 4.15.2, #411"
+reason = "client webpack-dev-server 4.15.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-f5vj-f2hx-8m93"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client webpack-dev-server 4.15.2, #411"
+reason = "client webpack-dev-server 4.15.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-fxqj-rqcc-2cmp"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client postcss 7.0.39, #411"
+reason = "client postcss 7.0.39, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-g3hv-75wg-m249"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client minimatch 9.0.9; server minimatch 10.2.6, #411"
+reason = "client minimatch 9.0.9; server minimatch 10.2.6, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-g84c-rxfj-3j2c"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client webpack-dev-middleware 5.3.4, #411"
+reason = "client webpack-dev-middleware 5.3.4, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-gcqx-w48m-w2h4"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client deepmerge 4.3.1; server deepmerge 4.3.1, #411"
+reason = "client deepmerge 4.3.1; server deepmerge 4.3.1, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-h6cr-wjv9-3cpp"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-hqq3-7jhf-c5jx"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-jc66-7q78-782g"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client node-forge 1.4.0, #411"
+reason = "client node-forge 1.4.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-m28w-2pqf-7qgj"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client webpack-dev-server 4.15.2, #411"
+reason = "client webpack-dev-server 4.15.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-m5mm-p8h7-m29v"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client serialize-javascript 4.0.0; client serialize-javascript 6.0.2, #411"
+reason = "client serialize-javascript 4.0.0; client serialize-javascript 6.0.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-mrwp-f3q8-3g9p"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client follow-redirects 1.16.1, #411"
+reason = "client follow-redirects 1.16.1, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-mx8g-39q3-5c79"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client webpack-dev-server 4.15.2, #411"
+reason = "client webpack-dev-server 4.15.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-qj8w-gfj5-8c6v"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client serialize-javascript 6.0.2, #411"
+reason = "client serialize-javascript 6.0.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-qpx9-hpmf-5gmw"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client underscore 1.13.6, #411"
+reason = "client underscore 1.13.6, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-qx2v-qp2m-jg93"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client postcss 7.0.39, #411"
+reason = "client postcss 7.0.39, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-r28c-9q8g-f849"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client postcss 7.0.39, #411"
+reason = "client postcss 7.0.39, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-rj75-hqrm-r3gf"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client postcss-selector-parser 6.1.4, #411"
+reason = "client postcss-selector-parser 6.1.4, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-rp65-9cf3-cjxr"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client nth-check 1.0.2, #411"
+reason = "client nth-check 1.0.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-vpq2-c234-7xj6"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client @tootallnate/once 1.1.2, #411"
+reason = "client @tootallnate/once 1.1.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-w27v-7q3p-w38r"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client svgo 1.3.2, #411"
+reason = "client svgo 1.3.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-w5hq-g745-h8pq"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client uuid 8.3.2, #411"
+reason = "client uuid 8.3.2, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-w74x-v6f9-j3xg"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client fast-uri 3.1.8, #411"
+reason = "client fast-uri 3.1.8, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-wjr9-j795-jxcr"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client fast-uri 3.1.8, #411"
+reason = "client fast-uri 3.1.8, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-wrjc-x8rr-h8h6"
@@ -242,4 +242,4 @@ reason = "client react-router 6.30.6, runtime, #413"
 [[IgnoredVulns]]
 id = "GHSA-xhq7-xmqj-769h"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client fast-uri 3.1.8, #411"
+reason = "client fast-uri 3.1.8, toolchain, #414"

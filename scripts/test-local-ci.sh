@@ -42,7 +42,7 @@ body gate | grep -q 'sonar-scanner -Dsonar.qualitygate.wait=true' || fail "gate 
 body gate | grep -q '^ *(cd e2e && npm test)$' || fail "gate does not run the smoke and E2E suites in a subshell"; ok
 body gate | grep -q -- "trivy config --skip-dirs '\*\*/node_modules'" || fail "trivy config would scan node_modules (gate always red)"; ok
 body gate | grep -q 'npm ci --ignore-scripts' || fail "gate does not reinstall the lockfiles"; ok
-body nightly | grep -q 'remote.origin.promisor' || fail "nightly does not refuse a partial clone (trufflehog)"; ok
+deps nightly | grep -qw full-clone || fail "nightly does not refuse a partial clone first (trufflehog)"; ok
 for r in gate merge; do body "$r" | grep -q '^ *set -eu$' || fail "$r lacks set -eu (a failed step must stop before the attestation)"; ok; done
 body gate | grep -q '^ *sh scripts/attest.sh write gate "\$head"$' || fail "gate does not attest the captured head"; ok
 dirty=$(body gate | grep -n 'git status --porcelain' | head -1 | cut -d: -f1); hd=$(body gate | grep -n '^ *head=$(git rev-parse HEAD)$' | cut -d: -f1); ck=$(body gate | grep -n '^ *just check$' | cut -d: -f1)
@@ -66,13 +66,6 @@ grep -q '^lockfile = true' mise.toml && [ -s mise.lock ] || fail "mise.lock miss
 grep -qE '^ +run: +sh scripts/check-commit-msg.sh \{1\}$' lefthook.yml || fail "commit-msg hook does not run check-commit-msg.sh on the message file"; ok
 grep -qE '^ +mise x -- just check$' lefthook.yml || fail "pre-push hook does not run just check"; ok
 lefthook validate > /dev/null || fail "lefthook validate"; ok
-
-# node-guard refuses a Node whose major differs from .nvmrc (local-ci rule 9).
-guard() { rc=0; just node-guard > "$work/out" 2>&1 || rc=$?; [ "$rc" -eq "$1" ] || { cat "$work/out"; fail "node-guard with .nvmrc=$2: exit $rc, expected $1"; }; ok; }
-guard 0 "$(cat .nvmrc)"
-cp .nvmrc "$work/nvmrc" && echo 99 > .nvmrc && trap 'cp "$work/nvmrc" "$root/.nvmrc"; rm -rf "$work"' EXIT
-guard 1 99; grep -q 'Node 99' "$work/out" || fail "node-guard does not name the required major"; ok
-cp "$work/nvmrc" .nvmrc
 
 # commit-msg subjects (exemptions: merges, reverts, autosquash prefixes; only the subject is checked).
 msg() { # msg <expected-exit> <subject>
@@ -108,6 +101,13 @@ cp -R "$root/scripts" "$root/lefthook.yml" "$root/justfile" "$root/typos.toml" "
 export MISE_TRUSTED_CONFIG_PATHS="$repo"
 git add -A && git commit -qm init --no-verify
 mkdir notes
+
+# node-guard refuses a Node whose major differs from .nvmrc (local-ci rule 9); on the copied .nvmrc only.
+guard() { rc=0; just node-guard > "$work/out" 2>&1 || rc=$?; [ "$rc" -eq "$1" ] || { cat "$work/out"; fail "node-guard with .nvmrc=$2: exit $rc, expected $1"; }; ok; }
+guard 0 "$(cat .nvmrc)"
+echo 99 > .nvmrc
+guard 1 99; grep -q 'Node 99' "$work/out" || fail "node-guard does not name the required major"; ok
+git checkout -q .nvmrc
 
 fast() { # fast <expected-exit> <label> [<text the output must hold>]
   rc=0; just fast > "$work/out" 2>&1 || rc=$?

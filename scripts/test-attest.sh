@@ -123,7 +123,7 @@ git checkout -q .github/allowed_signers
 # A trusted key signed another payload: the principal is found, the signature does not verify.
 printf 'gate o/r %s\n' "$first" > "$work/payload2"
 ssh-keygen -q -Y sign -n local-ci -f "$work/key" "$work/payload2" > /dev/null 2>&1
-{ printf 'gate o/r %s\n' "$second"; cat "$work/payload2.sig"; } | git notes --ref refs/notes/gate add -f -F - "$second"
+{ printf 'gate o/r %s\n' "$second"; cat "$work/payload2.sig"; } | git notes --ref refs/notes/gate add -f -F - "$second" 2> /dev/null
 git push -q origin refs/notes/gate
 run 1 "trusted signature over another payload refused" "bad signature" sh scripts/attest.sh verify gate HEAD
 # The overwrite is intended (its "Overwriting existing notes" line is noise); copy fails if $first has no note.

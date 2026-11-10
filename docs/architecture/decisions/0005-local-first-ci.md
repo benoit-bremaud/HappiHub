@@ -63,9 +63,10 @@ another machine, SonarQube never skipped (agents-skills #159), the pre-merge gat
   remedy if it ever flaps.
 - No GitHub minute is spent; a merge needs a laptop with Docker, the self-hosted SonarQube and the
   owner's SSH key loaded. The first merge after this decision cannot verify the attestation
-  (`allowed_signers` is not on `main` yet) and goes through the bootstrap waiver of the owner rule,
-  with the `test` requirement still in place; the owner applies `.github/branch-protection.md`
-  right after that merge, otherwise every later `just merge` is refused for a missing `test` status.
+  (`allowed_signers` is not on `main` yet): the owner applies `.github/branch-protection.md` first
+  (`main` still requires the `test` status that nothing can post), `just gate` on the pushed head
+  posts the `gate` status (`write` reads no trust store), and the merge goes through the bootstrap
+  waiver of the owner rule.
 - The clone the nightly unit points to must be a full clone: TruffleHog cannot read a partial
   (`blob:none`) clone, and `just nightly` refuses one with the conversion command.
 - The pre-merge gate keeps the same substance (tests, coverage floors, SonarQube, secrets,
@@ -77,4 +78,4 @@ another machine, SonarQube never skipped (agents-skills #159), the pre-merge gat
 - Per-project SonarQube token `project-happihub-collector-2026` and the fine-grained GitHub token of
   the collector have no reader left: revoke them (owner action, skill `infra-accounts`).
 - The waivers of `osv-scanner.toml` expire on 2026-12-10; `just check` turns red that day unless
-  #411 landed or the entries were reviewed.
+  #411, #413 and #414 landed or their entries were reviewed and extended with a dated reason.

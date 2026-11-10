@@ -122,12 +122,13 @@ folders as an approved implementation plan.
 
 ## Next actions
 
-CI follow-ups (#410, ADR-0005): the `osv-scanner.toml` waivers expire on 2026-12-10 unless #411 lands;
+CI follow-ups (#410, ADR-0005): the `osv-scanner.toml` waivers expire on 2026-12-10 (#411 server
+packages, #413 react-router 7, #414 react-scripts toolchain: land or review each before that date);
 #412 declares `authTagLength` on the field cipher and lifts the Semgrep exclusion; owner actions: revoke
 the collector tokens, remove the old `happihub-sonar.*` user units, convert the clone to a full one
 (`git fetch --refetch --no-filter`) and enable the nightly timer
-([CONTRIBUTING](../CONTRIBUTING.md#local-ci--the-four-tiers)), apply the branch protection
-(`.github/branch-protection.md`); no `deploy` recipe until #386.
+([CONTRIBUTING](../CONTRIBUTING.md#local-ci--the-four-tiers)); the branch protection
+(`.github/branch-protection.md`) is applied before the bootstrap merge; no `deploy` recipe until #386.
 
 #366 public agenda (UC21): visitors browse upcoming events on the home page without an account ([spec](architecture/specs/public-agenda.md), PR #369). #367 visual design: the cultural poster direction was chosen on 2026-10-29 ([study](architecture/specs/agenda-visual-design.md), D1–D7; PR #381, `8d09f29`). #382 implemented it and folded #347, #285, #302 and #355 (merged 2026-10-29, PR #385, `0179df5`). Follow-ups: #383 (year in day headings), #384 (Bootstrap CDN), #386 (staging environment, none exists yet). #346 (2026-11-05): event and association confirmations use one modal `ConfirmDialog` ([spec](architecture/specs/modal-confirmation-dialog.md)). #387 refreshed the plan, handover and changelog status (2026-11-05). #368 (2026-11-05): five client screens share one `useSend` hook ([spec](architecture/specs/shared-usesend-hook.md), PR #392, `d16b283`). #378 (2026-11-05): account and token locks follow one order, tokens first ([spec](architecture/specs/account-token-lock-order.md), PR #394, `b22390c`). #393 (2026-11-05): the cancel-reason textarea is focused on reveal instead of `autoFocus` ([spec](architecture/specs/steppreview-reason-focus.md)). #395 (2026-11-06): smoke and E2E suites on the local production build, one command `npm test` in `e2e/` (Playwright, [spec](architecture/specs/e2e-smoke-tests.md)), covering gate step 5; merged 2026-11-06 (PR #403, `f10c8a1`). #390 (2026-11-06): the association page clears a refused action's error after a later confirmed success ([spec](architecture/specs/association-stale-error.md)); merged 2026-11-06 (PR #405, `d50835a`). #373 (2026-11-06): the integration suite runs in CI against a PostgreSQL service ([spec](architecture/specs/ci-integration-suite.md)); merged 2026-11-06 (PR #406, `e8ef294`). #374 (2026-11-06): `lockEvent` locks the row, then reads the event and its editor in a new statement, so conflict details keep the editor name ([spec](architecture/specs/event-lock-editor-reread.md)); merged 2026-11-06 (PR #407, `369cb01`). #397 (2026-11-06): the API contract is published as OpenAPI 3.1 in [docs/api/openapi.yaml](api/openapi.yaml), validated and compared with the served routes by `server/tests/unit/openapiContract.test.js` ([spec](architecture/specs/openapi-contract.md)); in review. UI rule: always mobile first.
 

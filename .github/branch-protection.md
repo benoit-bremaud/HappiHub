@@ -15,9 +15,12 @@ diffed or audited without the GitHub UI (ADR-0005, #410).
 
 ## Apply / update
 
-Order for #410: apply after the bootstrap merge of the PR that adds `.github/allowed_signers` and
-`scripts/attest.sh` to `main` (that merge goes through the owner waiver, ADR-0005 § Consequences);
-until then the required context `gate` would block the only PR able to produce it.
+Bootstrap order for #410 (the PR that brings `scripts/attest.sh` and `.github/allowed_signers`):
+apply this protection first (`main` otherwise still requires the `test` status of the deleted
+workflow, which nothing can post), then run `mise x -- just gate` on the pushed PR head: `attest.sh
+write` posts the `gate` status without reading the trust store (only `verify` does), then merge with
+the owner waiver (`gh pr merge 410 --squash --match-head-commit <sha>`), since `just merge` cannot
+verify a note against an `allowed_signers` that is not on `main` yet.
 
 ```bash
 gh api -X PUT repos/benoit-bremaud/HappiHub/branches/main/protection --input - <<'EOF'

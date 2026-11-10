@@ -94,7 +94,9 @@ gate:
     [ -n "$token" ] || { echo "gate: no SonarQube token (export SONAR_TOKEN or ~/.config/sonarqube/analysis-token)" >&2; exit 1; }
     curl -sSf -o /dev/null --max-time 5 http://localhost:9000 \
       || { echo "gate: no SonarQube instance answering on http://localhost:9000 (docs/SONARQUBE.md)" >&2; exit 1; }
+    just node-guard
     for d in server client e2e; do (cd "$d" && npm ci --ignore-scripts --no-audit --no-fund); done
+    (cd e2e && npx playwright install chromium)
     just check
     just integration
     SONAR_TOKEN="$token" sonar-scanner -Dsonar.qualitygate.wait=true
@@ -115,8 +117,12 @@ merge pr:
     sh scripts/attest.sh verify gate "$sha"
     gh pr merge {{quote(pr)}} --squash --match-head-commit "$sha"
 
+# TruffleHog cannot read a partial (blob:none) clone: refuse it before the four minutes of check + integration.
+[private]
+full-clone:
+    @[ "$(git config remote.origin.promisor)" != true ] || { echo "nightly: partial clone, trufflehog cannot read it: git fetch --refetch --no-filter && git config --unset remote.origin.promisor && git config --unset remote.origin.partialclonefilter" >&2; exit 1; }
+
 # L3 — nightly, systemd user timer happihub-local-ci-nightly.timer (no time budget)
-nightly: check integration
-    [ "$(git config remote.origin.promisor)" != true ] || { echo "nightly: partial clone (blob:none), trufflehog cannot read it: git fetch --refetch --no-filter && git config --unset remote.origin.promisor && git config --unset remote.origin.partialclonefilter" >&2; exit 1; }
+nightly: full-clone check integration
     trufflehog git "file://$PWD" --no-verification --fail --no-update
     mise outdated
