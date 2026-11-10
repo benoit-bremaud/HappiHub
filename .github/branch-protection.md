@@ -19,7 +19,7 @@ Bootstrap order for #410 (the PR that brings `scripts/attest.sh` and `.github/al
 apply this protection first (`main` otherwise still requires the `test` status of the deleted
 workflow, which nothing can post), then run `mise x -- just gate` on the pushed PR head: `attest.sh
 write` posts the `gate` status without reading the trust store (only `verify` does), then merge with
-the owner waiver (`gh pr merge 410 --squash --match-head-commit <sha>`), since `just merge` cannot
+the owner waiver (`MERGE_GATE_WAIVER="bootstrap #410" gh pr merge 410 --squash --match-head-commit <sha>`), since `just merge` cannot
 verify a note against an `allowed_signers` that is not on `main` yet.
 
 ```bash

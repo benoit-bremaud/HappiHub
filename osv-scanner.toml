@@ -7,7 +7,7 @@
 [[IgnoredVulns]]
 id = "GHSA-27r3-jxmh-p828"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client body-parser 1.20.8; server body-parser 1.20.8, toolchain, #414"
+reason = "server body-parser 1.20.8, #411; client body-parser 1.20.8, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-2p49-hgcm-8545"
@@ -27,7 +27,7 @@ reason = "client react-router 6.30.6, runtime, #413"
 [[IgnoredVulns]]
 id = "GHSA-3g3m-2fjr-6pw4"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client glob 10.5.0; server glob 13.0.6, toolchain, #414"
+reason = "server glob 13.0.6, #411; client glob 10.5.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-4487-j8r4-4g2f"
@@ -82,7 +82,7 @@ reason = "client postcss 7.0.39, toolchain, #414"
 [[IgnoredVulns]]
 id = "GHSA-6pq8-jhm2-2vcw"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client qs 6.16.0; server qs 6.16.0, toolchain, #414"
+reason = "server qs 6.16.0, #411; client qs 6.16.0, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-6wvx-3r32-xmcg"
@@ -132,7 +132,7 @@ reason = "client postcss 7.0.39, toolchain, #414"
 [[IgnoredVulns]]
 id = "GHSA-g3hv-75wg-m249"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client minimatch 9.0.9; server minimatch 10.2.6, toolchain, #414"
+reason = "server minimatch 10.2.6, #411; client minimatch 9.0.9, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-g84c-rxfj-3j2c"
@@ -142,7 +142,7 @@ reason = "client webpack-dev-middleware 5.3.4, toolchain, #414"
 [[IgnoredVulns]]
 id = "GHSA-gcqx-w48m-w2h4"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client deepmerge 4.3.1; server deepmerge 4.3.1, toolchain, #414"
+reason = "server deepmerge 4.3.1, #411; client deepmerge 4.3.1, toolchain, #414"
 
 [[IgnoredVulns]]
 id = "GHSA-h6cr-wjv9-3cpp"
