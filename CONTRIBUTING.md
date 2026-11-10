@@ -30,21 +30,38 @@ includes /api and must match the chosen local topology. Never put secrets in cli
 Only placeholder examples belong in Git. Do not commit .env files, credentials, sessions
 or raw private inventories. Test against isolated synthetic data, never production.
 
-## Verification and style
+## Local CI — the four tiers
 
-From server/: `npm test -- --runInBand` and `npm run test:integration` (CI job `integration`;
-the PostgreSQL image digest is pinned in several files: bump
-every pin listed by
-`git grep -nE 'postgres:[^ ]*@sha256'` together).
-From client/: `CI=true npm test -- --watchAll=false --runInBand` and `npm run build`
-(on PowerShell set `$env:CI='true'` first). Run the appropriate checks before pushing.
-From e2e/ (Linux/macOS, Docker required, `npm ci --ignore-scripts` done in client/ and server/; first time:
-`npm ci --ignore-scripts && npx playwright install chromium`): `npm test` builds the production
+Every check runs on the laptop and in the git hooks; the repository has no GitHub workflow
+([ADR-0005](docs/architecture/decisions/0005-local-first-ci.md), skill `local-ci`). Once per clone:
+`mise trust mise.toml && mise x -- just setup` (pinned tools from `mise.toml`, the three `npm ci`,
+Chromium for Playwright, the lefthook hooks). Run the tiers as `mise x -- just <tier>` when the
+shell does not activate mise.
+
+| Tier | Command | When | Holds |
+|---|---|---|---|
+| L0 | `just fast` | pre-commit hook (< 10 s) | staged secrets (gitleaks), typos, shellcheck, hadolint; commit-msg: Conventional Commits subject |
+| L1 | `just check` | pre-push hook (< 3 min, ~40 s) | typos, shellcheck, `lefthook validate`, hadolint; server unit suite with coverage, client suite with coverage, client build; the wiring and attestation tests; Semgrep CE, osv-scanner (waivers in `osv-scanner.toml`), gitleaks on the history |
+| L2 | `just gate` | on the pushed head, before every merge (10–15 min) | L1, `just integration` (server integration suite on a disposable PostgreSQL, 80 % branch floor), SonarQube with the quality gate waited for ([SONARQUBE](docs/SONARQUBE.md)), the smoke and E2E suites on the local production build ([spec](docs/architecture/specs/e2e-smoke-tests.md)), Trivy on the compose/Dockerfile configuration and the two images; then the signed gate attestation on the head SHA |
+| L3 | `just nightly` | systemd user timer `happihub-local-ci-nightly.timer` (`scripts/systemd/`) | L1, the integration suite, TruffleHog, `mise outdated` |
+
+`just merge <pr>` is the only merge path: it refuses unless the PR head carries the gate attestation
+(signed note on `refs/notes/gate` + commit status `gate`, verified against `.github/allowed_signers`
+read from `origin/main`). Needs Docker, `sonar-scanner` on `PATH`, the SonarQube token file and
+the signer's SSH key in `ssh-agent` (`git config gpg.format ssh`, `user.signingkey`).
+
+The underlying commands still work alone. From server/: `npm test -- --runInBand` and
+`npm run test:integration` (the PostgreSQL image digest is pinned in several files: bump every pin
+listed by `git grep -nE 'postgres:[^ ]*@sha256'` together). From client/:
+`CI=true npm test -- --watchAll=false --runInBand` and `npm run build` (on PowerShell set
+`$env:CI='true'` first). From e2e/ (Linux/macOS, Docker required): `npm test` builds the production
 client, starts the API on a disposable PostgreSQL with the demo seed, and runs the smoke and E2E
-suites ([spec](docs/architecture/specs/e2e-smoke-tests.md)); `npm run smoke` runs the smoke suite
-alone. Ports 3100 and 5100 must be free (`E2E_WEB_PORT`, `E2E_API_PORT` override them). This is
-step 5 of the pre-merge gate. There are no dedicated lint/typecheck scripts; do not report them as passing.
-The client build runs its configured lint checks and currently has documented legacy warnings.
+suites; `npm run smoke` runs the smoke suite alone. Ports 3100 and 5100 must be free
+(`E2E_WEB_PORT`, `E2E_API_PORT` override them). There are no dedicated lint/typecheck scripts; do not
+report them as passing. The client build runs its configured lint checks and currently has
+documented legacy warnings.
+
+## Verification and style
 
 Use named exports for new/touched modules, never introduce TypeScript any, and test
 meaningful behavior against approved acceptance criteria. Keep architecture proportional.

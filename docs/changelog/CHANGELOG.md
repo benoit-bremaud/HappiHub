@@ -7,7 +7,7 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 ## [Unreleased]
 
 The following changes are merged to main (recovery PR #257, bricks D #276 and B #282, fixes
-#283 (PR #299), #319, #320, #328, #329, #341, #346, #378, #390, #393 and #374, OpenAPI contract #397, refactor #368, E2E/smoke suite #395, CI integration job #373, event client #252, encryption #310, demo
+#283 (PR #299), #319, #320, #328, #329, #341, #346, #378, #390, #393 and #374, OpenAPI contract #397, refactor #368, E2E/smoke suite #395, CI integration job #373 then local-first CI #410 (no GitHub workflow, ADR-0005), event client #252, encryption #310, demo
 seed #251, public agenda #366 and cultural poster #382 with #285, #302, #347 and #355) and have
 not been released or deployed. See [PROJECT_LOG.md](../../PROJECT_LOG.md) for the operational
 history and [handover](../HANDOVER.md) for the current state.

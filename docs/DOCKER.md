@@ -106,10 +106,10 @@ application modules and production nginx.conf read-only, and uses an internal du
 network without published ports. It creates an ephemeral TLS certificate, synthetic
 sessions and an injected in-memory session store; this ingress test uses no database and
 no real credentials. (The separate server suite `npm run test:integration` starts its own
-disposable PostgreSQL container, or uses the empty database at `TEST_DATABASE_URL` as in CI.)
+disposable PostgreSQL container, or uses the empty database at `TEST_DATABASE_URL`.)
 Only its labelled fixture resources are removed during cleanup. The fixture checks both
 proxy hops, IPv4/IPv6 provenance, quota isolation, forged headers, Secure cookies and trust
-file failures. It is separate from ordinary Jest/collector tests and is not a deployment test.
+file failures. It is separate from the Jest suites and is not a deployment test.
 
 Backups/restores, resource limits, image scanning and deployment operations remain to be validated before real use. The old HTTP-only production smoke test does not validate cookie authentication. Cookie-session validation uses a disposable HTTPS gateway and isolated browser context.
 

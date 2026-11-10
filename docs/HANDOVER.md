@@ -69,7 +69,7 @@ payment, logo and cover illustrations. Compose files on main use PostgreSQL; #29
 
 Latest recorded verification (#346 pre-merge run, 2026-11-05): 113 client, 164 server unit
 and 222 PostgreSQL integration tests, SonarQube gate passed, gitleaks clean
-([review-local](architecture/review-local.md)). Since #295 the CI server coverage uses the `jest.config.cjs` scope (all server modules); #307 raised the integration run to 82.5 % branches with an 80 % floor in `jest.integration.cjs`; the integration suite runs in CI as the `integration` job since #373.
+([review-local](architecture/review-local.md)). Since #295 the CI server coverage uses the `jest.config.cjs` scope (all server modules); #307 raised the integration run to 82.5 % branches with an 80 % floor in `jest.integration.cjs`; the integration suite ran in CI as the `integration` job from #373 to #410; since #410 it runs in `just gate` (ADR-0005).
 
 Last recorded dependency audit: runtime server zero findings, full server tree 33 affected
 entries, client 104. Counts are dated and include dependency chains. CRA/Jest migration,
@@ -114,8 +114,10 @@ feature-usage ranking. Keep sample, date, segment and confidence attached to con
 The owner reinforced folder organization, Clean/SOLID, anti-pattern checks and removal
 of unjustified duplication. A [read-only folder audit](architecture/folder-architecture-audit-2026-10-12.md)
 records verified CSS/request duplication, responsibility boundaries and stale configuration.
-#41 must include the responsibility/path map and dependency UML. A local SonarQube server
-is in use for the pre-merge gate ([SONARQUBE](SONARQUBE.md)). Do not interpret candidate
+#41 must include the responsibility/path map and dependency UML. Every check runs locally:
+`just check` before the push, `just gate` (integration, SonarQube, E2E, images, attestation) on the
+pushed head before the merge, `just merge <pr>`; no GitHub workflow ([ADR-0005](architecture/decisions/0005-local-first-ci.md),
+[SONARQUBE](SONARQUBE.md)). Do not interpret candidate
 folders as an approved implementation plan.
 
 ## Next actions

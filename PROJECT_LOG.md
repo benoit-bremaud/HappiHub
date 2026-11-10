@@ -5,6 +5,29 @@ Latest entries appear first. Product/release changes belong in the changelog;
 current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
 [the handover](docs/HANDOVER.md).
 
+## 2026-11-10
+
+- **#410 local-first CI, zero GitHub workflow** (branch `ci/410-local-ci-no-workflows`,
+  [ADR-0005](docs/architecture/decisions/0005-local-first-ci.md)). GitHub Actions bills the owner
+  since October 2026; owner rule 2026-11-07: every check runs locally, only a signed-tag prod deploy
+  may stay as a workflow, and HappiHub deploys nothing from GitHub. Plan validated by the owner on
+  2026-11-10 after a second analysis round with measured timings (server unit 3 s, client 5 s, build
+  7 s, integration 172 s, Semgrep 10 s, gitleaks 1 s, osv-scanner 3 s, typos 10 s). Decisions: D1 A
+  remove the GitHub-artefact SonarQube collector (`tools/quality/`, 450/500 vs dormant 295, rewrite
+  245): `just gate` scans the pushed head; integration suite in L2 (172 s > the 3 min L1 budget);
+  D2 A osv-scanner waivers per advisory with `ignoreUntil` 2026-12-10 and issue #411 for the five
+  fixable server advisories (385/500 vs bump here 320, nightly only 325); D3 A Semgrep
+  `gcm-no-tag-length` excluded with issue #412 (415/500 vs fix here 325, `nosemgrep` 290).
+  Added: `justfile` (fast / check / gate / nightly, integration, security, secrets, merge, setup),
+  `mise.toml` + `mise.lock` (Node 22.23.3 as the former workflow and the Dockerfiles), `lefthook.yml`,
+  `typos.toml`, `.semgrepignore`, `osv-scanner.toml`, `.nvmrc`, `scripts/{attest,check-commit-msg,
+  test-attest,test-local-ci}.sh` (20 + 43 cases), `scripts/systemd/happihub-local-ci-nightly.*`,
+  `.github/allowed_signers`, `.github/branch-protection.md`. Removed: `.github/workflows/`,
+  `tools/quality/`. `docs/SONARQUBE.md` rewritten for the local scan; CONTRIBUTING, AGENTS,
+  HANDOVER, WORK_PLAN, DOCKER, changelog updated. #400 (E2E in GitHub CI) closed by this PR: the
+  suites run in `just gate`. Follow-ups for the owner: revoke the collector's SonarQube and GitHub
+  tokens, remove the `happihub-sonar.*` user units, enable the nightly timer.
+
 ## 2026-11-06
 
 - **#397 OpenAPI 3.1 contract with a route-drift test** (branch `docs/397-openapi-contract`).

@@ -43,12 +43,14 @@ UML sources in diagrams/. Current plan/status lives in docs/WORK_PLAN.md and HAN
 Dedicated branches start from main. Follow root CONTRIBUTING.md for current setup and PR metadata.
 The recovery work (formerly `fix/security-boundaries`) is merged to main. Do not start a
 feature implementation before its conception is approved. Never commit directly to main. Use Conventional Commits.
-Run appropriate checks before pushing; the human triggers the actual push. PR creation,
+Run `just check` before pushing (the pre-push hook does); the human triggers the actual push. PR creation,
 merge, deletion, force-push, external messages and CI/CD modification require explicit
 owner authorization under the applicable project/session rules.
 
 ## Verified commands
 
+Local CI (ADR-0005): `mise trust mise.toml && mise x -- just setup` once, then `mise x -- just check`
+(L1, pre-push), `mise x -- just gate` (L2, pushed head, attested), `just merge <pr>`; no GitHub workflow.
 From server/: `npm ci --ignore-scripts`, `npm test -- --runInBand`,
 `npm run test:integration`, `npm start` (private runtime configuration and PostgreSQL required;
 run `npm run migrate` first).
