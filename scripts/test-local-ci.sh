@@ -39,6 +39,7 @@ body() { just --show "$1" | grep -v '^ *#'; } # body <recipe>: its lines, commen
 body gate | grep -q '^ *just check$' || fail "gate does not run check"; ok
 body gate | grep -q '^ *just integration$' || fail "gate does not run the integration suite"; ok
 body gate | grep -q 'sonar-scanner -Dsonar.qualitygate.wait=true' || fail "gate does not wait for the SonarQube quality gate"; ok
+grep -q '^sonar.host.url=http://localhost:9000$' sonar-project.properties || fail "sonar-project.properties does not point at the local instance (the scanner defaults to SonarCloud)"; ok
 body gate | grep -q '^ *(cd e2e && npm test)$' || fail "gate does not run the smoke and E2E suites in a subshell"; ok
 body gate | grep -q -- "trivy config --skip-dirs '\*\*/node_modules'" || fail "trivy config would scan node_modules (gate always red)"; ok
 body gate | grep -q 'npm ci --ignore-scripts' || fail "gate does not reinstall the lockfiles"; ok
