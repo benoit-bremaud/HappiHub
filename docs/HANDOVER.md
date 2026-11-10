@@ -124,7 +124,8 @@ folders as an approved implementation plan.
 
 CI follow-ups (#410, ADR-0005): the `osv-scanner.toml` waivers expire on 2026-12-10 unless #411 lands;
 #412 declares `authTagLength` on the field cipher and lifts the Semgrep exclusion; owner actions: revoke
-the collector tokens, remove the old `happihub-sonar.*` user units, enable the nightly timer
+the collector tokens, remove the old `happihub-sonar.*` user units, convert the clone to a full one
+(`git fetch --refetch --no-filter`) and enable the nightly timer
 ([CONTRIBUTING](../CONTRIBUTING.md#local-ci--the-four-tiers)), apply the branch protection
 (`.github/branch-protection.md`); no `deploy` recipe until #386.
 

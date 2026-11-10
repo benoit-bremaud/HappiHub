@@ -40,6 +40,9 @@ body gate | grep -q '^ *just check$' || fail "gate does not run check"; ok
 body gate | grep -q '^ *just integration$' || fail "gate does not run the integration suite"; ok
 body gate | grep -q 'sonar-scanner -Dsonar.qualitygate.wait=true' || fail "gate does not wait for the SonarQube quality gate"; ok
 body gate | grep -q '^ *(cd e2e && npm test)$' || fail "gate does not run the smoke and E2E suites in a subshell"; ok
+body gate | grep -q -- "trivy config --skip-dirs '\*\*/node_modules'" || fail "trivy config would scan node_modules (gate always red)"; ok
+body gate | grep -q 'npm ci --ignore-scripts' || fail "gate does not reinstall the lockfiles"; ok
+body nightly | grep -q 'remote.origin.promisor' || fail "nightly does not refuse a partial clone (trufflehog)"; ok
 for r in gate merge; do body "$r" | grep -q '^ *set -eu$' || fail "$r lacks set -eu (a failed step must stop before the attestation)"; ok; done
 body gate | grep -q '^ *sh scripts/attest.sh write gate "\$head"$' || fail "gate does not attest the captured head"; ok
 dirty=$(body gate | grep -n 'git status --porcelain' | head -1 | cut -d: -f1); hd=$(body gate | grep -n '^ *head=$(git rev-parse HEAD)$' | cut -d: -f1); ck=$(body gate | grep -n '^ *just check$' | cut -d: -f1)

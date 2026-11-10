@@ -126,7 +126,8 @@ Playwright traces are off because they would record the typed values; only failu
   instead of "not covered".
 - `.gitignore` adds `e2e/test-results/`, `e2e/playwright-report/` and `e2e/.run/`.
 - SonarQube: `e2e/` is test code (`sonar.tests`), excluded from coverage.
-- Follow-up issue #400 (not this brick): run the suite in GitHub CI (needs CI/CD authorization).
+- Follow-up issue #400 (not this brick): run the suite in GitHub CI; closed by #410 (ADR-0005): the
+  suite runs in `just gate` on the pushed head instead.
 
 ## 9. Decisions (MCDA)
 

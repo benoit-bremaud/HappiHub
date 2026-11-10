@@ -42,7 +42,7 @@ shell does not activate mise.
 |---|---|---|---|
 | L0 | `just fast` | pre-commit hook (< 10 s) | staged secrets (gitleaks), typos, shellcheck, hadolint; commit-msg: Conventional Commits subject |
 | L1 | `just check` | pre-push hook (< 3 min, ~40 s) | typos, shellcheck, `lefthook validate`, hadolint; server unit suite with coverage, client suite with coverage, client build; the wiring and attestation tests; Semgrep CE, osv-scanner (waivers in `osv-scanner.toml`), gitleaks on the history |
-| L2 | `just gate` | on the pushed head, before every merge (10–15 min) | L1, `just integration` (server integration suite on a disposable PostgreSQL, 80 % branch floor), SonarQube with the quality gate waited for ([SONARQUBE](docs/SONARQUBE.md)), the smoke and E2E suites on the local production build ([spec](docs/architecture/specs/e2e-smoke-tests.md)), Trivy on the compose/Dockerfile configuration and the two images; then the signed gate attestation on the head SHA |
+| L2 | `just gate` | on the pushed head, before every merge (10–15 min) | L1, `just integration` (server integration suite on a disposable PostgreSQL, 80 % branch floor), SonarQube with the quality gate waited for ([SONARQUBE](docs/SONARQUBE.md)), the smoke and E2E suites on the local production build ([spec](docs/architecture/specs/e2e-smoke-tests.md)), Trivy on the two Dockerfiles and the two images; then the signed gate attestation on the head SHA |
 | L3 | `just nightly` | systemd user timer `happihub-local-ci-nightly.timer` (`scripts/systemd/`) | L1, the integration suite, TruffleHog, `mise outdated` |
 
 The nightly timer is installed by hand once per machine: edit `WorkingDirectory=` in

@@ -35,30 +35,39 @@ another machine, SonarQube never skipped (agents-skills #159), the pre-merge gat
   - L2 `just gate` before every merge, on the pushed head: L1, the server integration suite on a
     disposable PostgreSQL container (172 s measured, hence out of L1), `sonar-scanner` with the
     quality gate waited for, the smoke and E2E suites on the local production build (gate step 5),
-    Trivy on the compose and Dockerfile configuration and on the two production images, then the
+    Trivy on the two Dockerfiles and on the two production images, then the
     attestation of agents-skills ADR-0003: a signed note on `refs/notes/gate` and the commit status
     `gate` on the head SHA captured before the first check.
   - L3 `just nightly` on the systemd user timer `happihub-local-ci-nightly.timer`
     (`scripts/systemd/`): L1, the integration suite, TruffleHog on the history, `mise outdated`.
 - `just merge <pr>` is the only merge path: it refuses unless the PR head carries the attestation,
   verified against `.github/allowed_signers` read from `origin/main`.
-- `.github/workflows/` is deleted; branch protection on `main` requires the `gate` commit status
-  only, with an up-to-date branch and linear history (`.github/branch-protection.md`).
+- `.github/workflows/` is deleted; the target branch protection on `main` requires the `gate` commit
+  status only, with an up-to-date branch and linear history (`.github/branch-protection.md`). Until it
+  is applied, `main` still requires the `test` status of the deleted workflow.
 - The SonarQube collector (`tools/quality/`, its tests, systemd units and config) is removed:
   `just gate` scans the pushed head with every lcov report (D1 of #410, option A 450/500 against
   keeping it dormant 295 and rewriting it for `main` 245). `docs/SONARQUBE.md` describes the
   local scan.
 - Known advisories without an in-scope fix are waived per advisory in `osv-scanner.toml`, each with
-  a follow-up issue and an expiry (D2, A 385/500: #411 for the server packages, 2026-12-10). The
+  a follow-up issue and an expiry (D2, A 385/500: #411 for the server packages, #413 for react-router 7, 2026-12-10). The
   Semgrep rule `gcm-no-tag-length` is excluded in `just security` until #412 declares
   `authTagLength` on the field cipher (D3, A 415/500).
 - No `deploy` or `attest staging` recipe: they come with the staging design (#386).
 
 ## Consequences
 
+- Semgrep is the one unpinned input: `p/default` is fetched from the registry at each run and
+  `uvx semgrep@1.184.0` carries no checksum, so a finding can appear without a commit and the
+  pre-push needs the network. Accepted for a Community Edition rule set; a committed snapshot is the
+  remedy if it ever flaps.
 - No GitHub minute is spent; a merge needs a laptop with Docker, the self-hosted SonarQube and the
   owner's SSH key loaded. The first merge after this decision cannot verify the attestation
-  (`allowed_signers` is not on `main` yet) and goes through the bootstrap waiver of the owner rule.
+  (`allowed_signers` is not on `main` yet) and goes through the bootstrap waiver of the owner rule,
+  with the `test` requirement still in place; the owner applies `.github/branch-protection.md`
+  right after that merge, otherwise every later `just merge` is refused for a missing `test` status.
+- The clone the nightly unit points to must be a full clone: TruffleHog cannot read a partial
+  (`blob:none`) clone, and `just nightly` refuses one with the conversion command.
 - The pre-merge gate keeps the same substance (tests, coverage floors, SonarQube, secrets,
   E2E/smoke) and becomes a single attested command; `review-local` runs `just check` before the
   push and `just gate` before the merge.

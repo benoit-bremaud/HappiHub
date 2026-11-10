@@ -22,7 +22,7 @@ reason = "client fast-uri 3.1.8, #411"
 [[IgnoredVulns]]
 id = "GHSA-337j-9hxr-rhxg"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client react-router 6.30.6, #411"
+reason = "client react-router 6.30.6, runtime, #413"
 
 [[IgnoredVulns]]
 id = "GHSA-3g3m-2fjr-6pw4"
@@ -237,7 +237,7 @@ reason = "client fast-uri 3.1.8, #411"
 [[IgnoredVulns]]
 id = "GHSA-wrjc-x8rr-h8h6"
 ignoreUntil = 2026-12-10T00:00:00Z
-reason = "client react-router 6.30.6, #411"
+reason = "client react-router 6.30.6, runtime, #413"
 
 [[IgnoredVulns]]
 id = "GHSA-xhq7-xmqj-769h"

@@ -77,7 +77,8 @@ secrets:
 # L1 — pre-push (< 3 min)
 check: lint test security secrets
 
-# Called by review-local § 2b (contents: CONTRIBUTING.md § Local CI). The SonarQube token comes from
+# Called by review-local § 2b (contents: CONTRIBUTING.md § Local CI). Reinstalls the three lockfiles so the
+# attested SHA is tested with the dependencies it declares. The SonarQube token comes from
 # ~/.config/sonarqube/analysis-token unless SONAR_TOKEN is exported (skill infra-accounts). Attests
 # the head SHA captured before the first check (agents-skills ADR-0003): a HEAD moved during the run
 # is refused, so do not touch the tree meanwhile.
@@ -93,11 +94,12 @@ gate:
     [ -n "$token" ] || { echo "gate: no SonarQube token (export SONAR_TOKEN or ~/.config/sonarqube/analysis-token)" >&2; exit 1; }
     curl -sSf -o /dev/null --max-time 5 http://localhost:9000 \
       || { echo "gate: no SonarQube instance answering on http://localhost:9000 (docs/SONARQUBE.md)" >&2; exit 1; }
+    for d in server client e2e; do (cd "$d" && npm ci --ignore-scripts --no-audit --no-fund); done
     just check
     just integration
     SONAR_TOKEN="$token" sonar-scanner -Dsonar.qualitygate.wait=true
     (cd e2e && npm test)
-    trivy config --exit-code 1 --severity HIGH,CRITICAL --quiet .
+    trivy config --skip-dirs '**/node_modules' --skip-dirs .claude --exit-code 1 --severity HIGH,CRITICAL --quiet .
     docker build --quiet --target runtime -t happihub-server:gate server
     docker build --quiet --target runtime --build-arg REACT_APP_API_URL=/api -t happihub-client:gate client
     trivy image --exit-code 1 --severity HIGH,CRITICAL --quiet happihub-server:gate
@@ -115,5 +117,6 @@ merge pr:
 
 # L3 — nightly, systemd user timer happihub-local-ci-nightly.timer (no time budget)
 nightly: check integration
+    [ "$(git config remote.origin.promisor)" != true ] || { echo "nightly: partial clone (blob:none), trufflehog cannot read it: git fetch --refetch --no-filter && git config --unset remote.origin.promisor && git config --unset remote.origin.partialclonefilter" >&2; exit 1; }
     trufflehog git "file://$PWD" --no-verification --fail --no-update
     mise outdated

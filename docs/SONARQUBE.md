@@ -29,6 +29,9 @@ then the E2E suites and the image scans, and ends with the gate attestation. It 
 - the global analysis token of this machine in `~/.config/sonarqube/analysis-token` (mode 600), or
   `SONAR_TOKEN` exported. Agent shells do not inherit the shell export: the recipe reads the file.
 
+The token travels in plain HTTP on the loopback interface only (host to `localhost:9000`, the
+CRYPTO-1 exception of the former collector conception carried over: never a remote host).
+
 The gate fails loudly when any of the three is missing; SonarQube is never skipped
 (agents-skills #159). A standalone scan: `SONAR_TOKEN="$(cat ~/.config/sonarqube/analysis-token)"
 sonar-scanner -Dsonar.qualitygate.wait=true` from the repository root, after the suites.
