@@ -39,7 +39,10 @@ current work and next actions belong in [the work plan](docs/WORK_PLAN.md) and
   byte-identical to `~/.claude/scripts` (its ADR numbers are agents-skills', resync by `diff`).
   First `just gate` on the pushed head (PR #415): red at SonarQube, the scanner defaulted to
   SonarCloud (403) because `sonar-project.properties` carried no `sonar.host.url`; fixed with the
-  local URL and a wiring assertion.
+  local URL and a wiring assertion. Second run: SonarQube PASSED, smoke + E2E 6/6, Trivy config
+  clean, Trivy image 44 (server, Debian 12) + 12 (client, Alpine 3.24) OS findings with the same
+  backlog on the newest base digests: report-only with a WARNING line until #416 (docker-hardening
+  rule for an existing backlog), the merge question names it.
 
 ## 2026-11-06
 

@@ -35,7 +35,7 @@ another machine, SonarQube never skipped (agents-skills #159), the pre-merge gat
   - L2 `just gate` before every merge, on the pushed head: L1, the server integration suite on a
     disposable PostgreSQL container (172 s measured, hence out of L1), `sonar-scanner` with the
     quality gate waited for, the smoke and E2E suites on the local production build (gate step 5),
-    Trivy on the two Dockerfiles and on the two production images, then the
+    Trivy on the two Dockerfiles and, report-only until #416, on the two production images, then the
     attestation of agents-skills ADR-0003: a signed note on `refs/notes/gate` and the commit status
     `gate` on the head SHA captured before the first check.
   - L3 `just nightly` on the systemd user timer `happihub-local-ci-nightly.timer`
@@ -61,6 +61,10 @@ another machine, SonarQube never skipped (agents-skills #159), the pre-merge gat
   `uvx semgrep@1.184.0` carries no checksum, so a finding can appear without a commit and the
   pre-push needs the network. Accepted for a Community Edition rule set; a committed snapshot is the
   remedy if it ever flaps.
+- The image scan is report-only (`WARNING` line, rule 5 of the skill) until #416 hardens the two
+  base images: the first gate found 44 + 12 OS-package findings, none in the application code, and
+  the newest base digests carry the same backlog (skill `docker-hardening`: an existing backlog is
+  report-only with a tracking issue, never a red gate).
 - No GitHub minute is spent; a merge needs a laptop with Docker, the self-hosted SonarQube and the
   owner's SSH key loaded. The first merge after this decision cannot verify the attestation
   (`allowed_signers` is not on `main` yet): the owner applies `.github/branch-protection.md` first

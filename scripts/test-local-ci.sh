@@ -44,6 +44,7 @@ body gate | grep -q '^ *(cd e2e && npm test)$' || fail "gate does not run the sm
 body gate | grep -q -- "trivy config --skip-dirs '\*\*/node_modules'" || fail "trivy config would scan node_modules (gate always red)"; ok
 body gate | grep -q 'npm ci --ignore-scripts' || fail "gate does not reinstall the lockfiles"; ok
 deps nightly | grep -qw full-clone || fail "nightly does not refuse a partial clone first (trufflehog)"; ok
+body gate | grep -q '^ *echo "WARNING: trivy image is report-only' || fail "gate hides the report-only image scan (rule 5: a skipped step says so, #416)"; ok
 for r in gate merge; do body "$r" | grep -q '^ *set -eu$' || fail "$r lacks set -eu (a failed step must stop before the attestation)"; ok; done
 body gate | grep -q '^ *sh scripts/attest.sh write gate "\$head"$' || fail "gate does not attest the captured head"; ok
 dirty=$(body gate | grep -n 'git status --porcelain' | head -1 | cut -d: -f1); hd=$(body gate | grep -n '^ *head=$(git rev-parse HEAD)$' | cut -d: -f1); ck=$(body gate | grep -n '^ *just check$' | cut -d: -f1)
