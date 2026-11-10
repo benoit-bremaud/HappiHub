@@ -39,15 +39,18 @@ body() { just --show "$1" | grep -v '^ *#'; } # body <recipe>: its lines, commen
 body gate | grep -q '^ *just check$' || fail "gate does not run check"; ok
 body gate | grep -q '^ *just integration$' || fail "gate does not run the integration suite"; ok
 body gate | grep -q 'sonar-scanner -Dsonar.qualitygate.wait=true' || fail "gate does not wait for the SonarQube quality gate"; ok
-body gate | grep -q '^ *cd e2e && npm test' || fail "gate does not run the smoke and E2E suites"; ok
+body gate | grep -q '^ *(cd e2e && npm test)$' || fail "gate does not run the smoke and E2E suites in a subshell"; ok
+for r in gate merge; do body "$r" | grep -q '^ *set -eu$' || fail "$r lacks set -eu (a failed step must stop before the attestation)"; ok; done
 body gate | grep -q '^ *sh scripts/attest.sh write gate "\$head"$' || fail "gate does not attest the captured head"; ok
 dirty=$(body gate | grep -n 'git status --porcelain' | head -1 | cut -d: -f1); hd=$(body gate | grep -n '^ *head=$(git rev-parse HEAD)$' | cut -d: -f1); ck=$(body gate | grep -n '^ *just check$' | cut -d: -f1)
 [ -n "$dirty" ] && [ -n "$hd" ] && [ -n "$ck" ] && [ "$dirty" -lt "$hd" ] && [ "$hd" -lt "$ck" ] \
   || fail "gate must refuse a dirty tree, then capture HEAD, before its first check"; ok
 body merge | grep -q '^ *sh scripts/attest.sh verify gate "\$sha"$' || fail "merge does not verify the attestation"; ok
 body merge | grep -q -- '--match-head-commit "\$sha"' || fail "merge does not pin the head SHA"; ok
-body test | grep -q 'jest --config jest.config.cjs --runInBand --coverage' || fail "test does not run the server unit suite with coverage"; ok
-body test | grep -q -- "--collectCoverageFrom='src/\*\*/\*.{js,jsx}'" || fail "test lost the client coverage globs"; ok
+body test | grep -q -- '--coverage' || fail "test does not run the unit suites with coverage"; ok
+body security | grep -q -- '--error' || fail "semgrep lost --error (findings would not fail)"; ok
+for f in $(git ls-files '*package-lock.json'); do just --evaluate lockfiles | grep -q -- "$f" || fail "osv-scanner misses $f"; ok; done
+[ -s .github/allowed_signers ] || fail ".github/allowed_signers missing or empty (the gate trust store)"; ok
 body test | grep -q '^ *sh scripts/test-attest.sh$' || fail "test does not run the attestation tests"; ok
 body integration | grep -q 'npm run test:integration' || fail "integration does not run the server integration suite"; ok
 
@@ -61,7 +64,14 @@ grep -qE '^ +run: +sh scripts/check-commit-msg.sh \{1\}$' lefthook.yml || fail "
 grep -qE '^ +mise x -- just check$' lefthook.yml || fail "pre-push hook does not run just check"; ok
 lefthook validate > /dev/null || fail "lefthook validate"; ok
 
-# commit-msg subjects.
+# node-guard refuses a Node whose major differs from .nvmrc (local-ci rule 9).
+guard() { rc=0; just node-guard > "$work/out" 2>&1 || rc=$?; [ "$rc" -eq "$1" ] || { cat "$work/out"; fail "node-guard with .nvmrc=$2: exit $rc, expected $1"; }; ok; }
+guard 0 "$(cat .nvmrc)"
+cp .nvmrc "$work/nvmrc" && echo 99 > .nvmrc && trap 'cp "$work/nvmrc" "$root/.nvmrc"; rm -rf "$work"' EXIT
+guard 1 99; grep -q 'Node 99' "$work/out" || fail "node-guard does not name the required major"; ok
+cp "$work/nvmrc" .nvmrc
+
+# commit-msg subjects (exemptions: merges, reverts, autosquash prefixes; only the subject is checked).
 msg() { # msg <expected-exit> <subject>
   printf '%s\n' "$2" > "$work/msg"
   rc=0; sh scripts/check-commit-msg.sh "$work/msg" > /dev/null 2>&1 || rc=$?
@@ -71,6 +81,11 @@ msg 0 'ci(workflows): wire just + lefthook + mise'
 msg 0 'feat!: drop the legacy endpoint'
 msg 0 'feat(api)!: drop the v1 endpoint'
 msg 0 'Merge branch main into feat/1'
+msg 0 'Revert "feat(api): drop the v1 endpoint"'
+msg 0 'fixup! feat(api): drop the v1 endpoint'
+msg 1 'feat(): empty scope'
+msg 1 'feat(API): uppercase scope'
+printf 'feat(api): subject\n\nbody that is not checked.\n' > "$work/msg" && sh scripts/check-commit-msg.sh "$work/msg" > /dev/null 2>&1 || fail "commit-msg refused a valid multi-line message"; ok
 msg 1 'Wire just'
 msg 1 'ci(workflows): ends with a period.'
 msg 1 'wip: not a listed type'
@@ -112,9 +127,20 @@ printf 't%sh notes\n' e > notes/b.txt && git add notes/b.txt
 fast 1 "staged typo refused" "should be"
 git rm -q --cached notes/b.txt
 
+printf '#!/bin/sh\nunused=1\n' > notes/bad.sh && git add notes/bad.sh
+fast 1 "staged shell smell refused" "SC2"
+git rm -q --cached notes/bad.sh
+printf 'FROM node\nRUN cd /x\n' > notes/Dockerfile && git add notes/Dockerfile
+fast 1 "staged Dockerfile smell refused" "DL3"
+git rm -q --cached notes/Dockerfile
+printf 'echo $x\nRUN cd /x\n' > notes/c.txt && git add notes/c.txt
+fast 0 "a non-matching file triggers neither linter"
+git rm -q --cached notes/c.txt
+
 # The installed commit-msg hook, end to end (pre-commit runs too: the stage is clean).
 mise x -- lefthook install > /dev/null 2>&1 || fail "lefthook install in the throwaway repo"
-git commit -qm 'Wire just' > /dev/null 2>&1 && fail "commit-msg hook accepted a bad subject"; ok
+git commit -qm 'Wire just' > "$work/out" 2>&1 && fail "commit-msg hook accepted a bad subject"
+grep -q 'commit-msg' "$work/out" || { cat "$work/out"; fail "the refusal did not come from the commit-msg hook"; }; ok
 git commit -qm 'test(notes): add a plain note' > /dev/null 2>&1 || fail "commit-msg hook refused a good subject"; ok
 
 echo "test-local-ci: $n cases passed"

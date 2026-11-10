@@ -1,9 +1,11 @@
 #!/bin/sh
-# Tests for scripts/attest.sh (agents-skills #213, ADR-0003/0004; HappiHub #410) against a fake `gh` (commit statuses
-# kept in files), a bare remote and throwaway SSH keys. Copied from ~/.claude/scripts without its
-# cassette section (this repository calls no third party). The attestation is
-# written and pushed, verified from a second clone, and refused when missing, forged, moved to
-# another commit or carried by a non-release or unsigned tag. Needs git, ssh-keygen.
+# Tests for scripts/attest.sh (agents-skills #213, ADR-0003/0004; HappiHub #410) against a fake `gh`
+# (commit statuses kept in files), a bare remote and throwaway SSH keys. Copied verbatim from
+# ~/.claude/scripts (the staging and release cases stay as the drift tripwire of that copy) without
+# its cassette section (this repository calls no third party), plus the write-with-commit refusals and
+# the tampered-signature case. The attestation is written and pushed, verified from a second clone,
+# and refused when missing, forged, moved to another commit or carried by a non-release or unsigned
+# tag. Needs git, ssh-keygen.
 set -e
 # shellcheck disable=SC2046 # one variable name per word
 unset $(git rev-parse --local-env-vars)
@@ -51,11 +53,18 @@ run() {
 }
 
 run 1 "no status, no gate" "status gate is missing" sh scripts/attest.sh verify gate HEAD
-run 0 "gate written" "gate recorded on $first" sh scripts/attest.sh write gate
+run 0 "gate written" "gate recorded on $first" sh scripts/attest.sh write gate "$first"
 git ls-remote --exit-code origin refs/notes/gate > /dev/null || fail "gate note not pushed"; n=$((n + 1))
 run 0 "gate verified" "gate verified on $first (t@example.com)" sh scripts/attest.sh verify gate HEAD
 run 1 "no staging note yet" "no deploy/staging note" sh scripts/attest.sh verify deploy/staging HEAD
 run 1 "unknown kind" "unknown kind" sh scripts/attest.sh write prod
+# The gate passes the SHA it captured before its first check (justfile `gate`): an empty capture, an
+# unknown commit and a HEAD moved since the checks are refused.
+run 1 "empty captured head refused" "empty commit argument" sh scripts/attest.sh write gate ""
+run 1 "unknown commit refused" "unknown commit" sh scripts/attest.sh write gate deadbeef
+git commit -q --allow-empty -m moved && git push -q origin main
+run 1 "HEAD moved since the checks" "but the checks ran on $first" sh scripts/attest.sh write gate "$first"
+git reset -q --hard "$first" && git push -q -f origin main
 
 # A second clone fetches the notes before reading and before adding (no forked notes history).
 git clone -q "$work/remote.git" "$work/clone"
@@ -66,6 +75,31 @@ run 0 "gate verified from a clone" "gate verified on $first" sh scripts/attest.s
 run 0 "staging attested from the clone" "deploy/staging recorded" sh scripts/attest.sh write deploy/staging
 cd "$repo"
 run 0 "staging note fetched back" "deploy/staging verified on $first" sh scripts/attest.sh verify deploy/staging HEAD
+
+# Concurrent push (#372): a pre-push hook makes the clone push its gate note between our fetch and
+# our push, once; write refetches, re-adds its note on top and retries, keeping the clone's note.
+cd "$work/clone" && git commit -q --allow-empty -m other && git push -q origin main
+other=$(git rev-parse HEAD)
+cd "$repo" && git pull -q origin main && git commit -q --allow-empty -m mine && git push -q origin main
+mine=$(git rev-parse HEAD)
+cat > .git/hooks/pre-push <<EOF
+#!/bin/sh
+grep -q refs/notes/gate || exit 0
+[ -e "$work/raced" ] && exit 0
+touch "$work/raced"
+unset \$(git rev-parse --local-env-vars)
+cd "$work/clone" && sh scripts/attest.sh write gate "$other" > /dev/null
+EOF
+chmod +x .git/hooks/pre-push
+run 0 "gate written after a concurrent push" "retrying" sh scripts/attest.sh write gate "$mine"
+rm .git/hooks/pre-push
+[ -e "$work/raced" ] || fail "the concurrent push did not happen"; n=$((n + 1))
+run 0 "own note kept" "gate verified on $mine" sh scripts/attest.sh verify gate "$mine"
+run 0 "concurrent note kept" "gate verified on $other" sh scripts/attest.sh verify gate "$other"
+printf '#!/bin/sh\necho refused by hook >&2\nexit 1\n' > .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+run 1 "other push failure not retried" "could not record the gate note" sh scripts/attest.sh write gate "$mine"
+grep -q retrying "$work/out" && fail "a refused push was retried"; n=$((n + 1))
+rm .git/hooks/pre-push
 
 # write refuses what the gate did not see: a dirty tree, an unpushed HEAD.
 echo b > b
@@ -86,6 +120,12 @@ run 1 "foreign key refused" "not signed by a key" sh scripts/attest.sh verify ga
 printf 'x@example.com %s\n' "$(cat "$work/other.pub")" >> .github/allowed_signers
 run 1 "trust store of the checkout ignored" "not signed by a key" sh scripts/attest.sh verify gate HEAD
 git checkout -q .github/allowed_signers
+# A trusted key signed another payload: the principal is found, the signature does not verify.
+printf 'gate o/r %s\n' "$first" > "$work/payload2"
+ssh-keygen -q -Y sign -n local-ci -f "$work/key" "$work/payload2" > /dev/null 2>&1
+{ printf 'gate o/r %s\n' "$second"; cat "$work/payload2.sig"; } | git notes --ref refs/notes/gate add -f -F - "$second"
+git push -q origin refs/notes/gate
+run 1 "trusted signature over another payload refused" "bad signature" sh scripts/attest.sh verify gate HEAD
 # The overwrite is intended (its "Overwriting existing notes" line is noise); copy fails if $first has no note.
 git notes --ref refs/notes/gate copy -f "$first" "$second" 2> /dev/null || fail "note not copied to $second"
 git push -q origin refs/notes/gate

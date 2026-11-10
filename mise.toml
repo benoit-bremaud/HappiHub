@@ -2,7 +2,7 @@
 # pinned; `mise.lock` pins the checksums. `just setup` installs it. Run the tiers as
 # `mise x -- just <tier>` when the shell does not activate mise (the git hooks do). Outside mise:
 # docker (PostgreSQL containers, the two images), ssh-keygen (attestation), sonar-scanner
-# (`sonar-scanner-npm` linked in ~/.local/bin, skill infra-accounts), python3 (tools/ingress) and
+# (`sonar-scanner-npm` linked in ~/.local/bin, skill infra-accounts), python3 (`tools/ingress/test_ingress.py`, opt-in) and
 # Semgrep (`uvx semgrep@…` in the justfile: a mise pipx install needs a mise-managed Python).
 #
 # Node matches .nvmrc and the Dockerfiles (22.23.3): a global mise shim resolving another Node would

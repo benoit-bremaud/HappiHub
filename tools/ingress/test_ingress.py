@@ -3,7 +3,7 @@
 Requires prebuilt HappiHub server/client images, Docker and OpenSSL. Creates only
 labelled disposable containers on an internal network, with no host ports, real
 credentials or database. Session storage is a fake boundary; ingress and limits
-are real. Never discovered by the non-Docker quality collector test suite.
+are real. Opt-in: no `just` tier runs it (docs/DOCKER.md).
 """
 
 import argparse

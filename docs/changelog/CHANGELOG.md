@@ -17,8 +17,8 @@ history and [handover](../HANDOVER.md) for the current state.
 - OpenAPI 3.1 contract of every `/api` route and `/ready` in `docs/api/openapi.yaml` (#397):
   request bodies, response schemas, both error envelopes, cookie session and CSRF schemes. A
   server test validates it and fails when the served routes and the contract diverge.
-- The server integration suite and its 80 % branch floor run in CI against a PostgreSQL service
-  (#373, job `integration`).
+- The server integration suite and its 80 % branch floor run against a disposable PostgreSQL
+  container in `just gate` (#373, formerly the CI job `integration`; #410).
 - Smoke and E2E tests on the local production build (#395): `npm test` in `e2e/` starts a
   disposable PostgreSQL with the demo seed, builds the production client and runs Playwright
   checks for sign-up with email verification, sign-in, event publication and the public agenda.

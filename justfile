@@ -39,15 +39,15 @@ node-guard:
 
 # The two Dockerfiles tolerate info-level findings (DL3066 numeric user id, tracked by #361).
 # Spelling (typos.toml: French content excluded or allow-listed), shell scripts, hook config, Dockerfiles
-lint: node-guard
+lint:
     typos
     shellcheck --severity=warning scripts/*.sh
     lefthook validate
     hadolint --failure-threshold warning server/Dockerfile client/Dockerfile
 
-# Same commands and coverage globs as the former quality-tests.yml `test` job (jest.config.cjs is the
-# coverage scope of the server); the client build keeps CI=false: its legacy ESLint warnings are
-# documented, build errors still fail.
+# jest.config.cjs is the coverage scope of the server; the client globs stay on the command line until
+# a client-config change moves them into package.json (owner approval, AGENTS.md). The client build
+# keeps CI=false: under CI=true react-scripts turns its documented legacy ESLint warnings into errors.
 # Server and client unit suites with coverage, the client build, then the tests of the CI wiring itself
 test: node-guard
     cd server && npx --no-install jest --config jest.config.cjs --runInBand --coverage
@@ -62,8 +62,7 @@ integration: node-guard
     docker info > /dev/null 2>&1 || { echo "integration: Docker is not running (disposable {{postgres_image}})" >&2; exit 1; }
     cd server && npm run test:integration
 
-# SAST (Semgrep Community Edition on the shipped sources, tests excluded by .semgrepignore) and known
-# vulnerabilities in the three lockfiles (waivers in osv-scanner.toml). EIO_BACKEND=posix: semgrep-core
+# Tests are excluded by .semgrepignore, waivers live in osv-scanner.toml. EIO_BACKEND=posix: semgrep-core
 # otherwise opens io_uring rings charged to RLIMIT_MEMLOCK and dies with "Cannot allocate memory".
 # The GCM rule is excluded until #412 declares authTagLength on the field cipher.
 # SAST (Semgrep CE on the shipped sources) and known vulnerabilities in the three lockfiles
@@ -78,21 +77,16 @@ secrets:
 # L1 — pre-push (< 3 min)
 check: lint test security secrets
 
-# L2 — pre-merge, called by review-local § 2b, on the pushed head only (10–15 min). check, then the
-# integration suite, SonarQube (self-hosted instance, quality gate waited for; the global analysis
-# token from ~/.config/sonarqube/analysis-token unless SONAR_TOKEN is exported, skill infra-accounts),
-# the smoke and E2E suites on the local production build (pre-merge gate step 5), the compose and
-# Dockerfile configuration and the two production images (Trivy, HIGH and CRITICAL). Ends with the
-# gate attestation (agents-skills ADR-0003): signed note + commit status `gate` on the head SHA captured
-# before the first check; a HEAD moved during the run is refused. Do not touch the tree meanwhile.
+# Called by review-local § 2b (contents: CONTRIBUTING.md § Local CI). The SonarQube token comes from
+# ~/.config/sonarqube/analysis-token unless SONAR_TOKEN is exported (skill infra-accounts). Attests
+# the head SHA captured before the first check (agents-skills ADR-0003): a HEAD moved during the run
+# is refused, so do not touch the tree meanwhile.
 # L2 — pre-merge on the pushed head (10–15 min): check, integration, SonarQube, E2E, images, attestation
-gate base="origin/main":
+gate:
     #!/bin/sh
     set -eu
     [ -z "$(git status --porcelain)" ] || { echo "gate: the working tree has uncommitted changes" >&2; exit 1; }
     head=$(git rev-parse HEAD)
-    base={{quote(base)}}
-    case "$base" in origin/*) git fetch --quiet origin "${base#origin/}" ;; esac
     docker info > /dev/null 2>&1 || { echo "gate: Docker is not running (integration, E2E, images)" >&2; exit 1; }
     command -v sonar-scanner > /dev/null || { echo "gate: sonar-scanner not on PATH (system tool, skill local-ci rule 2)" >&2; exit 1; }
     token=${SONAR_TOKEN:-$(cat "$HOME/.config/sonarqube/analysis-token" 2> /dev/null || true)}
@@ -102,7 +96,7 @@ gate base="origin/main":
     just check
     just integration
     SONAR_TOKEN="$token" sonar-scanner -Dsonar.qualitygate.wait=true
-    cd e2e && npm test && cd ..
+    (cd e2e && npm test)
     trivy config --exit-code 1 --severity HIGH,CRITICAL --quiet .
     docker build --quiet --target runtime -t happihub-server:gate server
     docker build --quiet --target runtime --build-arg REACT_APP_API_URL=/api -t happihub-client:gate client

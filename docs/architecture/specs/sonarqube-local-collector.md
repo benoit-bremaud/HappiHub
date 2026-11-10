@@ -1,6 +1,8 @@
 # HappiHub local SonarQube collector — conception
 
-2026-10-13. Status: owner approved conception and narrow local HTTP exception on 2026-10-13.
+2026-10-13. Status: owner approved conception and narrow local HTTP exception on 2026-10-13;
+**superseded by [ADR-0005](../decisions/0005-local-first-ci.md) on 2026-11-10** (#410: the collector
+is removed, `just gate` scans the pushed head locally).
 Work item: #25; recovered application source prerequisite: PR #257 (not merged).
 Supersedes the GitHub self-hosted runner topology in sonarqube-push-analysis.md.
 

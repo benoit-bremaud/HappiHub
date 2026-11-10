@@ -45,6 +45,13 @@ shell does not activate mise.
 | L2 | `just gate` | on the pushed head, before every merge (10–15 min) | L1, `just integration` (server integration suite on a disposable PostgreSQL, 80 % branch floor), SonarQube with the quality gate waited for ([SONARQUBE](docs/SONARQUBE.md)), the smoke and E2E suites on the local production build ([spec](docs/architecture/specs/e2e-smoke-tests.md)), Trivy on the compose/Dockerfile configuration and the two images; then the signed gate attestation on the head SHA |
 | L3 | `just nightly` | systemd user timer `happihub-local-ci-nightly.timer` (`scripts/systemd/`) | L1, the integration suite, TruffleHog, `mise outdated` |
 
+The nightly timer is installed by hand once per machine: edit `WorkingDirectory=` in
+`scripts/systemd/happihub-local-ci-nightly.service` if the clone lives elsewhere, then
+`systemctl --user link "$PWD"/scripts/systemd/happihub-local-ci-nightly.{service,timer}
+"$PWD"/scripts/systemd/happihub-local-ci-nightly-failed.service && systemctl --user enable --now
+happihub-local-ci-nightly.timer`. Branch protection of `main`: [`.github/branch-protection.md`](.github/branch-protection.md).
+References to skills and to `agents-skills` point at the owner's `~/.claude` tooling, not at this repository.
+
 `just merge <pr>` is the only merge path: it refuses unless the PR head carries the gate attestation
 (signed note on `refs/notes/gate` + commit status `gate`, verified against `.github/allowed_signers`
 read from `origin/main`). Needs Docker, `sonar-scanner` on `PATH`, the SonarQube token file and
@@ -78,7 +85,7 @@ already given for a concrete operation does not need to be requested again.
 Create PRs with main as base. Assign benoit-bremaud, use existing relevant labels, and attach
 to [HappiHub Project #6](https://github.com/users/benoit-bremaud/projects/6) via GraphQL
 (project ID PVT_kwHOB8rwIc4AkXrp). Request clement-machtelinckx when the owner requests
-Clement review; Copilot is best-effort. Carry a milestone only from a linked issue when
+Clement review; no hosted reviewer runs (owner rule 2026-11-07). Carry a milestone only from a linked issue when
 its scope matches. Never route this repository to an unrelated project.
 
 Maintain docs/HANDOVER.md and PROJECT_LOG.md when substantive state or decisions change.

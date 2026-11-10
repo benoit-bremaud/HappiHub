@@ -13,7 +13,7 @@ extend-exclude = [
 [default.extend-identifiers]
 emial_enc = "emial_enc"           # fieldCipher.test.js: an unknown column must be refused
 sercurity_front = "sercurity_front" # PROJECT_LOG.md: historical branch name
-CHECKs = "CHECKs"
+CHECKs = "CHECKs"                 # server/domain/event.js: the SQL CHECK constraints
 
 [default.extend-words]
 # French words in the README, docs, tests and log

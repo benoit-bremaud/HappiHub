@@ -15,6 +15,10 @@ diffed or audited without the GitHub UI (ADR-0005, #410).
 
 ## Apply / update
 
+Order for #410: apply after the bootstrap merge of the PR that adds `.github/allowed_signers` and
+`scripts/attest.sh` to `main` (that merge goes through the owner waiver, ADR-0005 § Consequences);
+until then the required context `gate` would block the only PR able to produce it.
+
 ```bash
 gh api -X PUT repos/benoit-bremaud/HappiHub/branches/main/protection --input - <<'EOF'
 {
